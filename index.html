@@ -208,8 +208,9 @@
 
         const formatYen = (angka) => "¥" + angka.toLocaleString('ja-JP');
 
+        // FIX UNDEFINED: Ditambahkan pengecekan if(!schedule)
         function getMapelByDate(dateString, schedule) {
-            if (!dateString) return "-";
+            if (!dateString || !schedule) return "-"; // FIX: Cegah error jika schedule kosong
             const parts = dateString.split('/');
             let dateObj = parts.length === 3 ? new Date(parts[2], parts[1]-1, parts[0]) : new Date(dateString);
             if(isNaN(dateObj)) return "-";
@@ -224,6 +225,13 @@
 
         // --- ACTIONS ---
         function kirimWA(text) { window.open(`https://wa.me/${ADMIN_WA}?text=${encodeURIComponent(text)}`, '_blank'); }
+        
+        // FUNGSI LAPOR IZIN (Sesuai permintaan)
+        function laporIzin(nama, id) {
+            const pesan = `Assalamualaikum Admin RBM, saya wali dari siswa ${nama} (${id}) ingin izin tidak masuk kelas hari ini dikarenakan sakit/berhalangan. Mohon doanya.`;
+            kirimWA(pesan);
+        }
+
         function cetakLaporan() { window.print(); }
         function toggleInstallModal(show) {
             const modal = document.getElementById('installModal');
@@ -413,8 +421,8 @@
                         <div>
                             <div class="flex justify-between items-center mb-3">
                                 <h3 class="text-sm font-bold text-gray-800 flex items-center gap-2"><i data-lucide="user-check" width="16" class="text-blue-500"></i> ${t.menu3}</h3>
-                                <button onclick="kirimWA('Izin Siswa ${s.name} (${s.id}) : ')" class="text-[10px] font-bold text-blue-600 bg-blue-50 px-3 py-1 rounded-full active:bg-blue-100 transition no-print">
-                                    ${t.reportAbsence}
+                                <button onclick="laporIzin('${s.name}', '${s.id}')" class="text-[10px] font-bold text-blue-600 bg-blue-50 px-3 py-1 rounded-full active:bg-blue-100 transition no-print flex items-center gap-1">
+                                    <i data-lucide="send" width="10"></i> ${t.reportAbsence}
                                 </button>
                             </div>
                             <div class="bg-white rounded-2xl p-4 shadow-sm border border-gray-100">
@@ -425,11 +433,15 @@
                         <div class="opacity-60 grayscale hover:grayscale-0 transition duration-300">
                             <h3 class="text-sm font-bold text-gray-800 mb-3 flex items-center gap-2"><i data-lucide="history" width="16" class="text-gray-500"></i> ${t.history}</h3>
                             <div class="bg-white rounded-2xl p-4 border border-gray-100">
-                                ${spp.rincian.length > 0 ? listSPP : ''}
-                                <div class="mt-2 pt-2 border-t border-gray-100 text-xs flex justify-between font-bold text-gray-700">
-                                    <span>${t.totalFinal}</span>
-                                    <span>${formatYen(spp.totalAkhir)}</span>
-                                </div>
+                                <table class="w-full text-left">
+                                    <thead class="text-[10px] text-gray-400 uppercase bg-gray-50 border-b">
+                                        <tr><th class="py-2 pl-2">${t.month}</th><th class="text-center">${t.date}</th><th class="text-center">${t.status}</th></tr>
+                                    </thead>
+                                    <tbody>
+                                        <!-- FIX: Hapus history bulan lalu, hanya tampilkan bulan ini untuk start fresh -->
+                                        <tr><td class="py-2 font-bold text-xs">${t.currentMonth}</td><td class="text-center text-xs">-</td><td class="text-center"><span class="${statusColor} px-2 rounded text-[10px] font-bold uppercase">${statusText}</span></td></tr>
+                                    </tbody>
+                                </table>
                             </div>
                         </div>
                     </div>
