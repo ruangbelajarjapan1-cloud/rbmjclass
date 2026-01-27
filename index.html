@@ -3,18 +3,21 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>RBM Japan Portal</title>
+    <title>RBM Japan Student Portal</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://unpkg.com/lucide@latest"></script>
     <style>
         body { font-family: 'Inter', sans-serif; background: #f0fdf4; }
+        .pattern-grid { background-image: radial-gradient(#059669 1px, transparent 1px); background-size: 24px 24px; opacity: 0.05; }
         .fade-enter { animation: fadeIn 0.5s ease-out; }
-        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
-        .glass { background: rgba(255, 255, 255, 0.9); backdrop-filter: blur(10px); }
-        @media print { .no-print { display: none !important; } }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(12px); } to { opacity: 1; transform: translateY(0); } }
+        .ticker { overflow: hidden; white-space: nowrap; }
+        .ticker-text { display: inline-block; animation: marquee 15s linear infinite; }
+        @keyframes marquee { 0% { transform: translateX(100%); } 100% { transform: translateX(-100%); } }
     </style>
 </head>
 <body class="min-h-screen relative">
+    <div class="pattern-grid absolute inset-0 z-0"></div>
     <div id="app" class="relative z-10">
         <div class="flex flex-col items-center justify-center min-h-screen">
             <div class="animate-spin rounded-full h-12 w-12 border-b-4 border-emerald-600"></div>
@@ -23,8 +26,9 @@
     </div>
 
     <script>
-        // MASUKKAN URL WEB APP PAK WAHYU DI SINI
+        // API TERBARU PAK WAHYU
         const API_URL = "https://script.google.com/macros/s/AKfycbz2a5-sm2_gLBPF5jpTmZfBuN9PppkvUI3nXIyOJbYJ4XDZA3SDE7-FNU784ZxfSZjr/exec"; 
+        const WEBSITE_URL = "https://rbj-site.vercel.app/";
         const ADMIN_WA = "6285819809668";
 
         let DATA_SISWA = []; let DATA_HARGA = {}; let INFO_PENGUMUMAN = {};
@@ -35,9 +39,24 @@
             en: { 'Senin': 'Monday', 'Selasa': 'Tuesday', 'Rabu': 'Wednesday', 'Kamis': 'Thursday', 'Jumat': 'Friday', 'Sabtu': 'Saturday', 'Ahad': 'Sunday' }
         };
 
+        const HADITS = [
+            { text: "Barangsiapa yang menempuh jalan untuk mencari ilmu, Allah mudahkan baginya jalan menuju surga.", ref: "HR. Muslim" },
+            { text: "Sebaik-baik kalian adalah orang yang belajar Al-Qur'an dan mengajarkannya.", ref: "HR. Bukhari" }
+        ];
+
         const TEKS = {
-            id: { select: "Pilih Nama Siswa", btn: "MASUK", sub: "Student Portal", report: "LAPOR IZIN", schedule: "JADWAL KELAS", history: "RIWAYAT BAYAR", notes: "CATATAN GURU", noData: "Belum ada data", greet: ["Selamat Pagi", "Selamat Siang", "Selamat Sore", "Selamat Malam"] },
-            en: { select: "Select Student Name", btn: "LOGIN", sub: "Student Portal", report: "REPORT ABSENCE", schedule: "CLASS SCHEDULE", history: "PAYMENT HISTORY", notes: "TEACHER NOTES", noData: "No data available", greet: ["Good Morning", "Good Afternoon", "Good Evening", "Good Night"] }
+            id: { 
+                select: "Pilih Nama Siswa", btnMasuk: "MASUK PORTAL", loginSub: "Ruang Belajar Muslim Japan",
+                total: "TAGIHAN", report: "LAPOR IZIN", notes: "CATATAN GURU", schedule: "JADWAL KELAS",
+                history: "RIWAYAT BAYAR", noData: "Belum ada data", morning: "Selamat Pagi", afternoon: "Selamat Siang", evening: "Selamat Sore", night: "Selamat Malam",
+                webBtn: "Kunjungi Website"
+            },
+            en: { 
+                select: "Select Student Name", btnMasuk: "ENTER PORTAL", loginSub: "Muslim Learning Space Japan",
+                total: "TOTAL BILL", report: "REPORT ABSENCE", notes: "TEACHER NOTES", schedule: "CLASS SCHEDULE",
+                history: "PAYMENT HISTORY", noData: "No data available", morning: "Good Morning", afternoon: "Good Afternoon", evening: "Good Evening", night: "Good Night",
+                webBtn: "Visit Website"
+            }
         };
 
         async function ambilData() {
@@ -46,29 +65,47 @@
                 const data = await res.json();
                 DATA_SISWA = data.students; DATA_HARGA = data.prices; INFO_PENGUMUMAN = data.info;
                 renderApp();
-            } catch (e) { document.getElementById('app').innerHTML = `<p class='p-10 text-center text-red-500'>Koneksi Gagal. Cek URL Web App.</p>`; }
+            } catch (e) { document.getElementById('app').innerHTML = `<p class='p-10 text-center text-red-500'>Gagal terhubung ke API.</p>`; }
         }
 
-        function getGreet() {
-            const h = new Date().getHours();
-            const g = TEKS[STATE.lang].greet;
-            if (h < 11) return g[0]; if (h < 15) return g[1]; if (h < 19) return g[2]; return g[3];
+        function getGreeting(t) {
+            const hr = new Date().getHours();
+            if (hr < 11) return t.morning;
+            if (hr < 15) return t.afternoon;
+            if (hr < 19) return t.evening;
+            return t.night;
+        }
+
+        function getHijriDate() {
+            return new Intl.DateTimeFormat('id-TN-u-ca-islamic-uma', {day: 'numeric', month: 'long', year: 'numeric'}).format(new Date());
         }
 
         function renderApp() {
             const app = document.getElementById('app');
             const t = TEKS[STATE.lang];
+            const h = HADITS[Math.floor(Math.random() * HADITS.length)];
 
             if (STATE.view === 'login') {
                 let opsi = `<option value="" disabled selected>-- ${t.select} --</option>` + DATA_SISWA.map(s => `<option value="${s.id}">${s.name}</option>`).join('');
                 app.innerHTML = `
-                <div class="min-h-screen flex flex-col items-center justify-center p-6 bg-emerald-800 fade-enter">
-                    <button onclick="STATE.lang=STATE.lang==='id'?'en':'id';renderApp()" class="absolute top-8 right-8 text-white text-[10px] font-bold border border-white/40 px-3 py-1 rounded-full uppercase tracking-widest">${STATE.lang}</button>
-                    <div class="bg-white p-10 rounded-[2.5rem] shadow-2xl w-full max-w-sm text-center">
-                        <h1 class="text-3xl font-black text-emerald-900 tracking-tighter">RBM JAPAN</h1>
-                        <p class="text-[10px] text-gray-400 mb-10 uppercase font-bold tracking-[0.2em]">${t.sub}</p>
-                        <select id="selSiswa" class="w-full p-4 border rounded-2xl mb-6 bg-gray-50 text-sm font-bold text-gray-700 outline-none">${opsi}</select>
-                        <button onclick="login()" class="w-full bg-emerald-600 text-white py-4 rounded-2xl font-black text-sm tracking-widest hover:bg-emerald-700 transition-all">${t.btn}</button>
+                <div class="min-h-screen bg-emerald-900 flex flex-col items-center justify-center p-6 fade-enter">
+                    <button onclick="STATE.lang=STATE.lang==='id'?'en':'id';renderApp()" class="absolute top-8 right-8 text-white text-[10px] font-bold border border-white/40 px-3 py-1.5 rounded-full uppercase tracking-widest">${STATE.lang}</button>
+                    <div class="bg-white p-10 rounded-[2.5rem] shadow-2xl w-full max-w-sm text-center relative overflow-hidden">
+                        <img src="logo.png" class="h-16 mx-auto mb-4" onerror="this.src='https://ui-avatars.com/api/?name=RBJ&background=065f46&color=fff'">
+                        <p class="text-emerald-600 font-bold text-[10px] mb-1">${getHijriDate()}</p>
+                        <h1 class="text-2xl font-black text-emerald-900 tracking-tighter uppercase">RBM JAPAN</h1>
+                        
+                        <div class="my-6 p-4 bg-emerald-50 rounded-2xl border border-emerald-100 text-left">
+                            <p class="text-[10px] text-emerald-800 italic leading-relaxed">"${h.text}"</p>
+                            <p class="text-[9px] text-emerald-400 font-bold mt-2">— ${h.ref}</p>
+                        </div>
+
+                        <select id="selSiswa" class="w-full p-4 border rounded-2xl mb-4 bg-gray-50 text-sm font-bold text-gray-700 outline-none focus:border-emerald-500">${opsi}</select>
+                        <button onclick="login()" class="w-full bg-emerald-600 text-white py-4 rounded-2xl font-black text-sm tracking-widest hover:bg-emerald-700 active:scale-95 transition-all mb-4 uppercase italic italic">${t.btnMasuk}</button>
+                        
+                        <a href="${WEBSITE_URL}" target="_blank" class="text-[10px] font-bold text-emerald-600 hover:underline flex items-center justify-center gap-1">
+                            <i data-lucide="globe" width="12"></i> ${t.webBtn}
+                        </button>
                     </div>
                 </div>`;
             } else {
@@ -80,30 +117,30 @@
                 <div class="max-w-md mx-auto pb-20 fade-enter">
                     <div class="bg-emerald-800 pt-16 pb-28 px-8 rounded-b-[3.5rem] shadow-xl text-white relative">
                         <div class="flex justify-between items-start">
-                            <div><p class="text-emerald-300 text-[11px] font-bold mb-1">${getGreet()},</p><h1 class="text-3xl font-black tracking-tight">${s.name}</h1></div>
+                            <div><p class="text-emerald-300 text-[10px] font-bold mb-1">${getGreeting(t)},</p><h1 class="text-3xl font-black tracking-tight lowercase">${s.name}</h1></div>
                             <button onclick="location.reload()" class="bg-white/10 p-2.5 rounded-xl no-print"><i data-lucide="log-out" width="18"></i></button>
                         </div>
                     </div>
 
                     <div class="px-6 -mt-20 relative z-20">
-                        <div class="glass p-8 rounded-[2.5rem] shadow-2xl">
+                        <div class="bg-white p-8 rounded-[2.5rem] shadow-2xl border">
                             <div class="flex justify-between items-center mb-6">
-                                <span class="text-[10px] font-black text-emerald-600 uppercase tracking-widest">Tagihan</span>
+                                <span class="text-[10px] font-black text-emerald-600 uppercase tracking-widest">${t.total}</span>
                                 <button onclick="laporIzin('${s.name}', '${s.id}')" class="text-[10px] font-bold text-blue-600 bg-blue-50 px-3 py-1.5 rounded-full flex items-center gap-1.5"><i data-lucide="send" width="12"></i> ${t.report}</button>
                             </div>
                             <h2 class="text-5xl font-black text-emerald-900 mb-8 tracking-tighter">¥${totalBill.toLocaleString('ja-JP')}</h2>
                             <div class="grid grid-cols-2 gap-4 no-print">
-                                <button onclick="window.open('https://wa.me/${ADMIN_WA}?text=Konfirmasi SPP ${s.name} (${s.id})')" class="bg-emerald-600 text-white py-3.5 rounded-2xl text-[10px] font-bold">KONFIRMASI WA</button>
-                                <button onclick="window.print()" class="bg-slate-800 text-white py-3.5 rounded-2xl text-[10px] font-bold">SIMPAN PDF</button>
+                                <button onclick="window.open('https://wa.me/${ADMIN_WA}?text=Konfirmasi SPP ${s.name}')" class="bg-emerald-600 text-white py-3.5 rounded-2xl text-[10px] font-bold uppercase shadow-lg">KONFIRMASI WA</button>
+                                <button onclick="window.print()" class="bg-slate-800 text-white py-3.5 rounded-2xl text-[10px] font-bold uppercase shadow-lg">SIMPAN PDF</button>
                             </div>
                         </div>
                     </div>
 
                     <div class="p-8 space-y-10">
-                        ${INFO_PENGUMUMAN.aktif ? `<div class="bg-amber-100 p-5 rounded-[2rem] border-2 border-amber-200 flex gap-4 text-xs text-amber-900 italic fade-enter"><i data-lucide="megaphone" class="shrink-0 text-amber-600"></i>${STATE.lang === 'id' ? INFO_PENGUMUMAN.teks_id : INFO_PENGUMUMAN.teks_en}</div>` : ''}
+                        ${INFO_PENGUMUMAN.aktif ? `<div class="ticker bg-amber-100 p-4 rounded-3xl border-2 border-amber-200 text-[11px] text-amber-900 font-bold italic"><span class="ticker-text">${STATE.lang === 'id' ? INFO_PENGUMUMAN.teks_id : INFO_PENGUMUMAN.teks_en}</span></div>` : ''}
 
                         <section><h3 class="font-black text-emerald-900 mb-4 flex items-center gap-3 uppercase tracking-tighter"><i data-lucide="message-square" class="text-blue-500" width="20"></i> ${t.notes}</h3>
-                            ${s.notes.map(n => `<div class="bg-blue-50/50 p-4 rounded-3xl border border-blue-100 mb-3"><p class="text-[9px] font-bold text-blue-600 mb-1">${n.date}</p><p class="text-xs text-blue-900">${n.message}</p></div>`).join('') || `<p class="text-xs text-gray-400 italic text-center">${t.noData}</p>`}
+                            ${s.notes.map(n => `<div class="bg-blue-50/50 p-4 rounded-3xl border border-blue-100 mb-3 text-xs text-blue-900 font-medium"><p class="text-[9px] font-bold text-blue-600 mb-1 tracking-widest uppercase">${n.date}</p>${n.message}</div>`).join('') || `<p class="text-xs text-gray-400 italic text-center">${t.noData}</p>`}
                         </section>
 
                         <section><h3 class="font-black text-emerald-900 mb-4 flex items-center gap-3 uppercase tracking-tighter"><i data-lucide="calendar" class="text-purple-500" width="20"></i> ${t.schedule}</h3>
@@ -116,12 +153,10 @@
                         </section>
 
                         <section><h3 class="font-black text-emerald-900 mb-4 flex items-center gap-3 uppercase tracking-tighter"><i data-lucide="history" class="text-emerald-500" width="20"></i> ${t.history}</h3>
-                            <div class="bg-white rounded-[2rem] border overflow-hidden shadow-sm text-[11px] font-bold">
-                                <table class="w-full text-left">
-                                    <thead class="bg-emerald-50/50 text-emerald-800/50 uppercase"><tr><th class="p-4">Bulan/Kelas</th><th class="p-4 text-right">Status</th></tr></thead>
-                                    <tbody class="divide-y">${s.history.map(h => `<tr><td class="p-4 text-emerald-900">${h.bulan}<br><span class="font-medium text-[9px] text-slate-400">${h.kelas}</span></td><td class="p-4 text-right text-emerald-600 uppercase italic font-black">${h.status}</td></tr>`).join('') || '<tr><td colspan="2" class="p-4 text-center italic text-gray-300">Kosong</td></tr>'}</tbody>
-                                </table>
-                            </div>
+                            <div class="bg-white rounded-[2rem] border overflow-hidden shadow-sm text-[11px] font-bold"><table class="w-full text-left">
+                                <thead class="bg-emerald-50/50 text-emerald-800/50 uppercase"><tr><th class="p-4">Bulan/Kelas</th><th class="p-4 text-right">Status</th></tr></thead>
+                                <tbody class="divide-y">${s.history.map(h => `<tr><td class="p-4 text-emerald-900">${h.bulan}<br><span class="font-medium text-[9px] text-slate-400">${h.kelas}</span></td><td class="p-4 text-right text-emerald-600 uppercase italic font-black">${h.status}</td></tr>`).join('') || '<tr><td colspan="2" class="p-4 text-center italic text-gray-300">Kosong</td></tr>'}</tbody>
+                            </table></div>
                         </section>
                     </div>
                 </div>`;
@@ -130,7 +165,7 @@
         }
 
         function login() { const id = document.getElementById('selSiswa').value; if(!id) return; STATE.user = DATA_SISWA.find(s => s.id === id); STATE.view = 'dashboard'; renderApp(); }
-        function laporIzin(nama, id) { window.open(`https://wa.me/${ADMIN_WA}?text=Assalamu’alaikum Admin RBM, saya wali dari ${nama} (${id}) ingin izin tidak masuk kelas hari ini karena...`, '_blank'); }
+        function laporIzin(nama, id) { window.open(`https://wa.me/${ADMIN_WA}?text=Assalamu’alaikum Admin RBJ, saya wali dari ${nama} (${id}) ingin izin tidak masuk kelas hari ini karena...`, '_blank'); }
         ambilData();
     </script>
 </body>
