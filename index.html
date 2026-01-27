@@ -2,78 +2,57 @@
 <html lang="id">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>RBM Japan Student Portal</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <title>RBJ Student Portal</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://unpkg.com/lucide@latest"></script>
     <style>
-        body { font-family: 'Inter', sans-serif; background: #f0fdf4; }
-        .pattern-grid { background-image: radial-gradient(#059669 1px, transparent 1px); background-size: 24px 24px; opacity: 0.05; }
-        .fade-enter { animation: fadeIn 0.5s ease-out; }
-        @keyframes fadeIn { from { opacity: 0; transform: translateY(12px); } to { opacity: 1; transform: translateY(0); } }
-        .ticker { overflow: hidden; white-space: nowrap; }
-        .ticker-text { display: inline-block; animation: marquee 15s linear infinite; }
+        @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;700;800&display=swap');
+        body { font-family: 'Plus Jakarta Sans', sans-serif; background: #f0fdf4; }
+        .glass { background: rgba(255, 255, 255, 0.9); backdrop-filter: blur(10px); border: 1px solid rgba(255,255,255,0.5); }
+        .fade-enter { animation: fadeIn 0.6s ease-out; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(15px); } to { opacity: 1; transform: translateY(0); } }
+        .ticker-container { overflow: hidden; white-space: nowrap; }
+        .ticker-text { display: inline-block; animation: marquee 20s linear infinite; }
         @keyframes marquee { 0% { transform: translateX(100%); } 100% { transform: translateX(-100%); } }
+        @media print { .no-print { display: none !important; } }
     </style>
 </head>
 <body class="min-h-screen relative">
-    <div class="pattern-grid absolute inset-0 z-0"></div>
-    <div id="app" class="relative z-10">
-        <div class="flex flex-col items-center justify-center min-h-screen">
-            <div class="animate-spin rounded-full h-12 w-12 border-b-4 border-emerald-600"></div>
-            <p class="mt-4 text-emerald-800 font-bold">Sinkronisasi Database...</p>
-        </div>
-    </div>
+    <div id="app" class="relative z-10"><div class="flex flex-col items-center justify-center min-h-screen"><div class="animate-spin rounded-full h-12 w-12 border-b-4 border-emerald-600"></div></div></div>
 
     <script>
-        // API TERBARU PAK WAHYU
+        // GANTI DENGAN LINK WEB APP PAK WAHYU
         const API_URL = "https://script.google.com/macros/s/AKfycbz2a5-sm2_gLBPF5jpTmZfBuN9PppkvUI3nXIyOJbYJ4XDZA3SDE7-FNU784ZxfSZjr/exec"; 
         const WEBSITE_URL = "https://rbj-site.vercel.app/";
         const ADMIN_WA = "6285819809668";
 
-        let DATA_SISWA = []; let DATA_HARGA = {}; let INFO_PENGUMUMAN = {};
+        let DATA_SISWA = []; let DATA_HARGA = {}; let KABAR_RBM = []; let INFO_PENGUMUMAN = {}; let DONASI = null;
         let STATE = { view: 'login', user: null, lang: 'id' };
 
-        const DAY_MAP = {
+        const DAY_NAMES = {
             id: { 'Senin': 'Senin', 'Selasa': 'Selasa', 'Rabu': 'Rabu', 'Kamis': 'Kamis', 'Jumat': 'Jumat', 'Sabtu': 'Sabtu', 'Ahad': 'Ahad' },
             en: { 'Senin': 'Monday', 'Selasa': 'Tuesday', 'Rabu': 'Wednesday', 'Kamis': 'Thursday', 'Jumat': 'Friday', 'Sabtu': 'Saturday', 'Ahad': 'Sunday' }
         };
 
-        const HADITS = [
-            { text: "Barangsiapa yang menempuh jalan untuk mencari ilmu, Allah mudahkan baginya jalan menuju surga.", ref: "HR. Muslim" },
-            { text: "Sebaik-baik kalian adalah orang yang belajar Al-Qur'an dan mengajarkannya.", ref: "HR. Bukhari" }
-        ];
-
         const TEKS = {
-            id: { 
-                select: "Pilih Nama Siswa", btnMasuk: "MASUK PORTAL", loginSub: "Ruang Belajar Muslim Japan",
-                total: "TAGIHAN", report: "LAPOR IZIN", notes: "CATATAN GURU", schedule: "JADWAL KELAS",
-                history: "RIWAYAT BAYAR", noData: "Belum ada data", morning: "Selamat Pagi", afternoon: "Selamat Siang", evening: "Selamat Sore", night: "Selamat Malam",
-                webBtn: "Kunjungi Website"
-            },
-            en: { 
-                select: "Select Student Name", btnMasuk: "ENTER PORTAL", loginSub: "Muslim Learning Space Japan",
-                total: "TOTAL BILL", report: "REPORT ABSENCE", notes: "TEACHER NOTES", schedule: "CLASS SCHEDULE",
-                history: "PAYMENT HISTORY", noData: "No data available", morning: "Good Morning", afternoon: "Good Afternoon", evening: "Good Evening", night: "Good Night",
-                webBtn: "Visit Website"
-            }
+            id: { select: "Pilih Nama Siswa", btn: "MASUK PORTAL", report: "LAPOR IZIN", notes: "CATATAN GURU", schedule: "JADWAL KELAS", history: "RIWAYAT & KWITANSI", confirm: "KONFIRMASI WA", greet: ["Selamat Pagi", "Selamat Siang", "Selamat Sore", "Selamat Malam"] },
+            en: { select: "Select Name", btn: "LOGIN", report: "REPORT ABSENCE", notes: "TEACHER NOTES", schedule: "SCHEDULE", history: "HISTORY & RECEIPT", confirm: "CONFIRM PAYMENT", greet: ["Good Morning", "Good Afternoon", "Good Evening", "Good Night"] }
         };
 
         async function ambilData() {
             try {
                 const res = await fetch(API_URL);
                 const data = await res.json();
-                DATA_SISWA = data.students; DATA_HARGA = data.prices; INFO_PENGUMUMAN = data.info;
+                DATA_SISWA = data.students; DATA_HARGA = data.prices; KABAR_RBM = data.news; INFO_PENGUMUMAN = data.info; DONASI = data.donation;
                 renderApp();
-            } catch (e) { document.getElementById('app').innerHTML = `<p class='p-10 text-center text-red-500'>Gagal terhubung ke API.</p>`; }
+            } catch (e) { document.getElementById('app').innerHTML = `<p class='p-10 text-center text-red-500'>Koneksi Error. Pastikan URL API benar.</p>`; }
         }
 
-        function getGreeting(t) {
-            const hr = new Date().getHours();
-            if (hr < 11) return t.morning;
-            if (hr < 15) return t.afternoon;
-            if (hr < 19) return t.evening;
-            return t.night;
+        function getGreet() {
+            const h = new Date().getHours();
+            const g = TEKS[STATE.lang].greet;
+            if (h < 11) return g[0]; if (h < 15) return g[1]; if (h < 19) return g[2]; return g[3];
         }
 
         function getHijriDate() {
@@ -83,80 +62,75 @@
         function renderApp() {
             const app = document.getElementById('app');
             const t = TEKS[STATE.lang];
-            const h = HADITS[Math.floor(Math.random() * HADITS.length)];
 
             if (STATE.view === 'login') {
                 let opsi = `<option value="" disabled selected>-- ${t.select} --</option>` + DATA_SISWA.map(s => `<option value="${s.id}">${s.name}</option>`).join('');
                 app.innerHTML = `
                 <div class="min-h-screen bg-emerald-900 flex flex-col items-center justify-center p-6 fade-enter">
-                    <button onclick="STATE.lang=STATE.lang==='id'?'en':'id';renderApp()" class="absolute top-8 right-8 text-white text-[10px] font-bold border border-white/40 px-3 py-1.5 rounded-full uppercase tracking-widest">${STATE.lang}</button>
-                    <div class="bg-white p-10 rounded-[2.5rem] shadow-2xl w-full max-w-sm text-center relative overflow-hidden">
+                    <button onclick="STATE.lang=STATE.lang==='id'?'en':'id';renderApp()" class="absolute top-8 right-8 text-white text-xs border border-white/40 px-3 py-1 rounded-full uppercase font-bold">${STATE.lang}</button>
+                    <div class="bg-white p-10 rounded-[2.5rem] shadow-2xl w-full max-w-sm text-center">
                         <img src="logo.png" class="h-16 mx-auto mb-4" onerror="this.src='https://ui-avatars.com/api/?name=RBJ&background=065f46&color=fff'">
-                        <p class="text-emerald-600 font-bold text-[10px] mb-1">${getHijriDate()}</p>
-                        <h1 class="text-2xl font-black text-emerald-900 tracking-tighter uppercase">RBM JAPAN</h1>
-                        
-                        <div class="my-6 p-4 bg-emerald-50 rounded-2xl border border-emerald-100 text-left">
-                            <p class="text-[10px] text-emerald-800 italic leading-relaxed">"${h.text}"</p>
-                            <p class="text-[9px] text-emerald-400 font-bold mt-2">— ${h.ref}</p>
-                        </div>
-
-                        <select id="selSiswa" class="w-full p-4 border rounded-2xl mb-4 bg-gray-50 text-sm font-bold text-gray-700 outline-none focus:border-emerald-500">${opsi}</select>
-                        <button onclick="login()" class="w-full bg-emerald-600 text-white py-4 rounded-2xl font-black text-sm tracking-widest hover:bg-emerald-700 active:scale-95 transition-all mb-4 uppercase italic italic">${t.btnMasuk}</button>
-                        
-                        <a href="${WEBSITE_URL}" target="_blank" class="text-[10px] font-bold text-emerald-600 hover:underline flex items-center justify-center gap-1">
-                            <i data-lucide="globe" width="12"></i> ${t.webBtn}
-                        </button>
+                        <p class="text-emerald-600 font-bold text-[10px] mb-2">${getHijriDate()}</p>
+                        <h1 class="text-2xl font-black text-emerald-900 uppercase mb-8 tracking-tighter">RBM JAPAN</h1>
+                        <select id="selSiswa" class="w-full p-4 border rounded-2xl mb-4 bg-gray-50 text-sm font-bold text-gray-700 outline-none">${opsi}</select>
+                        <button onclick="login()" class="w-full bg-emerald-600 text-white py-4 rounded-2xl font-black text-xs uppercase tracking-widest hover:bg-emerald-700 transition-all mb-6">${t.btn}</button>
+                        <a href="${WEBSITE_URL}" target="_blank" class="text-[10px] font-bold text-emerald-600 flex items-center justify-center gap-1"><i data-lucide="globe" width="12"></i> Kunjungi Website Ruang Belajar</a>
                     </div>
                 </div>`;
             } else {
                 const s = STATE.user;
-                let totalBill = 0; s.classes.forEach(c => { totalBill += (DATA_HARGA[c.split('(')[0].trim()] || 0); });
-                if (s.role == 2) totalBill *= 0.5;
+                let total = 0; s.classes.forEach(c => { total += (DATA_HARGA[c.split('(')[0].trim()] || 0); });
+                if (s.role == 2) total *= 0.5;
 
                 app.innerHTML = `
                 <div class="max-w-md mx-auto pb-20 fade-enter">
-                    <div class="bg-emerald-800 pt-16 pb-28 px-8 rounded-b-[3.5rem] shadow-xl text-white relative">
+                    <div class="bg-emerald-800 pt-16 pb-28 px-8 rounded-b-[3.5rem] text-white">
                         <div class="flex justify-between items-start">
-                            <div><p class="text-emerald-300 text-[10px] font-bold mb-1">${getGreeting(t)},</p><h1 class="text-3xl font-black tracking-tight lowercase">${s.name}</h1></div>
-                            <button onclick="location.reload()" class="bg-white/10 p-2.5 rounded-xl no-print"><i data-lucide="log-out" width="18"></i></button>
+                            <div><p class="text-emerald-300 text-[10px] font-bold mb-1 italic">${getGreet()},</p><h1 class="text-3xl font-black tracking-tight lowercase">${s.name}</h1></div>
+                            <button onclick="location.reload()" class="bg-white/10 p-2.5 rounded-xl"><i data-lucide="log-out" width="18"></i></button>
                         </div>
                     </div>
 
-                    <div class="px-6 -mt-20 relative z-20">
-                        <div class="bg-white p-8 rounded-[2.5rem] shadow-2xl border">
-                            <div class="flex justify-between items-center mb-6">
-                                <span class="text-[10px] font-black text-emerald-600 uppercase tracking-widest">${t.total}</span>
-                                <button onclick="laporIzin('${s.name}', '${s.id}')" class="text-[10px] font-bold text-blue-600 bg-blue-50 px-3 py-1.5 rounded-full flex items-center gap-1.5"><i data-lucide="send" width="12"></i> ${t.report}</button>
+                    <div class="px-6 -mt-20 relative z-20 space-y-6">
+                        <div class="bg-white p-6 rounded-[2rem] shadow-lg border-l-8 border-blue-400">
+                            <div class="flex justify-between items-center mb-3">
+                                <h4 class="text-[10px] font-black text-gray-400 uppercase tracking-widest">Target Hafalan</h4>
+                                <span class="text-xs font-black text-blue-600">${s.progres.persen}%</span>
                             </div>
-                            <h2 class="text-5xl font-black text-emerald-900 mb-8 tracking-tighter">¥${totalBill.toLocaleString('ja-JP')}</h2>
-                            <div class="grid grid-cols-2 gap-4 no-print">
-                                <button onclick="window.open('https://wa.me/${ADMIN_WA}?text=Konfirmasi SPP ${s.name}')" class="bg-emerald-600 text-white py-3.5 rounded-2xl text-[10px] font-bold uppercase shadow-lg">KONFIRMASI WA</button>
-                                <button onclick="window.print()" class="bg-slate-800 text-white py-3.5 rounded-2xl text-[10px] font-bold uppercase shadow-lg">SIMPAN PDF</button>
+                            <div class="w-full bg-gray-100 h-3 rounded-full mb-2"><div class="bg-blue-400 h-3 rounded-full transition-all duration-1000" style="width: ${s.progres.persen}%"></div></div>
+                            <p class="text-[10px] text-emerald-900 font-bold italic text-right">Target: ${s.progres.target}</p>
+                        </div>
+
+                        <div class="glass p-8 rounded-[2.5rem] shadow-2xl">
+                            <div class="flex justify-between items-center mb-4">
+                                <span class="text-[10px] font-black text-emerald-600 uppercase tracking-widest">Tagihan SPP</span>
+                                <button onclick="laporIzin('${s.name}', '${s.id}')" class="text-[10px] font-bold text-blue-600 bg-blue-50 px-3 py-1 rounded-full flex items-center gap-1"><i data-lucide="send" width="12"></i> ${t.report}</button>
+                            </div>
+                            <h2 class="text-5xl font-black text-emerald-900 mb-8 tracking-tighter">¥${total.toLocaleString('ja-JP')}</h2>
+                            <div class="grid grid-cols-2 gap-4">
+                                <button onclick="window.open('https://wa.me/${ADMIN_WA}?text=Konfirmasi Pembayaran SPP ${s.name} (${s.id})')" class="bg-emerald-600 text-white py-4 rounded-2xl text-[10px] font-bold uppercase shadow-lg hover:bg-emerald-700 transition-all">${t.confirm}</button>
+                                <button onclick="window.print()" class="bg-slate-800 text-white py-4 rounded-2xl text-[10px] font-bold uppercase shadow-lg">SIMPAN PDF</button>
                             </div>
                         </div>
                     </div>
 
                     <div class="p-8 space-y-10">
-                        ${INFO_PENGUMUMAN.aktif ? `<div class="ticker bg-amber-100 p-4 rounded-3xl border-2 border-amber-200 text-[11px] text-amber-900 font-bold italic"><span class="ticker-text">${STATE.lang === 'id' ? INFO_PENGUMUMAN.teks_id : INFO_PENGUMUMAN.teks_en}</span></div>` : ''}
-
-                        <section><h3 class="font-black text-emerald-900 mb-4 flex items-center gap-3 uppercase tracking-tighter"><i data-lucide="message-square" class="text-blue-500" width="20"></i> ${t.notes}</h3>
-                            ${s.notes.map(n => `<div class="bg-blue-50/50 p-4 rounded-3xl border border-blue-100 mb-3 text-xs text-blue-900 font-medium"><p class="text-[9px] font-bold text-blue-600 mb-1 tracking-widest uppercase">${n.date}</p>${n.message}</div>`).join('') || `<p class="text-xs text-gray-400 italic text-center">${t.noData}</p>`}
+                        ${INFO_PENGUMUMAN.aktif ? `<div class="bg-amber-100 p-4 rounded-3xl border border-amber-200 text-xs ticker-container"><div class="ticker-text font-bold italic text-amber-900">${STATE.lang==='id'?INFO_PENGUMUMAN.teks_id:INFO_PENGUMUMAN.teks_en}</div></div>` : ''}
+                        
+                        <section><h3 class="font-black text-emerald-900 mb-4 flex items-center gap-3 uppercase tracking-tighter"><i data-lucide="newspaper" class="text-emerald-500"></i> Kabar RBM Japan</h3>
+                            <div class="flex gap-4 overflow-x-auto pb-4 snap-x">${KABAR_RBM.map(k => `<div class="min-w-[280px] bg-white rounded-3xl shadow-sm border overflow-hidden snap-center"><img src="${k.foto}" class="w-full h-32 object-cover"><div class="p-4"><p class="text-[9px] font-bold text-gray-400 uppercase">${k.tgl}</p><h4 class="text-sm font-bold text-emerald-900 mb-2">${k.judul}</h4><p class="text-[10px] text-gray-500 line-clamp-2">${k.isi}</p></div></div>`).join('') || '<p class="text-xs text-gray-400 italic">Belum ada kabar terbaru.</p>'}</div>
                         </section>
 
-                        <section><h3 class="font-black text-emerald-900 mb-4 flex items-center gap-3 uppercase tracking-tighter"><i data-lucide="calendar" class="text-purple-500" width="20"></i> ${t.schedule}</h3>
-                            ${s.schedule.map(sc => `<div class="bg-white p-5 rounded-3xl border border-emerald-50 shadow-sm flex justify-between items-center mb-4">
-                                <div class="flex items-center gap-4">
-                                    <div class="bg-emerald-100 text-emerald-700 font-black px-4 py-2 rounded-2xl text-[11px] min-w-[70px] text-center uppercase tracking-tighter">${DAY_MAP[STATE.lang][sc.day] || sc.day}</div>
-                                    <p class="text-sm font-bold text-emerald-900">${sc.subject}</p>
-                                </div>
-                            </div>`).join('') || `<p class="text-xs text-gray-400 italic text-center">${t.noData}</p>`}
+                        <section><h3 class="font-black text-emerald-900 mb-4 flex items-center gap-3 uppercase tracking-tighter"><i data-lucide="message-square" class="text-blue-500"></i> ${t.notes}</h3>
+                            ${s.notes.map(n => `<div class="bg-blue-50/50 p-4 rounded-3xl border border-blue-100 mb-3 text-xs text-blue-900 font-medium"><p class="text-[9px] font-bold text-blue-600 mb-1">${n.date}</p>${n.message}</div>`).join('') || `<p class="text-xs text-gray-400 italic text-center">${t.noData}</p>`}
                         </section>
 
-                        <section><h3 class="font-black text-emerald-900 mb-4 flex items-center gap-3 uppercase tracking-tighter"><i data-lucide="history" class="text-emerald-500" width="20"></i> ${t.history}</h3>
-                            <div class="bg-white rounded-[2rem] border overflow-hidden shadow-sm text-[11px] font-bold"><table class="w-full text-left">
-                                <thead class="bg-emerald-50/50 text-emerald-800/50 uppercase"><tr><th class="p-4">Bulan/Kelas</th><th class="p-4 text-right">Status</th></tr></thead>
-                                <tbody class="divide-y">${s.history.map(h => `<tr><td class="p-4 text-emerald-900">${h.bulan}<br><span class="font-medium text-[9px] text-slate-400">${h.kelas}</span></td><td class="p-4 text-right text-emerald-600 uppercase italic font-black">${h.status}</td></tr>`).join('') || '<tr><td colspan="2" class="p-4 text-center italic text-gray-300">Kosong</td></tr>'}</tbody>
-                            </table></div>
+                        <section><h3 class="font-black text-emerald-900 mb-4 flex items-center gap-3 uppercase tracking-tighter"><i data-lucide="calendar" class="text-purple-500"></i> ${t.schedule}</h3>
+                            ${s.schedule.map(sc => `<div class="bg-white p-5 rounded-3xl border border-emerald-50 shadow-sm flex justify-between items-center mb-4"><div class="flex items-center gap-4"><div class="bg-emerald-100 text-emerald-700 font-black px-4 py-2 rounded-2xl text-[11px] min-w-[70px] text-center uppercase tracking-tighter">${DAY_NAMES[STATE.lang][sc.day] || sc.day}</div><div><p class="text-sm font-bold text-emerald-900">${sc.subject}</p>${sc.time?`<p class="text-[10px] text-emerald-500 font-bold">${sc.time} JST</p>`:''}</div></div></div>`).join('') || `<p class="text-xs text-gray-400 italic text-center">${t.noData}</p>`}
+                        </section>
+
+                        <section><h3 class="font-black text-emerald-900 mb-4 flex items-center gap-3 uppercase tracking-tighter"><i data-lucide="history" class="text-emerald-500"></i> ${t.history}</h3>
+                            <div class="bg-white rounded-[2rem] border overflow-hidden shadow-sm text-[11px] font-bold"><table class="w-full text-left font-bold"><thead class="bg-emerald-50 text-emerald-800 uppercase"><tr><th class="p-4">Bulan</th><th class="p-4 text-right">Receipt</th></tr></thead><tbody class="divide-y">${s.history.map(h => `<tr><td class="p-4 text-emerald-900">${h.bulan}<br><span class="font-normal text-[9px] text-slate-400">${h.kelas}</span></td><td class="p-4 text-right"><button onclick="alert('Digital Receipt\\n----------\\nNama: ${s.name}\\nBulan: ${h.bulan}\\nTotal: ${h.nominal}\\nStatus: ${h.status}')" class="text-emerald-600 bg-emerald-50 px-2 py-1 rounded-lg">View</button></td></tr>`).join('') || '<tr><td colspan="2" class="p-4 text-center italic text-gray-300">Kosong</td></tr>'}</tbody></table></div>
                         </section>
                     </div>
                 </div>`;
@@ -165,7 +139,7 @@
         }
 
         function login() { const id = document.getElementById('selSiswa').value; if(!id) return; STATE.user = DATA_SISWA.find(s => s.id === id); STATE.view = 'dashboard'; renderApp(); }
-        function laporIzin(nama, id) { window.open(`https://wa.me/${ADMIN_WA}?text=Assalamu’alaikum Admin RBJ, saya wali dari ${nama} (${id}) ingin izin tidak masuk kelas hari ini karena...`, '_blank'); }
+        function laporIzin(nama, id) { window.open(`https://wa.me/${ADMIN_WA}?text=Assalamu'alaikum Admin RBJ, saya wali dari ${nama} (${id}) ingin izin hari ini karena...`); }
         ambilData();
     </script>
 </body>
