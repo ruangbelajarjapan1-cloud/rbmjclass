@@ -3,17 +3,14 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    
     <meta name="theme-color" content="#047857">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <title>RBM Japan App</title>
     <link rel="apple-touch-icon" href="logo.png">
     <link rel="icon" type="image/png" href="logo.png">
-    
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://unpkg.com/lucide@latest"></script>
-
     <style>
         body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; }
         .pattern-grid { background-image: radial-gradient(#065F46 1px, transparent 1px); background-size: 20px 20px; opacity: 0.05; }
@@ -22,109 +19,63 @@
         .no-select { -webkit-tap-highlight-color: transparent; user-select: none; }
         .safe-pb { padding-bottom: env(safe-area-inset-bottom); }
         .safe-pt { padding-top: max(1rem, env(safe-area-inset-top)); }
-        
-        .toast {
-            position: fixed; bottom: 80px; left: 50%; transform: translateX(-50%);
-            background: rgba(0,0,0,0.8); color: white; padding: 10px 20px;
-            border-radius: 50px; font-size: 12px; z-index: 100; font-weight: bold;
-            opacity: 0; transition: opacity 0.3s; pointer-events: none;
-            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
-        }
+        .toast { position: fixed; bottom: 80px; left: 50%; transform: translateX(-50%); background: rgba(0,0,0,0.8); color: white; padding: 10px 20px; border-radius: 50px; font-size: 12px; z-index: 100; font-weight: bold; opacity: 0; transition: opacity 0.3s; pointer-events: none; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
         .toast.show { opacity: 1; }
-
         @media print { .no-print { display: none !important; } body { background: white; } }
     </style>
 </head>
 <body class="bg-gray-50 min-h-screen text-gray-800 relative no-select touch-pan-y">
-
     <div class="pattern-grid absolute inset-0 z-0 pointer-events-none"></div>
-
     <div id="app" class="relative z-10 safe-pb">
         <div class="flex flex-col items-center justify-center min-h-screen">
             <div class="animate-spin rounded-full h-10 w-10 border-b-2 border-emerald-700"></div>
             <p class="mt-4 text-emerald-800 font-semibold text-sm">Memuat Aplikasi...</p>
         </div>
     </div>
-
     <div id="toast" class="toast">Sedang sinkronisasi...</div>
 
-    <div id="installModal" class="fixed inset-0 z-50 flex items-end sm:items-center justify-center pointer-events-none opacity-0 transition-opacity duration-300">
-        <div class="absolute inset-0 bg-black/50" onclick="toggleInstallModal(false)"></div>
-        <div class="bg-white w-full max-w-sm mx-auto p-6 rounded-t-2xl sm:rounded-2xl transform translate-y-full sm:translate-y-0 transition-transform duration-300 pointer-events-auto shadow-2xl relative">
-            <button onclick="toggleInstallModal(false)" class="absolute top-4 right-4 text-gray-400 hover:text-gray-600"><i data-lucide="x" width="24"></i></button>
-            <div class="text-center">
-                <h3 class="text-lg font-bold text-gray-800 mb-2">Pasang Aplikasi</h3>
-                <p class="text-sm text-gray-500 mb-6">Agar lebih mudah diakses, tambahkan ke layar utama HP Anda.</p>
-                <div class="bg-gray-50 p-4 rounded-xl text-sm text-left space-y-3">
-                    <p><strong>iPhone:</strong> Klik tombol Share <i data-lucide="share" width="12" class="inline"></i> lalu pilih "Add to Home Screen".</p>
-                    <p><strong>Android:</strong> Klik menu pojok kanan atas, pilih "Install App" atau "Add to Home Screen".</p>
-                </div>
-            </div>
-        </div>
-    </div>
-
     <script>
-        // --- KONFIGURASI ---
         const API_URL = "https://script.google.com/macros/s/AKfycbw49kZ84bMIxXsEScQI0Kf2AG9CRBnsFIosgSaOe2pH575BrIifHy6NrjGVw1f6cB9VMA/exec"; 
         const ADMIN_WA = "6285819809668"; 
-
         let INFO_PENGUMUMAN = { aktif: false, teks_id: "", teks_en: "" };
         let DATA_SISWA = [];
         let DATA_HARGA = {}; 
         let STATE = { view: 'login', user: null, lang: 'id' };
 
         const TEKS = {
-    id: {
-        welcome: "Ahlan wa Sahlan,", select: "Pilih Nama Siswa", btnMasuk: "Masuk",
-        loginSub: "Portal Siswa", studentId: "ID Siswa", total: "Total Tagihan",
-        statusTelat: "Telat", statusLunas: "Lunas", statusBelum: "Belum Bayar",
-        month: "Bulan", date: "Tgl", status: "Ket", history: "Riwayat Pembayaran",
-        noData: "Tidak ada data", currentMonth: "Bulan Ini", confirmWA: "Konfirmasi WA",
-        reportAbsence: "Lapor Izin", printReport: "Simpan PDF",
-        myClassesList: "Daftar Kelas", menu2: "Jadwal Kelas", menu3: "Presensi Siswa",
-        installApp: "Pasang App", teacherNotes: "Catatan Guru"
-    },
-    en: {
-        welcome: "Welcome,", select: "Select Student", btnMasuk: "Enter",
-        loginSub: "Student Portal", studentId: "Student ID", total: "Total Bill",
-        statusTelat: "Overdue", statusLunas: "Paid", statusBelum: "Unpaid",
-        month: "Month", date: "Date", status: "Status", history: "Payment History",
-        noData: "No data", currentMonth: "Current Month", confirmWA: "Confirm via WA",
-        reportAbsence: "Report Absence", printReport: "Save PDF",
-        myClassesList: "Class List", menu2: "Class Schedule", menu3: "Attendance",
-        installApp: "Install App", teacherNotes: "Teacher's Notes"
-    }
-};
-
-        const RANDOM_QUOTE = { text: "Barangsiapa menempuh jalan untuk menuntut ilmu, Allah akan mudahkan jalannya ke surga.", source: "HR. Muslim" };
-
-        // --- CORE FUNCTIONS (V4 CACHE SYSTEM - FORCE REFRESH) ---
-        async function ambilData() {
-            // Menggunakan V4 untuk memaksa refresh data total dari masalah sebelumnya
-            const cachedData = localStorage.getItem('rbm_cache_v4');
-            
-            if (cachedData) {
-                try {
-                    const parsed = JSON.parse(cachedData);
-                    processData(parsed);
-                    showToast("Memperbarui data...");
-                } catch (e) { console.error("Cache Error", e); }
-            } else {
-                renderLoading();
+            id: {
+                welcome: "Ahlan wa Sahlan,", select: "Pilih Nama Siswa", btnMasuk: "Masuk",
+                loginSub: "Portal Siswa", studentId: "ID Siswa", total: "Total Tagihan",
+                statusTelat: "TELAT", statusLunas: "LUNAS", statusBelum: "BELUM BAYAR",
+                month: "Bulan", date: "Tgl", status: "Ket", history: "Riwayat",
+                noData: "Tidak ada data", currentMonth: "Bulan Ini", confirmWA: "Konfirmasi WA",
+                reportAbsence: "Lapor Izin", printReport: "Simpan PDF",
+                myClassesList: "Daftar Kelas", menu2: "Jadwal Kelas", menu3: "Presensi Siswa",
+                installApp: "Pasang App", teacherNotes: "Catatan Guru"
+            },
+            en: {
+                welcome: "Welcome,", select: "Select Student", btnMasuk: "Enter",
+                loginSub: "Student Portal", studentId: "Student ID", total: "Total Bill",
+                statusTelat: "OVERDUE", statusLunas: "PAID", statusBelum: "UNPAID",
+                month: "Month", date: "Date", status: "Status", history: "History",
+                noData: "No data", currentMonth: "Current Month", confirmWA: "Confirm via WA",
+                reportAbsence: "Report Absence", printReport: "Save PDF",
+                myClassesList: "Class List", menu2: "Class Schedule", menu3: "Attendance",
+                installApp: "Install App", teacherNotes: "Teacher Notes"
             }
+        };
 
+        async function ambilData() {
+            const cachedData = localStorage.getItem('rbm_cache_v5');
+            if (cachedData) {
+                try { processData(JSON.parse(cachedData)); showToast("Memperbarui data..."); } 
+                catch (e) { console.error("Cache Error", e); }
+            } else { renderLoading(); }
             try {
                 const respon = await fetch(API_URL);
                 const data = await respon.json();
-                
-                // Hapus cache lama jika ada
-                localStorage.removeItem('rbm_cache_v1');
-                localStorage.removeItem('rbm_cache_v2');
-                localStorage.removeItem('rbm_cache_v3');
-                
-                localStorage.setItem('rbm_cache_v4', JSON.stringify(data));
+                localStorage.setItem('rbm_cache_v5', JSON.stringify(data));
                 processData(data);
-                
                 if(cachedData) showToast("Data berhasil diperbarui!", 2000);
             } catch (error) {
                 if(!cachedData) renderError();
@@ -132,14 +83,12 @@
             }
         }
 
-        // FUNGSI PEMBERSIH DATA (ANTI-UNDEFINED EXTRA KUAT)
         function processData(data) {
             DATA_HARGA = data.prices || {};
             if (data.info) INFO_PENGUMUMAN = data.info;
-            
             DATA_SISWA = (data.students || []).map(s => ({
-                id: safeText(s.id),
-                name: safeText(s.name),
+                id: String(s.id || "-"),
+                name: String(s.name || "-"),
                 classes: Array.isArray(s.classes) ? s.classes : [],
                 role: s.role || 1,
                 payments: s.payments || {},
@@ -147,336 +96,101 @@
                 attendance: Array.isArray(s.attendance) ? s.attendance : [],
                 notes: Array.isArray(s.notes) ? s.notes : []
             }));
-
             renderApp();
-        }
-
-        // Helper: Mengubah null/undefined/text aneh menjadi "-"
-        function safeText(txt) {
-            if (txt === null || txt === undefined || txt === "undefined") return "-";
-            return txt;
-        }
-
-        function showToast(msg, duration = 3000) {
-            const t = document.getElementById('toast');
-            if(t) {
-                t.innerText = msg;
-                t.classList.add('show');
-                setTimeout(() => t.classList.remove('show'), duration);
-            }
         }
 
         function hitungSPP(student) {
             let totalMurni = 0;
             let rincian = [];
-            if (!student.classes) return { totalMurni: 0, rincian: [], totalAkhir: 0 };
-
             student.classes.forEach(kelasSiswa => {
-                let harga = 0;
-                if (DATA_HARGA[kelasSiswa]) {
-                    harga = DATA_HARGA[kelasSiswa];
-                } else {
-                    for (const [namaKelasDB, hargaDB] of Object.entries(DATA_HARGA)) {
-                        if (kelasSiswa.includes(namaKelasDB) || namaKelasDB.includes(kelasSiswa)) {
-                            harga = hargaDB;
-                            if (namaKelasDB.includes("8x") || namaKelasDB.includes("4x")) { break; }
-                        }
+                let harga = DATA_HARGA[kelasSiswa] || 0;
+                if (harga === 0) {
+                    for (const [k, v] of Object.entries(DATA_HARGA)) {
+                        if (kelasSiswa.includes(k) || k.includes(kelasSiswa)) { harga = v; break; }
                     }
                 }
                 totalMurni += harga;
                 rincian.push({ nama: kelasSiswa, harga: harga });
             });
-            let isDiskon = (student.role == 2);
-            let diskon = isDiskon ? (totalMurni * 0.5) : 0;
-            return { totalMurni, rincian, isDiskon, diskon, totalAkhir: totalMurni - diskon };
+            let diskon = (student.role == 2) ? (totalMurni * 0.5) : 0;
+            return { totalMurni, rincian, isDiskon: student.role == 2, diskon, totalAkhir: totalMurni - diskon };
         }
 
         const formatYen = (angka) => "¥" + (angka || 0).toLocaleString('ja-JP');
 
-        // FIX MAPEL & UNDEFINED (Final Robust Version)
         function getMapelByDate(dateString, schedule) {
-            if (!dateString || !schedule || schedule.length === 0) return "Kegiatan Sekolah"; 
-            
-            // Handle format tanggal dd/mm/yyyy atau yyyy-mm-dd
-            const parts = dateString.includes('/') ? dateString.split('/') : dateString.split('-');
-            let dateObj;
-            
-            if(parts.length === 3) {
-                // Asumsi dd/mm/yyyy jika parts[0] > 1000 kemungkinan yyyy
-                if(parseInt(parts[0]) > 1000) dateObj = new Date(parts[0], parts[1]-1, parts[2]);
-                else dateObj = new Date(parts[2], parts[1]-1, parts[0]);
-            } else {
-                dateObj = new Date(dateString);
-            }
-            
-            if(isNaN(dateObj.getTime())) return "Kegiatan"; 
-
+            if (!dateString || !schedule || schedule.length === 0) return "Kegiatan";
             const days = ['Minggu', 'Senin', 'Selasa', 'Rabu', 'Kamis', 'Jumat', 'Sabtu'];
+            const parts = dateString.split('/');
+            const dateObj = new Date(parts[2], parts[1]-1, parts[0]);
             const dayName = days[dateObj.getDay()];
-            
-            // Cari jadwal yang harinya sama.
             const found = schedule.find(s => s.day === dayName);
-            return found && found.subject ? found.subject : "Kegiatan";
-        }
-
-        function getHijriDate() {
-            try { return new Intl.DateTimeFormat('id-ID-u-ca-islamic', {day: 'numeric', month: 'long', year: 'numeric'}).format(new Date()); } 
-            catch (e) { return ""; }
-        }
-
-        function kirimWA(text) { window.open(`https://wa.me/${ADMIN_WA}?text=${encodeURIComponent(text)}`, '_blank'); }
-        
-        function laporIzin(nama, id) {
-            const pesan = `Assalamualaikum Admin RBM, saya wali dari siswa ${nama} (${id}) ingin izin tidak masuk kelas hari ini dikarenakan sakit/berhalangan. Mohon doanya.`;
-            kirimWA(pesan);
-        }
-
-        function cetakLaporan() { window.print(); }
-        
-        function toggleInstallModal(show) {
-            const modal = document.getElementById('installModal');
-            const content = modal.querySelector('div.bg-white');
-            if (show) { modal.classList.remove('pointer-events-none', 'opacity-0'); content.classList.remove('translate-y-full'); } 
-            else { modal.classList.add('pointer-events-none', 'opacity-0'); content.classList.add('translate-y-full'); }
-        }
-
-        // --- RENDER ---
-        function renderLoading() {
-            const app = document.getElementById('app');
-            if(app) {
-                app.innerHTML = `
-                 <div class="flex flex-col items-center justify-center min-h-screen">
-                    <div class="animate-spin rounded-full h-10 w-10 border-b-2 border-emerald-700"></div>
-                    <p class="mt-4 text-emerald-800 font-semibold text-sm">Menghubungkan Database...</p>
-                </div>`;
-            }
-        }
-
-        function renderError() {
-            const app = document.getElementById('app');
-            if(app) {
-                app.innerHTML = `
-                 <div class="flex flex-col items-center justify-center min-h-screen p-6 text-center">
-                    <i data-lucide="wifi-off" class="text-gray-400 w-12 h-12 mb-4"></i>
-                    <h3 class="text-lg font-bold text-gray-700">Gagal Terhubung</h3>
-                    <p class="text-sm text-gray-500 mb-6">Pastikan internet lancar atau link script benar.</p>
-                    <button onclick="location.reload()" class="bg-emerald-600 text-white px-6 py-2 rounded-full font-bold text-sm">Coba Lagi</button>
-                </div>`;
-                lucide.createIcons();
-            }
+            return found ? found.subject : "Kegiatan";
         }
 
         function renderApp() {
             const app = document.getElementById('app');
             const t = TEKS[STATE.lang];
-
             if (STATE.view === 'login') {
-                let opsiSiswa = `<option value="">-- ${t.select} --</option>`;
-                if(DATA_SISWA.length > 0) {
-                    DATA_SISWA.forEach(s => opsiSiswa += `<option value="${s.id}">${s.name}</option>`);
-                } else {
-                    opsiSiswa = `<option value="">Memuat data...</option>`;
-                }
-
-                app.innerHTML = `
-                <div class="min-h-screen flex flex-col items-center justify-center p-6 bg-emerald-800 fade-enter safe-pt pb-10">
-                    <div class="absolute top-6 right-6 safe-pt">
-                        <button onclick="gantiBahasa()" class="bg-white/10 text-white px-3 py-1.5 rounded-full text-xs font-bold border border-white/20 active:bg-white/20 transition">
-                            ${STATE.lang === 'id' ? 'ID' : 'EN'}
-                        </button>
-                    </div>
-                    <div class="bg-white p-6 rounded-3xl shadow-2xl w-full max-w-sm relative overflow-hidden">
+                let opsi = `<option value="">-- ${t.select} --</option>`;
+                DATA_SISWA.forEach(s => opsi += `<option value="${s.id}">${s.name}</option>`);
+                app.innerHTML = `<div class="min-h-screen flex flex-col items-center justify-center p-6 bg-emerald-800 fade-enter">
+                    <div class="bg-white p-6 rounded-3xl shadow-2xl w-full max-w-sm">
                         <div class="text-center mb-6">
-                            <img src="logo.png" onerror="this.style.display='none'" class="h-20 mx-auto mb-3 object-contain">
-                            <h1 class="text-xl font-extrabold text-emerald-800 tracking-tight">RBM Japan</h1>
-                            <p class="text-xs text-gray-400 font-medium tracking-wide uppercase">${t.loginSub}</p>
+                            <h1 class="text-xl font-extrabold text-emerald-800">RBM Japan</h1>
+                            <p class="text-xs text-gray-400 uppercase">${t.loginSub}</p>
                         </div>
-                        <div class="space-y-3">
-                            <div class="relative group">
-                                <i data-lucide="user" class="absolute left-3 top-3.5 text-gray-400 w-5 h-5 pointer-events-none z-10"></i>
-                                <i data-lucide="chevron-down" class="absolute right-3 top-3.5 text-gray-400 w-5 h-5 pointer-events-none z-10"></i>
-                                <select id="pilihSiswa" class="w-full pl-10 pr-10 py-3 border border-gray-200 rounded-xl bg-gray-50 focus:ring-2 focus:ring-emerald-500 outline-none text-sm appearance-none font-medium text-gray-700 cursor-pointer bg-white">
-                                    ${opsiSiswa}
-                                </select>
-                            </div>
-                            <button onclick="login()" class="w-full bg-emerald-600 text-white py-3.5 rounded-xl font-bold text-sm shadow-lg shadow-emerald-200 active:scale-95 transition-transform hover:bg-emerald-700">${t.btnMasuk}</button>
-                        </div>
-                        <div class="mt-6 pt-4 border-t border-gray-100 text-center">
-                            <p class="text-xs italic text-gray-400 leading-relaxed">"${RANDOM_QUOTE.text}"</p>
-                        </div>
+                        <select id="pilihSiswa" class="w-full p-3 border rounded-xl mb-3 text-sm">${opsi}</select>
+                        <button onclick="login()" class="w-full bg-emerald-600 text-white py-3 rounded-xl font-bold shadow-lg">${t.btnMasuk}</button>
                     </div>
-                    <button onclick="toggleInstallModal(true)" class="mt-8 text-emerald-100/60 text-xs flex items-center gap-1.5 py-2 px-4 rounded-full border border-emerald-100/20 hover:bg-emerald-700/50 transition">
-                        <i data-lucide="download" width="12"></i> ${t.installApp}
-                    </button>
                 </div>`;
-            } else if (STATE.view === 'dashboard') {
+            } else {
                 const s = STATE.user;
-                const spp = hitungSPP(s); 
-                
-                const listSPP = spp.rincian.map(item => `
-                    <div class="flex justify-between items-center text-xs py-2 border-b border-dashed border-gray-100 last:border-0">
-                        <span class="text-gray-600 font-medium w-2/3 truncate pr-2">${item.nama}</span>
-                        <span class="font-mono font-bold text-gray-800">${formatYen(item.harga)}</span>
-                    </div>`).join('');
+                const spp = hitungSPP(s);
+                let rawStatus = s.payments["Bulan Ini"] || "Belum Bayar";
+                let isPaid = rawStatus.toLowerCase().includes('lunas');
+                let isOverdue = !isPaid && new Date().getDate() > 28 && rawStatus.toLowerCase().includes('belum');
+                let statusColor = isPaid ? "bg-green-100 text-green-700" : (isOverdue ? "bg-red-100 text-red-600" : "bg-amber-100 text-amber-700");
+                let statusText = isPaid ? t.statusLunas : (isOverdue ? t.statusTelat : rawStatus);
 
-                let rawStatus = s.payments ? (Object.values(s.payments)[0] || "Belum Bayar") : "Belum Bayar";
-                let cleanStatus = safeText(rawStatus).toString().trim().toLowerCase();
-                
-                let isLunas = cleanStatus.includes('lunas');
-               // Ganti kode lama dengan ini:
-let isLunas = cleanStatus.includes('lunas');
-
-// Status TELAT hanya muncul jika:
-// 1. Belum lunas
-// 2. Status mengandung kata 'belum'
-// 3. Sekarang sudah lewat tanggal 28 (Ustadzah bisa ganti angka 28 ini)
-let isTelat = !isLunas && new Date().getDate() > 28 && cleanStatus.includes('belum');    
-                
-                let statusColor = isLunas ? "bg-green-100 text-green-700" : (isTelat ? "bg-red-100 text-red-600" : "bg-amber-100 text-amber-700");
-                let statusText = isLunas ? t.statusLunas : (isTelat ? t.statusTelat : (rawStatus || t.statusBelum));
-
-                const absensiHTML = (s.attendance && s.attendance.length > 0) ? s.attendance.map(att => `
-                    <div class="flex items-center justify-between py-2.5 border-b border-gray-50 last:border-0">
-                        <div class="flex items-center gap-3">
-                            <div class="w-1.5 h-8 rounded-full ${att.status==='Hadir'?'bg-emerald-400':'bg-red-400'}"></div>
-                            <div>
-                                <p class="text-xs text-gray-400 font-medium">${safeText(att.date)}</p>
-                                <p class="text-sm font-bold text-gray-700">${getMapelByDate(att.date, s.schedule)}</p>
-                            </div>
-                        </div>
-                        <span class="text-[10px] font-bold px-2 py-1 rounded-md ${att.status==='Hadir'?'bg-emerald-50 text-emerald-600':'bg-red-50 text-red-600'}">${safeText(att.status)}</span>
-                    </div>`).join('') : `<p class="text-xs text-gray-400 text-center py-4 italic">${t.noData}</p>`;
-
-                const scheduleHTML = (s.schedule && s.schedule.length > 0) ? s.schedule.map(sc => `
-                    <div class="bg-gray-50 p-3 rounded-xl border border-gray-100 flex justify-between items-center mb-2">
-                        <div class="flex items-center gap-3">
-                            <span class="text-xs font-bold text-gray-500 bg-white border border-gray-200 px-2 py-1 rounded-md w-16 text-center">${safeText(sc.day)}</span>
-                            <div>
-                                <p class="text-xs font-bold text-emerald-800">${safeText(sc.subject)}</p>
-                                <p class="text-[10px] text-gray-400">${safeText(sc.time)}</p>
-                            </div>
-                        </div>
-                    </div>`).join('') : `<p class="text-xs text-gray-400 text-center py-4 italic">Belum ada jadwal.</p>`;
-
-                const notesHTML = (s.notes && s.notes.length > 0) ? s.notes.map(n => `
-                    <div class="bg-blue-50 p-3 rounded-xl border border-blue-100 mb-2">
-                        <div class="flex justify-between items-start mb-1">
-                            <span class="text-[10px] font-bold text-blue-600 uppercase tracking-wider">${safeText(n.date)}</span>
-                            <span class="text-[10px] text-blue-400 italic">${safeText(n.teacher)}</span>
-                        </div>
-                        <p class="text-xs text-blue-800 leading-relaxed">"${safeText(n.message)}"</p>
-                    </div>`).join('') : `<p class="text-xs text-gray-400 text-center py-2 italic">${t.noData}</p>`;
-
-                const banner = INFO_PENGUMUMAN.aktif ? `
-                    <div class="bg-amber-50 border border-amber-100 rounded-xl p-3 mb-5 flex gap-3 items-start shadow-sm">
-                        <div class="bg-amber-100 p-1.5 rounded-full text-amber-600 shrink-0"><i data-lucide="megaphone" width="14"></i></div>
-                        <p class="text-xs text-amber-800 leading-relaxed">${STATE.lang === 'id' ? INFO_PENGUMUMAN.teks_id : INFO_PENGUMUMAN.teks_en}</p>
-                    </div>` : '';
-
-                app.innerHTML = `
-                <div class="max-w-md mx-auto min-h-screen bg-gray-50 pb-24 fade-enter">
-                    <div class="bg-emerald-700 pt-10 pb-20 px-6 rounded-b-[2.5rem] shadow-lg text-white relative overflow-hidden">
-                        <div class="absolute -right-10 -top-10 w-48 h-48 bg-white/10 rounded-full blur-2xl"></div>
-                        <div class="flex justify-between items-start relative z-10 mb-6">
-                            <div class="flex gap-3 items-center">
-                                <div class="w-12 h-12 bg-white/20 backdrop-blur-md rounded-full flex items-center justify-center text-lg font-bold border border-white/20 shadow-inner">
-                                    ${s.name.charAt(0)}
-                                </div>
-                                <div>
-                                    <p class="text-emerald-100 text-[10px] uppercase tracking-wider font-bold opacity-80">${t.studentId} : ${s.id}</p>
-                                    <h1 class="font-bold text-lg leading-tight truncate w-40">${s.name}</h1>
-                                </div>
-                            </div>
-                            <button onclick="logout()" class="bg-black/20 hover:bg-black/30 p-2 rounded-full text-white transition backdrop-blur-md"><i data-lucide="log-out" width="16"></i></button>
-                        </div>
-                        <div class="relative z-10 text-right">
-                            <p class="text-sm font-semibold text-emerald-50">${getHijriDate()}</p>
-                            <p class="text-[10px] text-emerald-200 opacity-80">${new Date().toLocaleDateString('id-ID', {weekday:'long', day:'numeric', month:'long', year:'numeric'})}</p>
+                app.innerHTML = `<div class="max-w-md mx-auto min-h-screen bg-gray-50 pb-24 fade-enter">
+                    <div class="bg-emerald-700 pt-10 pb-20 px-6 rounded-b-[2.5rem] text-white">
+                        <div class="flex justify-between items-center mb-6">
+                            <div><p class="text-[10px] opacity-80">${t.studentId}: ${s.id}</p><h1 class="font-bold text-lg">${s.name}</h1></div>
+                            <button onclick="logout()" class="bg-white/20 p-2 rounded-full"><i data-lucide="log-out" width="16"></i></button>
                         </div>
                     </div>
-
-                    <div class="px-5 -mt-14 relative z-20">
-                        <div class="bg-white p-5 rounded-2xl shadow-xl shadow-emerald-900/5 border border-white/50 backdrop-blur-sm">
-                             <div class="flex justify-between items-center mb-3">
-                                <p class="text-[10px] text-gray-400 font-bold uppercase tracking-wider flex items-center gap-1"><i data-lucide="credit-card" width="12"></i> ${t.total}</p>
-                                <span class="${statusColor} px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wide shadow-sm">${statusText}</span>
-                             </div>
-                             <div class="flex items-baseline gap-1 mb-4">
-                                <p class="text-3xl font-extrabold text-emerald-800 tracking-tight">${formatYen(spp.totalAkhir)}</p>
-                                ${spp.isDiskon ? `<span class="text-xs text-gray-300 line-through font-medium">${formatYen(spp.totalMurni)}</span>` : ''}
-                             </div>
-                             <div class="grid grid-cols-2 gap-3 no-print">
-                                <button onclick="kirimWA('Bayar SPP ${s.name} (${s.id}) sebesar ${formatYen(spp.totalAkhir)}')" 
-                                    class="bg-emerald-600 text-white py-2.5 rounded-xl text-xs font-bold flex items-center justify-center gap-1.5 shadow-lg shadow-emerald-200 active:scale-95 transition"><i data-lucide="send" width="14"></i> ${t.confirmWA}</button>
-                                <button onclick="cetakLaporan()" class="bg-gray-100 text-gray-600 py-2.5 rounded-xl text-xs font-bold flex items-center justify-center gap-1.5 hover:bg-gray-200 active:scale-95 transition"><i data-lucide="printer" width="14"></i> ${t.printReport}</button>
-                             </div>
-                        </div>
-                    </div>
-
-                    <div class="p-5 space-y-6">
-                        ${banner}
-                        
-                        <!-- CATATAN GURU -->
-                        <div>
-                            <h3 class="text-sm font-bold text-gray-800 mb-3 flex items-center gap-2"><i data-lucide="message-square" width="16" class="text-blue-500"></i> ${t.teacherNotes}</h3>
-                            ${notesHTML}
-                        </div>
-
-                        <div>
-                            <h3 class="text-sm font-bold text-gray-800 mb-3 flex items-center gap-2"><i data-lucide="bookmark" width="16" class="text-teal-500"></i> ${t.myClassesList}</h3>
-                            <div class="flex flex-wrap gap-2">
-                                ${(s.classes || []).map(c => `<span class="bg-white border border-gray-100 text-gray-600 text-xs px-3 py-1.5 rounded-lg shadow-sm font-medium">${c}</span>`).join('')}
-                            </div>
-                        </div>
-                        <div>
-                            <h3 class="text-sm font-bold text-gray-800 mb-3 flex items-center gap-2"><i data-lucide="calendar" width="16" class="text-purple-500"></i> ${t.menu2}</h3>
-                            ${scheduleHTML}
-                        </div>
-                        <div>
+                    <div class="px-5 -mt-14">
+                        <div class="bg-white p-5 rounded-2xl shadow-xl border">
                             <div class="flex justify-between items-center mb-3">
-                                <h3 class="text-sm font-bold text-gray-800 flex items-center gap-2"><i data-lucide="user-check" width="16" class="text-emerald-500"></i> ${t.menu3}</h3>
-                                <button onclick="laporIzin('${s.name}', '${s.id}')" class="text-[10px] font-bold text-blue-600 bg-blue-50 px-3 py-1 rounded-full active:bg-blue-100 transition no-print flex items-center gap-1">
-                                    <i data-lucide="send" width="10"></i> ${t.reportAbsence}
-                                </button>
+                                <p class="text-[10px] text-gray-400 font-bold uppercase">${t.total}</p>
+                                <span class="${statusColor} px-2.5 py-0.5 rounded-full text-[10px] font-bold">${statusText}</span>
                             </div>
-                            <div class="bg-white rounded-2xl p-4 shadow-sm border border-gray-100">
-                                ${absensiHTML}
-                            </div>
-                        </div>
-                        <div class="opacity-60 grayscale hover:grayscale-0 transition duration-300">
-                            <h3 class="text-sm font-bold text-gray-800 mb-3 flex items-center gap-2"><i data-lucide="history" width="16" class="text-gray-500"></i> ${t.history}</h3>
-                            <div class="bg-white rounded-2xl p-4 border border-gray-100">
-                                <table class="w-full text-left">
-                                    <thead class="text-[10px] text-gray-400 uppercase bg-gray-50 border-b">
-                                        <tr><th class="py-2 pl-2">${t.month}</th><th class="text-center">${t.date}</th><th class="text-center">${t.status}</th></tr>
-                                    </thead>
-                                    <tbody>
-                                        <!-- RESET HISTORY: Hanya menampilkan status bulan ini -->
-                                        <tr><td class="py-2 font-bold text-xs">${t.currentMonth}</td><td class="text-center text-xs">-</td><td class="text-center"><span class="${statusColor} px-2 rounded text-[10px] font-bold uppercase">${statusText}</span></td></tr>
-                                    </tbody>
-                                </table>
+                            <p class="text-3xl font-extrabold text-emerald-800">${formatYen(spp.totalAkhir)}</p>
+                            <div class="grid grid-cols-2 gap-3 mt-4">
+                                <button onclick="window.open('https://wa.me/${ADMIN_WA}?text=Konfirmasi SPP ${s.name}')" class="bg-emerald-600 text-white py-2 rounded-xl text-xs font-bold">${t.confirmWA}</button>
+                                <button onclick="window.print()" class="bg-gray-100 text-gray-600 py-2 rounded-xl text-xs font-bold">${t.printReport}</button>
                             </div>
                         </div>
                     </div>
-                    <div class="fixed bottom-6 right-6 z-40 no-print safe-pb">
-                        <button onclick="gantiBahasa()" class="bg-gray-800 text-white w-12 h-12 rounded-full shadow-2xl flex items-center justify-center font-bold text-xs active:scale-90 transition border-2 border-gray-700">
-                            ${STATE.lang === 'id' ? 'ID' : 'EN'}
-                        </button>
+                    <div class="p-5 space-y-6">
+                        <div><h3 class="text-sm font-bold text-gray-800 mb-2">${t.teacherNotes}</h3>
+                            ${s.notes.map(n => `<div class="bg-blue-50 p-3 rounded-xl mb-2"><p class="text-[10px] font-bold text-blue-600">${n.date} - ${n.teacher}</p><p class="text-xs text-blue-800">"${n.message}"</p></div>`).join('') || `<p class="text-xs text-gray-400 italic">${t.noData}</p>`}
+                        </div>
+                        <div><h3 class="text-sm font-bold text-gray-800 mb-2">${t.menu2}</h3>
+                            ${s.schedule.map(sc => `<div class="bg-white p-3 rounded-xl border flex justify-between items-center mb-2"><span class="text-xs font-bold text-gray-500 w-16">${sc.day}</span><div><p class="text-xs font-bold text-emerald-800">${sc.subject}</p><p class="text-[10px] text-gray-400">${sc.time}</p></div></div>`).join('') || `<p class="text-xs text-gray-400 italic">Belum ada jadwal.</p>`}
+                        </div>
                     </div>
                 </div>`;
             }
             lucide.createIcons();
         }
 
-        function login() {
-            const id = document.getElementById('pilihSiswa').value;
-            if(!id) return alert("Pilih siswa dulu!");
-            STATE.user = DATA_SISWA.find(s => s.id === id);
-            STATE.view = 'dashboard';
-            renderApp();
-        }
+        function login() { const id = document.getElementById('pilihSiswa').value; if(!id) return; STATE.user = DATA_SISWA.find(s => s.id === id); STATE.view = 'dashboard'; renderApp(); }
         function logout() { STATE.user = null; STATE.view = 'login'; renderApp(); }
-        function gantiBahasa() { STATE.lang = STATE.lang === 'id' ? 'en' : 'id'; renderApp(); }
+        function showToast(m, d=3000) { const t = document.getElementById('toast'); t.innerText = m; t.classList.add('show'); setTimeout(() => t.classList.remove('show'), d); }
+        function renderLoading() { document.getElementById('app').innerHTML = `<div class="flex items-center justify-center min-h-screen"><div class="animate-spin rounded-full h-10 w-10 border-b-2 border-emerald-700"></div></div>`; }
+        function renderError() { document.getElementById('app').innerHTML = `<div class="flex items-center justify-center min-h-screen text-center"><p>Gagal Terhubung ke Database.</p></div>`; }
 
         ambilData();
     </script>
