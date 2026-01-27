@@ -23,7 +23,6 @@
         .safe-pb { padding-bottom: env(safe-area-inset-bottom); }
         .safe-pt { padding-top: max(1rem, env(safe-area-inset-top)); }
         
-        /* TOAST NOTIFICATION (Pesan Kecil di Bawah) */
         .toast {
             position: fixed; bottom: 80px; left: 50%; transform: translateX(-50%);
             background: rgba(0,0,0,0.8); color: white; padding: 10px 20px;
@@ -41,6 +40,7 @@
     <div class="pattern-grid absolute inset-0 z-0 pointer-events-none"></div>
 
     <div id="app" class="relative z-10 safe-pb">
+        <!-- Default Loading State -->
         <div class="flex flex-col items-center justify-center min-h-screen">
             <div class="animate-spin rounded-full h-10 w-10 border-b-2 border-emerald-700"></div>
             <p class="mt-4 text-emerald-800 font-semibold text-sm">Memuat Aplikasi...</p>
@@ -57,7 +57,7 @@
             <button onclick="toggleInstallModal(false)" class="absolute top-4 right-4 text-gray-400 hover:text-gray-600"><i data-lucide="x" width="24"></i></button>
             <div class="text-center">
                 <h3 class="text-lg font-bold text-gray-800 mb-2">Pasang Aplikasi</h3>
-                <p class="text-sm text-gray-500 mb-6">Tambahkan ke layar utama agar mudah diakses.</p>
+                <p class="text-sm text-gray-500 mb-6">Agar lebih mudah diakses, tambahkan ke layar utama HP Anda.</p>
                 <div class="bg-gray-50 p-4 rounded-xl text-sm text-left space-y-3">
                     <p><strong>iPhone:</strong> Klik tombol Share <i data-lucide="share" width="12" class="inline"></i> lalu pilih "Add to Home Screen".</p>
                     <p><strong>Android:</strong> Klik menu pojok kanan atas, pilih "Install App" atau "Add to Home Screen".</p>
@@ -82,7 +82,7 @@
                 loginSub: "Portal Siswa", studentId: "ID Siswa", totalFinal: "Total Akhir",
                 statusTelat: "Telat", statusLunas: "Lunas", statusBelum: "Belum Bayar",
                 discount: "Diskon Anak Ke-2", month: "Bulan", date: "Tgl", status: "Ket",
-                noData: "-", connectFail: "Gagal koneksi.",
+                noData: "-", connectFail: "Gagal koneksi. Cek internet.",
                 currentMonth: "Bulan Ini", confirmWA: "Konfirmasi WA",
                 reportAbsence: "Lapor Izin", printReport: "Simpan PDF",
                 today: "Hari Ini", myClassesList: "Kelas", installApp: "Pasang App",
@@ -103,62 +103,79 @@
 
         const RANDOM_QUOTE = { text: "Barangsiapa menempuh jalan untuk menuntut ilmu, Allah akan mudahkan jalannya ke surga.", source: "HR. Muslim" };
 
-        // --- CORE FUNCTIONS (SMART CACHING) ---
+        // --- CORE FUNCTIONS (SMART CACHING & SANITIZING) ---
         async function ambilData() {
-            // 1. CEK CACHE LOKAL (Agar Loading INSTANT)
-            const cachedData = localStorage.getItem('rbm_cache_v1');
+            // 1. Cek Cache
+            const cachedData = localStorage.getItem('rbm_cache_v2');
             if (cachedData) {
                 try {
                     const parsed = JSON.parse(cachedData);
-                    DATA_SISWA = parsed.students || [];
-                    DATA_HARGA = parsed.prices || {};
-                    if (parsed.info) INFO_PENGUMUMAN = parsed.info;
-                    renderApp(); // Langsung tampilkan data lama
-                    showToast("Sedang memperbarui data..."); // Info ke user
-                } catch (e) {
-                    console.error("Cache Error", e);
-                }
+                    processData(parsed);
+                    showToast("Memperbarui data...");
+                } catch (e) { console.error("Cache Error", e); }
             } else {
-                renderLoading(); // Kalau tidak ada cache, baru tampilkan loading
+                renderLoading();
             }
 
-            // 2. AMBIL DATA BARU (Background Sync)
+            // 2. Ambil Data Baru
             try {
                 const respon = await fetch(API_URL);
                 const data = await respon.json();
                 
-                DATA_SISWA = data.students || [];
-                DATA_HARGA = data.prices || {};
-                if (data.info) INFO_PENGUMUMAN = data.info;
+                // Simpan cache
+                localStorage.setItem('rbm_cache_v2', JSON.stringify(data));
+                processData(data);
                 
-                // Simpan ke cache untuk akses berikutnya
-                localStorage.setItem('rbm_cache_v1', JSON.stringify(data));
-                
-                renderApp(); // Render ulang dengan data terbaru
                 if(cachedData) showToast("Data berhasil diperbarui!", 2000);
             } catch (error) {
-                if(!cachedData) alert(TEKS.id.connectFail);
-                if(cachedData) showToast("Offline: Menggunakan data terakhir.");
+                if(!cachedData) renderError();
+                else showToast("Offline: Menggunakan data terakhir.");
             }
+        }
+
+        // FUNGSI PEMBERSIH DATA (ANTI-UNDEFINED)
+        function processData(data) {
+            DATA_HARGA = data.prices || {};
+            if (data.info) INFO_PENGUMUMAN = data.info;
+            
+            // Sanitasi data siswa agar tidak ada null/undefined yang lolos
+            DATA_SISWA = (data.students || []).map(s => ({
+                id: s.id || "-",
+                name: s.name || "Tanpa Nama",
+                classes: Array.isArray(s.classes) ? s.classes : [],
+                role: s.role || 1,
+                payments: s.payments || {},
+                // Pastikan array selalu ada
+                schedule: Array.isArray(s.schedule) ? s.schedule : [],
+                attendance: Array.isArray(s.attendance) ? s.attendance : [],
+                notes: Array.isArray(s.notes) ? s.notes : []
+            }));
+
+            renderApp();
         }
 
         function showToast(msg, duration = 3000) {
             const t = document.getElementById('toast');
-            t.innerText = msg;
-            t.classList.add('show');
-            setTimeout(() => t.classList.remove('show'), duration);
+            if(t) {
+                t.innerText = msg;
+                t.classList.add('show');
+                setTimeout(() => t.classList.remove('show'), duration);
+            }
         }
 
         function hitungSPP(student) {
             let totalMurni = 0;
             let rincian = [];
+            // Safety check
             if (!student.classes) return { totalMurni: 0, rincian: [], totalAkhir: 0 };
 
             student.classes.forEach(kelasSiswa => {
                 let harga = 0;
+                // Cek harga eksak
                 if (DATA_HARGA[kelasSiswa]) {
                     harga = DATA_HARGA[kelasSiswa];
                 } else {
+                    // Cek harga mirip (misal Tahfidz 8x)
                     for (const [namaKelasDB, hargaDB] of Object.entries(DATA_HARGA)) {
                         if (kelasSiswa.includes(namaKelasDB) || namaKelasDB.includes(kelasSiswa)) {
                             harga = hargaDB;
@@ -176,14 +193,24 @@
 
         const formatYen = (angka) => "¥" + (angka || 0).toLocaleString('ja-JP');
 
+        // FIX MAPEL & UNDEFINED (Final Robust Version)
         function getMapelByDate(dateString, schedule) {
-            if (!dateString || !schedule || schedule.length === 0) return "Kegiatan"; 
+            if (!dateString || !schedule || schedule.length === 0) return "Kegiatan Sekolah"; 
+            
             const parts = dateString.split('/');
-            let dateObj = parts.length === 3 ? new Date(parts[2], parts[1]-1, parts[0]) : new Date(dateString);
+            let dateObj;
+            
+            if(parts.length === 3) dateObj = new Date(parts[2], parts[1]-1, parts[0]); // Format dd/mm/yyyy
+            else dateObj = new Date(dateString);
+            
             if(isNaN(dateObj.getTime())) return "Kegiatan"; 
+
             const days = ['Minggu', 'Senin', 'Selasa', 'Rabu', 'Kamis', 'Jumat', 'Sabtu'];
-            const found = schedule.find(s => s.day === days[dateObj.getDay()]);
-            return found && found.subject ? found.subject : "Kelas Tambahan";
+            const dayName = days[dateObj.getDay()];
+            
+            // Cari jadwal yang harinya sama. Jika ada banyak, ambil yang pertama.
+            const found = schedule.find(s => s.day === dayName);
+            return found && found.subject ? found.subject : "Kegiatan";
         }
 
         function getHijriDate() {
@@ -191,6 +218,7 @@
             catch (e) { return ""; }
         }
 
+        // --- ACTIONS ---
         function kirimWA(text) { window.open(`https://wa.me/${ADMIN_WA}?text=${encodeURIComponent(text)}`, '_blank'); }
         function laporIzin(nama, id) {
             const pesan = `Assalamualaikum Admin RBM, saya wali dari siswa ${nama} (${id}) ingin izin tidak masuk kelas hari ini dikarenakan sakit/berhalangan. Mohon doanya.`;
@@ -204,12 +232,30 @@
             else { modal.classList.add('pointer-events-none', 'opacity-0'); content.classList.add('translate-y-full'); }
         }
 
+        // --- RENDER ---
         function renderLoading() {
-            document.getElementById('app').innerHTML = `
-             <div class="flex flex-col items-center justify-center min-h-screen">
-                <div class="animate-spin rounded-full h-10 w-10 border-b-2 border-emerald-700"></div>
-                <p class="mt-4 text-emerald-800 font-semibold text-sm">Menghubungkan Database...</p>
-            </div>`;
+            const app = document.getElementById('app');
+            if(app) {
+                app.innerHTML = `
+                 <div class="flex flex-col items-center justify-center min-h-screen">
+                    <div class="animate-spin rounded-full h-10 w-10 border-b-2 border-emerald-700"></div>
+                    <p class="mt-4 text-emerald-800 font-semibold text-sm">Menghubungkan Database...</p>
+                </div>`;
+            }
+        }
+
+        function renderError() {
+            const app = document.getElementById('app');
+            if(app) {
+                app.innerHTML = `
+                 <div class="flex flex-col items-center justify-center min-h-screen p-6 text-center">
+                    <i data-lucide="wifi-off" class="text-gray-400 w-12 h-12 mb-4"></i>
+                    <h3 class="text-lg font-bold text-gray-700">Gagal Terhubung</h3>
+                    <p class="text-sm text-gray-500 mb-6">Pastikan internet lancar atau link script benar.</p>
+                    <button onclick="location.reload()" class="bg-emerald-600 text-white px-6 py-2 rounded-full font-bold text-sm">Coba Lagi</button>
+                </div>`;
+                lucide.createIcons();
+            }
         }
 
         function renderApp() {
@@ -218,7 +264,11 @@
 
             if (STATE.view === 'login') {
                 let opsiSiswa = `<option value="">-- ${t.select} --</option>`;
-                DATA_SISWA.forEach(s => opsiSiswa += `<option value="${s.id}">${s.name}</option>`);
+                if(DATA_SISWA.length > 0) {
+                    DATA_SISWA.forEach(s => opsiSiswa += `<option value="${s.id}">${s.name}</option>`);
+                } else {
+                    opsiSiswa = `<option value="">Data Kosong / Loading...</option>`;
+                }
 
                 app.innerHTML = `
                 <div class="min-h-screen flex flex-col items-center justify-center p-6 bg-emerald-800 fade-enter safe-pt pb-10">
@@ -261,14 +311,18 @@
                         <span class="font-mono font-bold text-gray-800">${formatYen(item.harga)}</span>
                     </div>`).join('');
 
+                // LOGIKA STATUS: 
+                // Hanya tampilkan "Telat" jika > tgl 25 DAN status bukan "Lunas".
                 let rawStatus = s.payments ? (Object.values(s.payments)[0] || "Belum Bayar") : "Belum Bayar";
-                let cleanStatus = rawStatus.trim().toLowerCase();
+                let cleanStatus = (rawStatus || "").toString().trim().toLowerCase();
+                
                 let isLunas = cleanStatus.includes('lunas');
-                let isTelat = !isLunas && new Date().getDate() > 25 && cleanStatus.includes('belum');
+                let isTelat = !isLunas && new Date().getDate() > 25;
                 
                 let statusColor = isLunas ? "bg-green-100 text-green-700" : (isTelat ? "bg-red-100 text-red-600" : "bg-amber-100 text-amber-700");
                 let statusText = isLunas ? t.statusLunas : (isTelat ? t.statusTelat : (rawStatus || t.statusBelum));
 
+                // ABSENSI: Pastikan tidak undefined
                 const absensiHTML = (s.attendance && s.attendance.length > 0) ? s.attendance.map(att => `
                     <div class="flex items-center justify-between py-2.5 border-b border-gray-50 last:border-0">
                         <div class="flex items-center gap-3">
@@ -281,7 +335,7 @@
                         <span class="text-[10px] font-bold px-2 py-1 rounded-md ${att.status==='Hadir'?'bg-emerald-50 text-emerald-600':'bg-red-50 text-red-600'}">${att.status || '-'}</span>
                     </div>`).join('') : `<p class="text-xs text-gray-400 text-center py-4 italic">${t.noData}</p>`;
 
-                const scheduleHTML = (s.schedule || []).map(sc => `
+                const scheduleHTML = (s.schedule && s.schedule.length > 0) ? s.schedule.map(sc => `
                     <div class="bg-gray-50 p-3 rounded-xl border border-gray-100 flex justify-between items-center mb-2">
                         <div class="flex items-center gap-3">
                             <span class="text-xs font-bold text-gray-500 bg-white border border-gray-200 px-2 py-1 rounded-md w-16 text-center">${sc.day}</span>
@@ -290,7 +344,7 @@
                                 <p class="text-[10px] text-gray-400">${sc.time}</p>
                             </div>
                         </div>
-                    </div>`).join('');
+                    </div>`).join('') : `<p class="text-xs text-gray-400 text-center py-4 italic">Belum ada jadwal.</p>`;
 
                 const notesHTML = (s.notes && s.notes.length > 0) ? s.notes.map(n => `
                     <div class="bg-blue-50 p-3 rounded-xl border border-blue-100 mb-2">
