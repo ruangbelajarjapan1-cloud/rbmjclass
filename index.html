@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-    <title>RBJ Student Portal</title>
+    <title>RBJ Portal</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://unpkg.com/lucide@latest"></script>
     <style>
@@ -12,7 +12,6 @@
         .glass { background: rgba(255, 255, 255, 0.9); backdrop-filter: blur(10px); border: 1px solid rgba(255,255,255,0.5); }
         .fade-enter { animation: fadeIn 0.6s ease-out; }
         @keyframes fadeIn { from { opacity: 0; transform: translateY(15px); } to { opacity: 1; transform: translateY(0); } }
-        .ticker-container { overflow: hidden; white-space: nowrap; }
         .ticker-text { display: inline-block; animation: marquee 20s linear infinite; }
         @keyframes marquee { 0% { transform: translateX(100%); } 100% { transform: translateX(-100%); } }
         @media print { .no-print { display: none !important; } }
@@ -22,12 +21,11 @@
     <div id="app" class="relative z-10"><div class="flex flex-col items-center justify-center min-h-screen"><div class="animate-spin rounded-full h-12 w-12 border-b-4 border-emerald-600"></div></div></div>
 
     <script>
-        // GANTI DENGAN LINK WEB APP PAK WAHYU
         const API_URL = "https://script.google.com/macros/s/AKfycbz2a5-sm2_gLBPF5jpTmZfBuN9PppkvUI3nXIyOJbYJ4XDZA3SDE7-FNU784ZxfSZjr/exec"; 
         const WEBSITE_URL = "https://rbj-site.vercel.app/";
         const ADMIN_WA = "6285819809668";
 
-        let DATA_SISWA = []; let DATA_HARGA = {}; let KABAR_RBM = []; let INFO_PENGUMUMAN = {}; let DONASI = null;
+        let DATA_SISWA = []; let DATA_HARGA = {}; let KABAR_RBM = []; let INFO_PENGUMUMAN = {};
         let STATE = { view: 'login', user: null, lang: 'id' };
 
         const DAY_NAMES = {
@@ -35,18 +33,23 @@
             en: { 'Senin': 'Monday', 'Selasa': 'Tuesday', 'Rabu': 'Wednesday', 'Kamis': 'Thursday', 'Jumat': 'Friday', 'Sabtu': 'Saturday', 'Ahad': 'Sunday' }
         };
 
+        const HADITS = [
+            { text: "Barangsiapa menempuh jalan untuk mencari ilmu, Allah mudahkan jalannya ke surga.", ref: "HR. Muslim" },
+            { text: "Sebaik-baik kalian adalah yang belajar Al-Qur'an dan mengajarkannya.", ref: "HR. Bukhari" }
+        ];
+
         const TEKS = {
-            id: { select: "Pilih Nama Siswa", btn: "MASUK PORTAL", report: "LAPOR IZIN", notes: "CATATAN GURU", schedule: "JADWAL KELAS", history: "RIWAYAT & KWITANSI", confirm: "KONFIRMASI WA", greet: ["Selamat Pagi", "Selamat Siang", "Selamat Sore", "Selamat Malam"] },
-            en: { select: "Select Name", btn: "LOGIN", report: "REPORT ABSENCE", notes: "TEACHER NOTES", schedule: "SCHEDULE", history: "HISTORY & RECEIPT", confirm: "CONFIRM PAYMENT", greet: ["Good Morning", "Good Afternoon", "Good Evening", "Good Night"] }
+            id: { select: "Pilih Nama Siswa", btn: "MASUK PORTAL", report: "LAPOR IZIN", notes: "CATATAN GURU", schedule: "JADWAL KELAS", history: "RIWAYAT & KWITANSI", greet: ["Selamat Pagi", "Selamat Siang", "Selamat Sore", "Selamat Malam"] },
+            en: { select: "Select Name", btn: "LOGIN", report: "REPORT ABSENCE", notes: "TEACHER NOTES", schedule: "SCHEDULE", history: "HISTORY", greet: ["Good Morning", "Good Afternoon", "Good Evening", "Good Night"] }
         };
 
         async function ambilData() {
             try {
                 const res = await fetch(API_URL);
                 const data = await res.json();
-                DATA_SISWA = data.students; DATA_HARGA = data.prices; KABAR_RBM = data.news; INFO_PENGUMUMAN = data.info; DONASI = data.donation;
+                DATA_SISWA = data.students; DATA_HARGA = data.prices; KABAR_RBM = data.news; INFO_PENGUMUMAN = data.info;
                 renderApp();
-            } catch (e) { document.getElementById('app').innerHTML = `<p class='p-10 text-center text-red-500'>Koneksi Error. Pastikan URL API benar.</p>`; }
+            } catch (e) { document.getElementById('app').innerHTML = `<p class='p-10 text-center text-red-500 font-bold'>Gagal terhubung ke API.</p>`; }
         }
 
         function getGreet() {
@@ -55,13 +58,10 @@
             if (h < 11) return g[0]; if (h < 15) return g[1]; if (h < 19) return g[2]; return g[3];
         }
 
-        function getHijriDate() {
-            return new Intl.DateTimeFormat('id-TN-u-ca-islamic-uma', {day: 'numeric', month: 'long', year: 'numeric'}).format(new Date());
-        }
-
         function renderApp() {
             const app = document.getElementById('app');
             const t = TEKS[STATE.lang];
+            const h = HADITS[Math.floor(Math.random() * HADITS.length)];
 
             if (STATE.view === 'login') {
                 let opsi = `<option value="" disabled selected>-- ${t.select} --</option>` + DATA_SISWA.map(s => `<option value="${s.id}">${s.name}</option>`).join('');
@@ -70,11 +70,16 @@
                     <button onclick="STATE.lang=STATE.lang==='id'?'en':'id';renderApp()" class="absolute top-8 right-8 text-white text-xs border border-white/40 px-3 py-1 rounded-full uppercase font-bold">${STATE.lang}</button>
                     <div class="bg-white p-10 rounded-[2.5rem] shadow-2xl w-full max-w-sm text-center">
                         <img src="logo.png" class="h-16 mx-auto mb-4" onerror="this.src='https://ui-avatars.com/api/?name=RBJ&background=065f46&color=fff'">
-                        <p class="text-emerald-600 font-bold text-[10px] mb-2">${getHijriDate()}</p>
-                        <h1 class="text-2xl font-black text-emerald-900 uppercase mb-8 tracking-tighter">RBM JAPAN</h1>
-                        <select id="selSiswa" class="w-full p-4 border rounded-2xl mb-4 bg-gray-50 text-sm font-bold text-gray-700 outline-none">${opsi}</select>
-                        <button onclick="login()" class="w-full bg-emerald-600 text-white py-4 rounded-2xl font-black text-xs uppercase tracking-widest hover:bg-emerald-700 transition-all mb-6">${t.btn}</button>
-                        <a href="${WEBSITE_URL}" target="_blank" class="text-[10px] font-bold text-emerald-600 flex items-center justify-center gap-1"><i data-lucide="globe" width="12"></i> Kunjungi Website Ruang Belajar</a>
+                        <h1 class="text-2xl font-black text-emerald-900 uppercase mb-6">RBM JAPAN</h1>
+                        
+                        <div class="p-4 bg-emerald-50 rounded-2xl text-left border mb-6">
+                            <p class="text-[10px] text-emerald-800 italic leading-relaxed">"${h.text}"</p>
+                            <p class="text-[9px] text-emerald-400 font-bold mt-2">— ${h.ref}</p>
+                        </div>
+
+                        <select id="selSiswa" class="w-full p-4 border rounded-2xl mb-4 bg-gray-50 text-sm font-bold outline-none">${opsi}</select>
+                        <button onclick="login()" class="w-full bg-emerald-600 text-white py-4 rounded-2xl font-black text-xs uppercase mb-4">${t.btn}</button>
+                        <a href="${WEBSITE_URL}" target="_blank" class="text-[10px] font-bold text-emerald-600 flex items-center justify-center gap-1"><i data-lucide="globe" width="12"></i> Website Ruang Belajar</a>
                     </div>
                 </div>`;
             } else {
@@ -86,51 +91,49 @@
                 <div class="max-w-md mx-auto pb-20 fade-enter">
                     <div class="bg-emerald-800 pt-16 pb-28 px-8 rounded-b-[3.5rem] text-white">
                         <div class="flex justify-between items-start">
-                            <div><p class="text-emerald-300 text-[10px] font-bold mb-1 italic">${getGreet()},</p><h1 class="text-3xl font-black tracking-tight lowercase">${s.name}</h1></div>
+                            <div><p class="text-emerald-300 text-[10px] font-bold mb-1 italic">${getGreet()},</p><h1 class="text-3xl font-black tracking-tight">${s.name}</h1></div>
                             <button onclick="location.reload()" class="bg-white/10 p-2.5 rounded-xl"><i data-lucide="log-out" width="18"></i></button>
                         </div>
                     </div>
 
                     <div class="px-6 -mt-20 relative z-20 space-y-6">
+                        ${s.progres ? `
                         <div class="bg-white p-6 rounded-[2rem] shadow-lg border-l-8 border-blue-400">
-                            <div class="flex justify-between items-center mb-3">
-                                <h4 class="text-[10px] font-black text-gray-400 uppercase tracking-widest">Target Hafalan</h4>
-                                <span class="text-xs font-black text-blue-600">${s.progres.persen}%</span>
-                            </div>
-                            <div class="w-full bg-gray-100 h-3 rounded-full mb-2"><div class="bg-blue-400 h-3 rounded-full transition-all duration-1000" style="width: ${s.progres.persen}%"></div></div>
-                            <p class="text-[10px] text-emerald-900 font-bold italic text-right">Target: ${s.progres.target}</p>
-                        </div>
+                            <div class="flex justify-between items-center mb-2"><h4 class="text-[10px] font-black text-gray-400 uppercase tracking-widest">Hafalan</h4><span class="text-xs font-black text-blue-600">${s.progres.persen}%</span></div>
+                            <div class="w-full bg-gray-100 h-3 rounded-full mb-1"><div class="bg-blue-400 h-3 rounded-full" style="width: ${s.progres.persen}%"></div></div>
+                            <p class="text-[9px] text-gray-400 font-bold text-right italic">Target: ${s.progres.target}</p>
+                        </div>` : ''}
 
                         <div class="glass p-8 rounded-[2.5rem] shadow-2xl">
                             <div class="flex justify-between items-center mb-4">
-                                <span class="text-[10px] font-black text-emerald-600 uppercase tracking-widest">Tagihan SPP</span>
+                                <span class="text-[10px] font-black text-emerald-600 uppercase tracking-widest">Tagihan</span>
                                 <button onclick="laporIzin('${s.name}', '${s.id}')" class="text-[10px] font-bold text-blue-600 bg-blue-50 px-3 py-1 rounded-full flex items-center gap-1"><i data-lucide="send" width="12"></i> ${t.report}</button>
                             </div>
                             <h2 class="text-5xl font-black text-emerald-900 mb-8 tracking-tighter">¥${total.toLocaleString('ja-JP')}</h2>
                             <div class="grid grid-cols-2 gap-4">
-                                <button onclick="window.open('https://wa.me/${ADMIN_WA}?text=Konfirmasi Pembayaran SPP ${s.name} (${s.id})')" class="bg-emerald-600 text-white py-4 rounded-2xl text-[10px] font-bold uppercase shadow-lg hover:bg-emerald-700 transition-all">${t.confirm}</button>
+                                <button onclick="window.open('https://wa.me/${ADMIN_WA}?text=Konfirmasi SPP ${s.name}')" class="bg-emerald-600 text-white py-4 rounded-2xl text-[10px] font-bold uppercase shadow-lg">KONFIRMASI WA</button>
                                 <button onclick="window.print()" class="bg-slate-800 text-white py-4 rounded-2xl text-[10px] font-bold uppercase shadow-lg">SIMPAN PDF</button>
                             </div>
                         </div>
                     </div>
 
                     <div class="p-8 space-y-10">
-                        ${INFO_PENGUMUMAN.aktif ? `<div class="bg-amber-100 p-4 rounded-3xl border border-amber-200 text-xs ticker-container"><div class="ticker-text font-bold italic text-amber-900">${STATE.lang==='id'?INFO_PENGUMUMAN.teks_id:INFO_PENGUMUMAN.teks_en}</div></div>` : ''}
+                        ${INFO_PENGUMUMAN.aktif ? `<div class="bg-amber-100 p-4 rounded-3xl border border-amber-200 text-xs overflow-hidden"><div class="ticker-text font-bold italic text-amber-900">${STATE.lang==='id'?INFO_PENGUMUMAN.teks_id:INFO_PENGUMUMAN.teks_en}</div></div>` : ''}
                         
                         <section><h3 class="font-black text-emerald-900 mb-4 flex items-center gap-3 uppercase tracking-tighter"><i data-lucide="newspaper" class="text-emerald-500"></i> Kabar RBM Japan</h3>
-                            <div class="flex gap-4 overflow-x-auto pb-4 snap-x">${KABAR_RBM.map(k => `<div class="min-w-[280px] bg-white rounded-3xl shadow-sm border overflow-hidden snap-center"><img src="${k.foto}" class="w-full h-32 object-cover"><div class="p-4"><p class="text-[9px] font-bold text-gray-400 uppercase">${k.tgl}</p><h4 class="text-sm font-bold text-emerald-900 mb-2">${k.judul}</h4><p class="text-[10px] text-gray-500 line-clamp-2">${k.isi}</p></div></div>`).join('') || '<p class="text-xs text-gray-400 italic">Belum ada kabar terbaru.</p>'}</div>
+                            <div class="flex gap-4 overflow-x-auto pb-4 snap-x">${KABAR_RBM.map(k => `<div class="min-w-[280px] bg-white rounded-3xl shadow-sm border overflow-hidden snap-center"><img src="${k.foto}" class="w-full h-32 object-cover"><div class="p-4"><p class="text-[9px] font-bold text-gray-400 uppercase">${k.tgl}</p><h4 class="text-sm font-bold text-emerald-900 mb-2">${k.judul}</h4></div></div>`).join('') || '<p class="text-xs text-gray-400 italic">Kosong</p>'}</div>
                         </section>
 
                         <section><h3 class="font-black text-emerald-900 mb-4 flex items-center gap-3 uppercase tracking-tighter"><i data-lucide="message-square" class="text-blue-500"></i> ${t.notes}</h3>
-                            ${s.notes.map(n => `<div class="bg-blue-50/50 p-4 rounded-3xl border border-blue-100 mb-3 text-xs text-blue-900 font-medium"><p class="text-[9px] font-bold text-blue-600 mb-1">${n.date}</p>${n.message}</div>`).join('') || `<p class="text-xs text-gray-400 italic text-center">${t.noData}</p>`}
+                            ${s.notes.map(n => `<div class="bg-blue-50/50 p-4 rounded-3xl border border-blue-100 mb-3 text-xs text-blue-900 font-medium"><p class="text-[9px] font-bold text-blue-600 mb-1 uppercase">${n.date}</p>${n.message}</div>`).join('') || `<p class="text-xs text-gray-400 italic">${t.noData}</p>`}
                         </section>
 
                         <section><h3 class="font-black text-emerald-900 mb-4 flex items-center gap-3 uppercase tracking-tighter"><i data-lucide="calendar" class="text-purple-500"></i> ${t.schedule}</h3>
-                            ${s.schedule.map(sc => `<div class="bg-white p-5 rounded-3xl border border-emerald-50 shadow-sm flex justify-between items-center mb-4"><div class="flex items-center gap-4"><div class="bg-emerald-100 text-emerald-700 font-black px-4 py-2 rounded-2xl text-[11px] min-w-[70px] text-center uppercase tracking-tighter">${DAY_NAMES[STATE.lang][sc.day] || sc.day}</div><div><p class="text-sm font-bold text-emerald-900">${sc.subject}</p>${sc.time?`<p class="text-[10px] text-emerald-500 font-bold">${sc.time} JST</p>`:''}</div></div></div>`).join('') || `<p class="text-xs text-gray-400 italic text-center">${t.noData}</p>`}
+                            ${s.schedule.map(sc => `<div class="bg-white p-5 rounded-3xl border flex justify-between items-center mb-4"><div class="flex items-center gap-4"><div class="bg-emerald-100 text-emerald-700 font-black px-4 py-2 rounded-2xl text-[11px] min-w-[70px] text-center uppercase tracking-tighter">${DAY_NAMES[STATE.lang][sc.day] || sc.day}</div><div><p class="text-sm font-bold text-emerald-900">${sc.subject}</p><p class="text-[10px] text-emerald-500 font-bold">${sc.time} JST</p></div></div></div>`).join('') || `<p class="text-xs text-gray-400 italic">${t.noData}</p>`}
                         </section>
 
                         <section><h3 class="font-black text-emerald-900 mb-4 flex items-center gap-3 uppercase tracking-tighter"><i data-lucide="history" class="text-emerald-500"></i> ${t.history}</h3>
-                            <div class="bg-white rounded-[2rem] border overflow-hidden shadow-sm text-[11px] font-bold"><table class="w-full text-left font-bold"><thead class="bg-emerald-50 text-emerald-800 uppercase"><tr><th class="p-4">Bulan</th><th class="p-4 text-right">Receipt</th></tr></thead><tbody class="divide-y">${s.history.map(h => `<tr><td class="p-4 text-emerald-900">${h.bulan}<br><span class="font-normal text-[9px] text-slate-400">${h.kelas}</span></td><td class="p-4 text-right"><button onclick="alert('Digital Receipt\\n----------\\nNama: ${s.name}\\nBulan: ${h.bulan}\\nTotal: ${h.nominal}\\nStatus: ${h.status}')" class="text-emerald-600 bg-emerald-50 px-2 py-1 rounded-lg">View</button></td></tr>`).join('') || '<tr><td colspan="2" class="p-4 text-center italic text-gray-300">Kosong</td></tr>'}</tbody></table></div>
+                            <div class="bg-white rounded-[2rem] border overflow-hidden shadow-sm text-[11px] font-bold"><table class="w-full text-left font-bold"><thead class="bg-emerald-50 text-emerald-800 uppercase"><tr><th class="p-4">Bulan</th><th class="p-4 text-right">Kwitansi</th></tr></thead><tbody class="divide-y">${s.history.map(h => `<tr><td class="p-4 text-emerald-900">${h.bulan}<br><span class="font-normal text-[9px] text-slate-400">${h.kelas}</span></td><td class="p-4 text-right"><button onclick="alert('Digital Receipt\\n----------\\nNama: ${s.name}\\nBulan: ${h.bulan}\\nTotal: ${h.nominal}\\nStatus: ${h.status}')" class="text-emerald-600 bg-emerald-50 px-2 py-1 rounded-lg">View</button></td></tr>`).join('') || '<tr><td colspan="2" class="p-4 text-center italic text-gray-300">Kosong</td></tr>'}</tbody></table></div>
                         </section>
                     </div>
                 </div>`;
@@ -139,7 +142,7 @@
         }
 
         function login() { const id = document.getElementById('selSiswa').value; if(!id) return; STATE.user = DATA_SISWA.find(s => s.id === id); STATE.view = 'dashboard'; renderApp(); }
-        function laporIzin(nama, id) { window.open(`https://wa.me/${ADMIN_WA}?text=Assalamu'alaikum Admin RBJ, saya wali dari ${nama} (${id}) ingin izin hari ini karena...`); }
+        function laporIzin(nama, id) { window.open(`https://wa.me/${ADMIN_WA}?text=Izin murid ${nama} (${id}) hari ini karena...`); }
         ambilData();
     </script>
 </body>
