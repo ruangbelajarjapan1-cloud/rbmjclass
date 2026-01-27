@@ -2,18 +2,15 @@
 <html lang="id">
 <head>
     <meta charset="UTF-8">
-    <!-- Tampilan Aplikasi Mobile (PWA) -->
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    
     <meta name="theme-color" content="#047857">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <title>RBM Japan App</title>
-    
-    <!-- Logo Aplikasi -->
     <link rel="apple-touch-icon" href="logo.png">
     <link rel="icon" type="image/png" href="logo.png">
     
-    <!-- Library CSS & Icon -->
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://unpkg.com/lucide@latest"></script>
 
@@ -23,9 +20,19 @@
         .fade-enter { animation: fadeIn 0.4s cubic-bezier(0.4, 0, 0.2, 1); }
         @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
         .no-select { -webkit-tap-highlight-color: transparent; user-select: none; }
-        /* Safe Area untuk HP berponi */
         .safe-pb { padding-bottom: env(safe-area-inset-bottom); }
         .safe-pt { padding-top: max(1rem, env(safe-area-inset-top)); }
+        
+        /* TOAST NOTIFICATION (Pesan Kecil di Bawah) */
+        .toast {
+            position: fixed; bottom: 80px; left: 50%; transform: translateX(-50%);
+            background: rgba(0,0,0,0.8); color: white; padding: 10px 20px;
+            border-radius: 50px; font-size: 12px; z-index: 100; font-weight: bold;
+            opacity: 0; transition: opacity 0.3s; pointer-events: none;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+        .toast.show { opacity: 1; }
+
         @media print { .no-print { display: none !important; } body { background: white; } }
     </style>
 </head>
@@ -34,12 +41,14 @@
     <div class="pattern-grid absolute inset-0 z-0 pointer-events-none"></div>
 
     <div id="app" class="relative z-10 safe-pb">
-        <!-- Loading Screen -->
         <div class="flex flex-col items-center justify-center min-h-screen">
             <div class="animate-spin rounded-full h-10 w-10 border-b-2 border-emerald-700"></div>
             <p class="mt-4 text-emerald-800 font-semibold text-sm">Memuat Aplikasi...</p>
         </div>
     </div>
+
+    <!-- TOAST MSG -->
+    <div id="toast" class="toast">Sedang sinkronisasi...</div>
 
     <!-- MODAL INSTALL GUIDE -->
     <div id="installModal" class="fixed inset-0 z-50 flex items-end sm:items-center justify-center pointer-events-none opacity-0 transition-opacity duration-300">
@@ -94,38 +103,65 @@
 
         const RANDOM_QUOTE = { text: "Barangsiapa menempuh jalan untuk menuntut ilmu, Allah akan mudahkan jalannya ke surga.", source: "HR. Muslim" };
 
-        // --- CORE FUNCTIONS ---
+        // --- CORE FUNCTIONS (SMART CACHING) ---
         async function ambilData() {
+            // 1. CEK CACHE LOKAL (Agar Loading INSTANT)
+            const cachedData = localStorage.getItem('rbm_cache_v1');
+            if (cachedData) {
+                try {
+                    const parsed = JSON.parse(cachedData);
+                    DATA_SISWA = parsed.students || [];
+                    DATA_HARGA = parsed.prices || {};
+                    if (parsed.info) INFO_PENGUMUMAN = parsed.info;
+                    renderApp(); // Langsung tampilkan data lama
+                    showToast("Sedang memperbarui data..."); // Info ke user
+                } catch (e) {
+                    console.error("Cache Error", e);
+                }
+            } else {
+                renderLoading(); // Kalau tidak ada cache, baru tampilkan loading
+            }
+
+            // 2. AMBIL DATA BARU (Background Sync)
             try {
                 const respon = await fetch(API_URL);
                 const data = await respon.json();
+                
                 DATA_SISWA = data.students || [];
                 DATA_HARGA = data.prices || {};
                 if (data.info) INFO_PENGUMUMAN = data.info;
-                renderApp();
+                
+                // Simpan ke cache untuk akses berikutnya
+                localStorage.setItem('rbm_cache_v1', JSON.stringify(data));
+                
+                renderApp(); // Render ulang dengan data terbaru
+                if(cachedData) showToast("Data berhasil diperbarui!", 2000);
             } catch (error) {
-                alert(TEKS.id.connectFail);
-                renderApp(); 
+                if(!cachedData) alert(TEKS.id.connectFail);
+                if(cachedData) showToast("Offline: Menggunakan data terakhir.");
             }
+        }
+
+        function showToast(msg, duration = 3000) {
+            const t = document.getElementById('toast');
+            t.innerText = msg;
+            t.classList.add('show');
+            setTimeout(() => t.classList.remove('show'), duration);
         }
 
         function hitungSPP(student) {
             let totalMurni = 0;
             let rincian = [];
-            // Safety check: jika classes undefined/null
             if (!student.classes) return { totalMurni: 0, rincian: [], totalAkhir: 0 };
 
             student.classes.forEach(kelasSiswa => {
                 let harga = 0;
-                // Cek harga eksak
                 if (DATA_HARGA[kelasSiswa]) {
                     harga = DATA_HARGA[kelasSiswa];
                 } else {
-                    // Cek harga mirip (misal Tahfidz 8x)
                     for (const [namaKelasDB, hargaDB] of Object.entries(DATA_HARGA)) {
                         if (kelasSiswa.includes(namaKelasDB) || namaKelasDB.includes(kelasSiswa)) {
                             harga = hargaDB;
-                            // Prioritaskan yang ada keterangan 8x/4x
                             if (namaKelasDB.includes("8x") || namaKelasDB.includes("4x")) { break; }
                         }
                     }
@@ -140,23 +176,13 @@
 
         const formatYen = (angka) => "¥" + (angka || 0).toLocaleString('ja-JP');
 
-        // FIX UNDEFINED: Safety check jika schedule kosong
         function getMapelByDate(dateString, schedule) {
             if (!dateString || !schedule || schedule.length === 0) return "Kegiatan"; 
-            
             const parts = dateString.split('/');
-            let dateObj;
-            
-            // Cek format tanggal dd/mm/yyyy
-            if(parts.length === 3) dateObj = new Date(parts[2], parts[1]-1, parts[0]);
-            else dateObj = new Date(dateString);
-            
+            let dateObj = parts.length === 3 ? new Date(parts[2], parts[1]-1, parts[0]) : new Date(dateString);
             if(isNaN(dateObj.getTime())) return "Kegiatan"; 
-
             const days = ['Minggu', 'Senin', 'Selasa', 'Rabu', 'Kamis', 'Jumat', 'Sabtu'];
-            const dayName = days[dateObj.getDay()];
-            
-            const found = schedule.find(s => s.day === dayName);
+            const found = schedule.find(s => s.day === days[dateObj.getDay()]);
             return found && found.subject ? found.subject : "Kelas Tambahan";
         }
 
@@ -176,6 +202,14 @@
             const content = modal.querySelector('div.bg-white');
             if (show) { modal.classList.remove('pointer-events-none', 'opacity-0'); content.classList.remove('translate-y-full'); } 
             else { modal.classList.add('pointer-events-none', 'opacity-0'); content.classList.add('translate-y-full'); }
+        }
+
+        function renderLoading() {
+            document.getElementById('app').innerHTML = `
+             <div class="flex flex-col items-center justify-center min-h-screen">
+                <div class="animate-spin rounded-full h-10 w-10 border-b-2 border-emerald-700"></div>
+                <p class="mt-4 text-emerald-800 font-semibold text-sm">Menghubungkan Database...</p>
+            </div>`;
         }
 
         function renderApp() {
@@ -227,11 +261,10 @@
                         <span class="font-mono font-bold text-gray-800">${formatYen(item.harga)}</span>
                     </div>`).join('');
 
-                // LOGIKA STATUS
                 let rawStatus = s.payments ? (Object.values(s.payments)[0] || "Belum Bayar") : "Belum Bayar";
                 let cleanStatus = rawStatus.trim().toLowerCase();
                 let isLunas = cleanStatus.includes('lunas');
-                let isTelat = !isLunas && new Date().getDate() > 25;
+                let isTelat = !isLunas && new Date().getDate() > 25 && cleanStatus.includes('belum');
                 
                 let statusColor = isLunas ? "bg-green-100 text-green-700" : (isTelat ? "bg-red-100 text-red-600" : "bg-amber-100 text-amber-700");
                 let statusText = isLunas ? t.statusLunas : (isTelat ? t.statusTelat : (rawStatus || t.statusBelum));
