@@ -8,16 +8,14 @@
     <script src="https://unpkg.com/lucide@latest"></script>
     <style>
         body { font-family: 'Inter', sans-serif; background: #f0fdf4; }
-        .pattern-grid { background-image: radial-gradient(#059669 1px, transparent 1px); background-size: 24px 24px; opacity: 0.05; }
         .fade-enter { animation: fadeIn 0.5s ease-out; }
-        @keyframes fadeIn { from { opacity: 0; transform: translateY(12px); } to { opacity: 1; transform: translateY(0); } }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
         .glass { background: rgba(255, 255, 255, 0.9); backdrop-filter: blur(10px); }
         @media print { .no-print { display: none !important; } }
     </style>
 </head>
-<body class="relative min-h-screen">
-    <div class="pattern-grid absolute inset-0 z-0"></div>
-    <div id="app" class="relative z-10 safe-pb">
+<body class="min-h-screen relative">
+    <div id="app" class="relative z-10">
         <div class="flex flex-col items-center justify-center min-h-screen">
             <div class="animate-spin rounded-full h-12 w-12 border-b-4 border-emerald-600"></div>
             <p class="mt-4 text-emerald-800 font-bold">Sinkronisasi Database...</p>
@@ -25,6 +23,7 @@
     </div>
 
     <script>
+        // MASUKKAN URL WEB APP PAK WAHYU DI SINI
         const API_URL = "https://script.google.com/macros/s/AKfycbz2a5-sm2_gLBPF5jpTmZfBuN9PppkvUI3nXIyOJbYJ4XDZA3SDE7-FNU784ZxfSZjr/exec"; 
         const ADMIN_WA = "6285819809668";
 
@@ -42,19 +41,12 @@
         };
 
         async function ambilData() {
-            const cache = localStorage.getItem('rbm_cache_v7');
-            if(cache) { processData(JSON.parse(cache)); }
             try {
                 const res = await fetch(API_URL);
                 const data = await res.json();
-                localStorage.setItem('rbm_cache_v7', JSON.stringify(data));
-                processData(data);
-            } catch (e) { console.log("Offline Mode"); }
-        }
-
-        function processData(data) {
-            DATA_SISWA = data.students; DATA_HARGA = data.prices; INFO_PENGUMUMAN = data.info;
-            renderApp();
+                DATA_SISWA = data.students; DATA_HARGA = data.prices; INFO_PENGUMUMAN = data.info;
+                renderApp();
+            } catch (e) { document.getElementById('app').innerHTML = `<p class='p-10 text-center text-red-500'>Koneksi Gagal. Cek URL Web App.</p>`; }
         }
 
         function getGreet() {
@@ -70,7 +62,7 @@
             if (STATE.view === 'login') {
                 let opsi = `<option value="" disabled selected>-- ${t.select} --</option>` + DATA_SISWA.map(s => `<option value="${s.id}">${s.name}</option>`).join('');
                 app.innerHTML = `
-                <div class="min-h-screen flex flex-col items-center justify-center p-6 bg-emerald-900 fade-enter">
+                <div class="min-h-screen flex flex-col items-center justify-center p-6 bg-emerald-800 fade-enter">
                     <button onclick="STATE.lang=STATE.lang==='id'?'en':'id';renderApp()" class="absolute top-8 right-8 text-white text-[10px] font-bold border border-white/40 px-3 py-1 rounded-full uppercase tracking-widest">${STATE.lang}</button>
                     <div class="bg-white p-10 rounded-[2.5rem] shadow-2xl w-full max-w-sm text-center">
                         <h1 class="text-3xl font-black text-emerald-900 tracking-tighter">RBM JAPAN</h1>
@@ -81,14 +73,14 @@
                 </div>`;
             } else {
                 const s = STATE.user;
-                let total = 0; s.classes.forEach(c => { total += (DATA_HARGA[c.split('(')[0].trim()] || 0); });
-                if (s.role == 2) total *= 0.5;
+                let totalBill = 0; s.classes.forEach(c => { totalBill += (DATA_HARGA[c.split('(')[0].trim()] || 0); });
+                if (s.role == 2) totalBill *= 0.5;
 
                 app.innerHTML = `
                 <div class="max-w-md mx-auto pb-20 fade-enter">
                     <div class="bg-emerald-800 pt-16 pb-28 px-8 rounded-b-[3.5rem] shadow-xl text-white relative">
                         <div class="flex justify-between items-start">
-                            <div><p class="text-emerald-300 text-[11px] font-bold mb-1">${getGreet()},</p><h1 class="text-3xl font-black tracking-tight lowercase">${s.name}</h1></div>
+                            <div><p class="text-emerald-300 text-[11px] font-bold mb-1">${getGreet()},</p><h1 class="text-3xl font-black tracking-tight">${s.name}</h1></div>
                             <button onclick="location.reload()" class="bg-white/10 p-2.5 rounded-xl no-print"><i data-lucide="log-out" width="18"></i></button>
                         </div>
                     </div>
@@ -99,7 +91,7 @@
                                 <span class="text-[10px] font-black text-emerald-600 uppercase tracking-widest">Tagihan</span>
                                 <button onclick="laporIzin('${s.name}', '${s.id}')" class="text-[10px] font-bold text-blue-600 bg-blue-50 px-3 py-1.5 rounded-full flex items-center gap-1.5"><i data-lucide="send" width="12"></i> ${t.report}</button>
                             </div>
-                            <h2 class="text-5xl font-black text-emerald-900 mb-8 tracking-tighter">¥${total.toLocaleString('ja-JP')}</h2>
+                            <h2 class="text-5xl font-black text-emerald-900 mb-8 tracking-tighter">¥${totalBill.toLocaleString('ja-JP')}</h2>
                             <div class="grid grid-cols-2 gap-4 no-print">
                                 <button onclick="window.open('https://wa.me/${ADMIN_WA}?text=Konfirmasi SPP ${s.name} (${s.id})')" class="bg-emerald-600 text-white py-3.5 rounded-2xl text-[10px] font-bold">KONFIRMASI WA</button>
                                 <button onclick="window.print()" class="bg-slate-800 text-white py-3.5 rounded-2xl text-[10px] font-bold">SIMPAN PDF</button>
@@ -118,7 +110,7 @@
                             ${s.schedule.map(sc => `<div class="bg-white p-5 rounded-3xl border border-emerald-50 shadow-sm flex justify-between items-center mb-4">
                                 <div class="flex items-center gap-4">
                                     <div class="bg-emerald-100 text-emerald-700 font-black px-4 py-2 rounded-2xl text-[11px] min-w-[70px] text-center uppercase tracking-tighter">${DAY_MAP[STATE.lang][sc.day] || sc.day}</div>
-                                    <div><p class="text-sm font-bold text-emerald-900">${sc.subject}</p>${sc.time ? `<p class="text-[11px] text-emerald-500 font-black">${sc.time} JST</p>` : ''}</div>
+                                    <p class="text-sm font-bold text-emerald-900">${sc.subject}</p>
                                 </div>
                             </div>`).join('') || `<p class="text-xs text-gray-400 italic text-center">${t.noData}</p>`}
                         </section>
