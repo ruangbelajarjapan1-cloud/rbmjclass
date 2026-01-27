@@ -3,194 +3,144 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <meta name="theme-color" content="#047857">
-    <meta name="apple-mobile-web-app-capable" content="yes">
-    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <title>RBM Japan App</title>
-    <link rel="apple-touch-icon" href="logo.png">
-    <link rel="icon" type="image/png" href="logo.png">
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://unpkg.com/lucide@latest"></script>
     <style>
-        body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; }
+        body { font-family: -apple-system, system-ui, sans-serif; background-color: #f9fafb; }
         .pattern-grid { background-image: radial-gradient(#065F46 1px, transparent 1px); background-size: 20px 20px; opacity: 0.05; }
-        .fade-enter { animation: fadeIn 0.4s cubic-bezier(0.4, 0, 0.2, 1); }
+        .fade-enter { animation: fadeIn 0.4s ease-out; }
         @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
-        .no-select { -webkit-tap-highlight-color: transparent; user-select: none; }
-        .safe-pb { padding-bottom: env(safe-area-inset-bottom); }
-        .safe-pt { padding-top: max(1rem, env(safe-area-inset-top)); }
-        .toast { position: fixed; bottom: 80px; left: 50%; transform: translateX(-50%); background: rgba(0,0,0,0.8); color: white; padding: 10px 20px; border-radius: 50px; font-size: 12px; z-index: 100; font-weight: bold; opacity: 0; transition: opacity 0.3s; pointer-events: none; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
+        .toast { position: fixed; bottom: 80px; left: 50%; transform: translateX(-50%); background: #1f2937; color: white; padding: 10px 20px; border-radius: 50px; font-size: 12px; z-index: 100; opacity: 0; transition: opacity 0.3s; pointer-events: none; }
         .toast.show { opacity: 1; }
-        @media print { .no-print { display: none !important; } body { background: white; } }
     </style>
 </head>
-<body class="bg-gray-50 min-h-screen text-gray-800 relative no-select touch-pan-y">
+<body class="min-h-screen text-gray-800 relative">
     <div class="pattern-grid absolute inset-0 z-0 pointer-events-none"></div>
-    <div id="app" class="relative z-10 safe-pb">
+    <div id="app" class="relative z-10">
         <div class="flex flex-col items-center justify-center min-h-screen">
             <div class="animate-spin rounded-full h-10 w-10 border-b-2 border-emerald-700"></div>
-            <p class="mt-4 text-emerald-800 font-semibold text-sm">Memuat Aplikasi...</p>
         </div>
     </div>
-    <div id="toast" class="toast">Sedang sinkronisasi...</div>
+    <div id="toast" class="toast">Sedang memperbarui...</div>
 
     <script>
         const API_URL = "https://script.google.com/macros/s/AKfycbw49kZ84bMIxXsEScQI0Kf2AG9CRBnsFIosgSaOe2pH575BrIifHy6NrjGVw1f6cB9VMA/exec"; 
-        const ADMIN_WA = "6285819809668"; 
-        let INFO_PENGUMUMAN = { aktif: false, teks_id: "", teks_en: "" };
-        let DATA_SISWA = [];
-        let DATA_HARGA = {}; 
+        const ADMIN_WA = "6285819809668";
+        let DATA_SISWA = []; let DATA_HARGA = {}; let INFO_PENGUMUMAN = {};
         let STATE = { view: 'login', user: null, lang: 'id' };
 
         const TEKS = {
             id: {
                 welcome: "Ahlan wa Sahlan,", select: "Pilih Nama Siswa", btnMasuk: "Masuk",
-                loginSub: "Portal Siswa", studentId: "ID Siswa", total: "Total Tagihan",
+                loginSub: "Portal Siswa", studentId: "ID Siswa", total: "TOTAL TAGIHAN",
                 statusTelat: "TELAT", statusLunas: "LUNAS", statusBelum: "BELUM BAYAR",
-                month: "Bulan", date: "Tgl", status: "Ket", history: "Riwayat",
-                noData: "Tidak ada data", currentMonth: "Bulan Ini", confirmWA: "Konfirmasi WA",
-                reportAbsence: "Lapor Izin", printReport: "Simpan PDF",
-                myClassesList: "Daftar Kelas", menu2: "Jadwal Kelas", menu3: "Presensi Siswa",
-                installApp: "Pasang App", teacherNotes: "Catatan Guru"
-            },
-            en: {
-                welcome: "Welcome,", select: "Select Student", btnMasuk: "Enter",
-                loginSub: "Student Portal", studentId: "Student ID", total: "Total Bill",
-                statusTelat: "OVERDUE", statusLunas: "PAID", statusBelum: "UNPAID",
-                month: "Month", date: "Date", status: "Status", history: "History",
-                noData: "No data", currentMonth: "Current Month", confirmWA: "Confirm via WA",
-                reportAbsence: "Report Absence", printReport: "Save PDF",
-                myClassesList: "Class List", menu2: "Class Schedule", menu3: "Attendance",
-                installApp: "Install App", teacherNotes: "Teacher Notes"
+                confirmWA: "Konfirmasi WA", printReport: "Simpan PDF",
+                teacherNotes: "Catatan Guru", myClassesList: "Daftar Kelas", menu2: "Jadwal Kelas", menu3: "Presensi Siswa",
+                noData: "Tidak ada data", currentMonth: "Bulan Ini"
             }
         };
 
         async function ambilData() {
-            const cachedData = localStorage.getItem('rbm_cache_v5');
-            if (cachedData) {
-                try { processData(JSON.parse(cachedData)); showToast("Memperbarui data..."); } 
-                catch (e) { console.error("Cache Error", e); }
-            } else { renderLoading(); }
             try {
-                const respon = await fetch(API_URL);
-                const data = await respon.json();
-                localStorage.setItem('rbm_cache_v5', JSON.stringify(data));
-                processData(data);
-                if(cachedData) showToast("Data berhasil diperbarui!", 2000);
-            } catch (error) {
-                if(!cachedData) renderError();
-                else showToast("Offline: Menggunakan data terakhir.");
-            }
+                const res = await fetch(API_URL);
+                const data = await res.json();
+                DATA_SISWA = data.students; DATA_HARGA = data.prices; INFO_PENGUMUMAN = data.info;
+                renderApp();
+            } catch (e) { document.getElementById('app').innerHTML = "<p class='p-10 text-center'>Gagal memuat data. Periksa koneksi.</p>"; }
         }
 
-        function processData(data) {
-            DATA_HARGA = data.prices || {};
-            if (data.info) INFO_PENGUMUMAN = data.info;
-            DATA_SISWA = (data.students || []).map(s => ({
-                id: String(s.id || "-"),
-                name: String(s.name || "-"),
-                classes: Array.isArray(s.classes) ? s.classes : [],
-                role: s.role || 1,
-                payments: s.payments || {},
-                schedule: Array.isArray(s.schedule) ? s.schedule : [],
-                attendance: Array.isArray(s.attendance) ? s.attendance : [],
-                notes: Array.isArray(s.notes) ? s.notes : []
-            }));
-            renderApp();
-        }
-
-        function hitungSPP(student) {
-            let totalMurni = 0;
-            let rincian = [];
-            student.classes.forEach(kelasSiswa => {
-                let harga = DATA_HARGA[kelasSiswa] || 0;
-                if (harga === 0) {
-                    for (const [k, v] of Object.entries(DATA_HARGA)) {
-                        if (kelasSiswa.includes(k) || k.includes(kelasSiswa)) { harga = v; break; }
-                    }
-                }
-                totalMurni += harga;
-                rincian.push({ nama: kelasSiswa, harga: harga });
-            });
-            let diskon = (student.role == 2) ? (totalMurni * 0.5) : 0;
-            return { totalMurni, rincian, isDiskon: student.role == 2, diskon, totalAkhir: totalMurni - diskon };
-        }
-
-        const formatYen = (angka) => "¥" + (angka || 0).toLocaleString('ja-JP');
-
-        function getMapelByDate(dateString, schedule) {
-            if (!dateString || !schedule || schedule.length === 0) return "Kegiatan";
-            const days = ['Minggu', 'Senin', 'Selasa', 'Rabu', 'Kamis', 'Jumat', 'Sabtu'];
-            const parts = dateString.split('/');
-            const dateObj = new Date(parts[2], parts[1]-1, parts[0]);
-            const dayName = days[dateObj.getDay()];
-            const found = schedule.find(s => s.day === dayName);
-            return found ? found.subject : "Kegiatan";
-        }
+        function formatYen(n) { return "¥" + (n || 0).toLocaleString('ja-JP'); }
 
         function renderApp() {
             const app = document.getElementById('app');
             const t = TEKS[STATE.lang];
+
             if (STATE.view === 'login') {
-                let opsi = `<option value="">-- ${t.select} --</option>`;
-                DATA_SISWA.forEach(s => opsi += `<option value="${s.id}">${s.name}</option>`);
-                app.innerHTML = `<div class="min-h-screen flex flex-col items-center justify-center p-6 bg-emerald-800 fade-enter">
-                    <div class="bg-white p-6 rounded-3xl shadow-2xl w-full max-w-sm">
-                        <div class="text-center mb-6">
-                            <h1 class="text-xl font-extrabold text-emerald-800">RBM Japan</h1>
-                            <p class="text-xs text-gray-400 uppercase">${t.loginSub}</p>
-                        </div>
-                        <select id="pilihSiswa" class="w-full p-3 border rounded-xl mb-3 text-sm">${opsi}</select>
-                        <button onclick="login()" class="w-full bg-emerald-600 text-white py-3 rounded-xl font-bold shadow-lg">${t.btnMasuk}</button>
+                let opsi = DATA_SISWA.map(s => `<option value="${s.id}">${s.name}</option>`).join('');
+                app.innerHTML = `
+                <div class="min-h-screen flex flex-col items-center justify-center p-6 bg-emerald-800 fade-enter">
+                    <div class="bg-white p-8 rounded-3xl shadow-2xl w-full max-w-sm text-center">
+                        <img src="logo.png" class="h-20 mx-auto mb-4" onerror="this.src='https://ui-avatars.com/api/?name=RBM+Japan&background=059669&color=fff'">
+                        <h1 class="text-2xl font-bold text-emerald-800">RBM Japan</h1>
+                        <p class="text-xs text-gray-400 mb-6 uppercase tracking-widest">${t.loginSub}</p>
+                        <select id="selSiswa" class="w-full p-3 border rounded-xl mb-4 text-sm bg-gray-50">${opsi}</select>
+                        <button onclick="login()" class="w-full bg-emerald-600 text-white py-3 rounded-xl font-bold shadow-lg hover:bg-emerald-700 transition">MASUK</button>
                     </div>
                 </div>`;
             } else {
                 const s = STATE.user;
-                const spp = hitungSPP(s);
-                let rawStatus = s.payments["Bulan Ini"] || "Belum Bayar";
-                let isPaid = rawStatus.toLowerCase().includes('lunas');
-                let isOverdue = !isPaid && new Date().getDate() > 28 && rawStatus.toLowerCase().includes('belum');
-                let statusColor = isPaid ? "bg-green-100 text-green-700" : (isOverdue ? "bg-red-100 text-red-600" : "bg-amber-100 text-amber-700");
-                let statusText = isPaid ? t.statusLunas : (isOverdue ? t.statusTelat : rawStatus);
+                // Hitung SPP
+                let total = 0;
+                s.classes.forEach(c => { total += (DATA_HARGA[c] || 0); });
+                if (s.role == 2) total *= 0.5;
 
-                app.innerHTML = `<div class="max-w-md mx-auto min-h-screen bg-gray-50 pb-24 fade-enter">
-                    <div class="bg-emerald-700 pt-10 pb-20 px-6 rounded-b-[2.5rem] text-white">
-                        <div class="flex justify-between items-center mb-6">
-                            <div><p class="text-[10px] opacity-80">${t.studentId}: ${s.id}</p><h1 class="font-bold text-lg">${s.name}</h1></div>
-                            <button onclick="logout()" class="bg-white/20 p-2 rounded-full"><i data-lucide="log-out" width="16"></i></button>
+                let rawSts = s.payments["Bulan Ini"] || "Belum Bayar";
+                let isLunas = rawSts.toLowerCase().includes('lunas');
+                let isTelat = !isLunas && new Date().getDate() > 28;
+                let stsColor = isLunas ? "bg-green-100 text-green-700" : (isTelat ? "bg-red-100 text-red-600" : "bg-amber-100 text-amber-700");
+
+                app.innerHTML = `
+                <div class="max-w-md mx-auto min-h-screen pb-10 fade-enter">
+                    <div class="bg-emerald-700 pt-12 pb-20 px-6 rounded-b-[3rem] shadow-lg text-white relative">
+                        <div class="flex justify-between items-start">
+                            <div>
+                                <p class="text-[10px] uppercase font-bold opacity-70">${t.studentId}: ${s.id}</p>
+                                <h1 class="text-3xl font-bold lowercase">${s.name}</h1>
+                            </div>
+                            <button onclick="location.reload()" class="bg-white/20 p-2 rounded-full"><i data-lucide="log-out" width="20"></i></button>
                         </div>
                     </div>
-                    <div class="px-5 -mt-14">
-                        <div class="bg-white p-5 rounded-2xl shadow-xl border">
-                            <div class="flex justify-between items-center mb-3">
-                                <p class="text-[10px] text-gray-400 font-bold uppercase">${t.total}</p>
-                                <span class="${statusColor} px-2.5 py-0.5 rounded-full text-[10px] font-bold">${statusText}</span>
+
+                    <div class="px-6 -mt-12">
+                        <div class="bg-white p-6 rounded-3xl shadow-xl border border-white/50">
+                            <div class="flex justify-between items-center mb-4">
+                                <span class="text-[10px] font-bold text-gray-400 uppercase tracking-widest">${t.total}</span>
+                                <span class="${stsColor} px-3 py-1 rounded-full text-[10px] font-bold">${isLunas ? t.statusLunas : (isTelat ? t.statusTelat : t.statusBelum)}</span>
                             </div>
-                            <p class="text-3xl font-extrabold text-emerald-800">${formatYen(spp.totalAkhir)}</p>
-                            <div class="grid grid-cols-2 gap-3 mt-4">
-                                <button onclick="window.open('https://wa.me/${ADMIN_WA}?text=Konfirmasi SPP ${s.name}')" class="bg-emerald-600 text-white py-2 rounded-xl text-xs font-bold">${t.confirmWA}</button>
-                                <button onclick="window.print()" class="bg-gray-100 text-gray-600 py-2 rounded-xl text-xs font-bold">${t.printReport}</button>
+                            <h2 class="text-4xl font-black text-emerald-900 mb-6">${formatYen(total)}</h2>
+                            <div class="flex gap-3">
+                                <button onclick="window.open('https://wa.me/${ADMIN_WA}?text=Konfirmasi SPP ${s.name}')" class="flex-1 bg-emerald-600 text-white py-3 rounded-2xl text-xs font-bold flex items-center justify-center gap-2"><i data-lucide="send" width="16"></i> ${t.confirmWA}</button>
+                                <button onclick="window.print()" class="flex-1 bg-gray-100 text-gray-600 py-3 rounded-2xl text-xs font-bold flex items-center justify-center gap-2"><i data-lucide="file-text" width="16"></i> ${t.printReport}</button>
                             </div>
                         </div>
                     </div>
-                    <div class="p-5 space-y-6">
-                        <div><h3 class="text-sm font-bold text-gray-800 mb-2">${t.teacherNotes}</h3>
-                            ${s.notes.map(n => `<div class="bg-blue-50 p-3 rounded-xl mb-2"><p class="text-[10px] font-bold text-blue-600">${n.date} - ${n.teacher}</p><p class="text-xs text-blue-800">"${n.message}"</p></div>`).join('') || `<p class="text-xs text-gray-400 italic">${t.noData}</p>`}
-                        </div>
-                        <div><h3 class="text-sm font-bold text-gray-800 mb-2">${t.menu2}</h3>
-                            ${s.schedule.map(sc => `<div class="bg-white p-3 rounded-xl border flex justify-between items-center mb-2"><span class="text-xs font-bold text-gray-500 w-16">${sc.day}</span><div><p class="text-xs font-bold text-emerald-800">${sc.subject}</p><p class="text-[10px] text-gray-400">${sc.time}</p></div></div>`).join('') || `<p class="text-xs text-gray-400 italic">Belum ada jadwal.</p>`}
-                        </div>
+
+                    <div class="p-6 space-y-8">
+                        ${INFO_PENGUMUMAN.aktif ? `<div class="bg-amber-50 p-4 rounded-2xl border border-amber-100 flex gap-3"><i data-lucide="megaphone" class="text-amber-600"></i><p class="text-xs text-amber-900">${INFO_PENGUMUMAN.teks_id}</p></div>` : ''}
+                        
+                        <section>
+                            <h3 class="font-bold text-gray-800 mb-4 flex items-center gap-2"><i data-lucide="message-square" class="text-blue-500" width="18"></i> ${t.teacherNotes}</h3>
+                            <div class="text-xs text-gray-400 italic">${s.notes.length ? s.notes.map(n => `<div class="bg-blue-50 p-3 rounded-xl mb-2 text-blue-900"><b>${n.date}</b>: ${n.message}</div>`).join('') : t.noData}</div>
+                        </section>
+
+                        <section>
+                            <h3 class="font-bold text-gray-800 mb-4 flex items-center gap-2"><i data-lucide="calendar" class="text-purple-500" width="18"></i> ${t.menu2}</h3>
+                            <div class="space-y-3">
+                                ${s.schedule.map(sc => `
+                                    <div class="bg-white p-4 rounded-2xl border flex justify-between items-center">
+                                        <div class="flex items-center gap-4">
+                                            <span class="bg-gray-100 text-gray-500 font-bold px-3 py-1 rounded-lg text-[10px] w-14 text-center">${sc.day}</span>
+                                            <div>
+                                                <p class="text-sm font-bold text-emerald-800">${sc.subject}</p>
+                                                <p class="text-[10px] text-gray-400 font-medium">${sc.time} JST</p>
+                                            </div>
+                                        </div>
+                                    </div>
+                                `).join('')}
+                            </div>
+                        </section>
                     </div>
                 </div>`;
             }
             lucide.createIcons();
         }
 
-        function login() { const id = document.getElementById('pilihSiswa').value; if(!id) return; STATE.user = DATA_SISWA.find(s => s.id === id); STATE.view = 'dashboard'; renderApp(); }
-        function logout() { STATE.user = null; STATE.view = 'login'; renderApp(); }
-        function showToast(m, d=3000) { const t = document.getElementById('toast'); t.innerText = m; t.classList.add('show'); setTimeout(() => t.classList.remove('show'), d); }
-        function renderLoading() { document.getElementById('app').innerHTML = `<div class="flex items-center justify-center min-h-screen"><div class="animate-spin rounded-full h-10 w-10 border-b-2 border-emerald-700"></div></div>`; }
-        function renderError() { document.getElementById('app').innerHTML = `<div class="flex items-center justify-center min-h-screen text-center"><p>Gagal Terhubung ke Database.</p></div>`; }
+        function login() {
+            const id = document.getElementById('selSiswa').value;
+            STATE.user = DATA_SISWA.find(s => s.id === id);
+            STATE.view = 'dashboard'; renderApp();
+        }
 
         ambilData();
     </script>
