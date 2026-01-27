@@ -1,0 +1,421 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sistem Manajemen RBM Japan</title>
+    
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/lucide@latest"></script>
+
+    <style>
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
+        .pattern-grid {
+            background-image: radial-gradient(#065F46 1px, transparent 1px);
+            background-size: 20px 20px;
+            opacity: 0.05;
+        }
+        .fade-enter { animation: fadeIn 0.5s ease-out; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+
+        /* CSS KHUSUS PRINT / CETAK PDF */
+        @media print {
+            .no-print { display: none !important; }
+            body { background: white; }
+            .shadow-2xl, .shadow-lg, .shadow-sm { box-shadow: none !important; }
+            .bg-gray-50 { background: white !important; }
+            .text-white { color: black !important; }
+            .bg-emerald-700 { background: white !important; color: black !important; border-bottom: 2px solid black; }
+        }
+    </style>
+</head>
+<body class="bg-gray-50 min-h-screen text-gray-800 relative">
+
+    <div class="pattern-grid absolute inset-0 z-0 pointer-events-none"></div>
+
+    <div id="app" class="relative z-10">
+        <!-- Tampilan awal sebelum JS dimuat penuh -->
+        <div class="flex flex-col items-center justify-center min-h-screen">
+            <div class="animate-spin rounded-full h-12 w-12 border-b-2 border-emerald-700"></div>
+            <p class="mt-4 text-emerald-800 font-semibold">Loading RBM Database...</p>
+        </div>
+    </div>
+
+    <script>
+        // ==========================================
+        // KONFIGURASI LINK SCRIPT (PASTE DI SINI)
+        // ==========================================
+        const API_URL = "https://script.google.com/macros/s/AKfycbw49kZ84bMIxXsEScQI0Kf2AG9CRBnsFIosgSaOe2pH575BrIifHy6NrjGVw1f6cB9VMA/exec"; 
+        
+        // NOMOR WA ADMIN (Ganti dengan nomor asli, pakai kode negara tanpa +)
+        const ADMIN_WA = "819012345678"; // Contoh nomor Jepang
+        // ==========================================
+
+        let DATA_SISWA = [];
+        let DATA_HARGA = {}; 
+        let STATE = { view: 'login', user: null, lang: 'id' };
+
+        // KAMUS BAHASA LENGKAP
+        const TEKS = {
+            id: {
+                loading: "Menghubungkan ke Database RBM...",
+                welcome: "Ahlan wa Sahlan,",
+                select: "Pilih Nama Siswa",
+                btnMasuk: "Masuk Dashboard",
+                menu1: "Kelas & Biaya",
+                menu2: "Jadwal",
+                menu3: "Absensi",
+                menu4: "Keuangan",
+                total: "Total Tagihan",
+                history: "Riwayat Pembayaran",
+                statusTelat: "Telat (> Tgl 25)",
+                statusLunas: "Lunas",
+                statusBelum: "Belum Bayar",
+                discount: "Diskon Anak Ke-2 (50%)",
+                subtotal: "Subtotal",
+                loginSub: "Portal Siswa",
+                studentId: "ID Siswa",
+                totalFinal: "Total Akhir",
+                month: "Bulan",
+                date: "Tgl",
+                status: "Status",
+                noData: "Belum ada data.",
+                connectFail: "Gagal koneksi. Cek internet atau link script.",
+                monthNames: ["Bulan 1", "Bulan 2", "Bulan 3", "Bulan 4", "Bulan 5", "Bulan 6", "Bulan 7", "Bulan 8", "Bulan 9", "Bulan 10", "Bulan 11", "Bulan 12"],
+                currentMonth: "Bulan Ini",
+                confirmWA: "Konfirmasi Bayar ke Admin",
+                printReport: "Cetak Laporan / Simpan PDF"
+            },
+            en: {
+                loading: "Connecting to RBM Database...",
+                welcome: "Welcome,",
+                select: "Select Student",
+                btnMasuk: "Enter Dashboard",
+                menu1: "Classes & Fees",
+                menu2: "Schedule",
+                menu3: "Attendance",
+                menu4: "Finance",
+                total: "Total Fee",
+                history: "Payment History",
+                statusTelat: "Overdue",
+                statusLunas: "Paid",
+                statusBelum: "Unpaid",
+                discount: "Sibling Discount (50%)",
+                subtotal: "Subtotal",
+                loginSub: "Student Portal",
+                studentId: "Student ID",
+                totalFinal: "Final Total",
+                month: "Month",
+                date: "Date",
+                status: "Status",
+                noData: "No data available.",
+                connectFail: "Connection failed. Check internet or script link.",
+                monthNames: ["Month 1", "Month 2", "Month 3", "Month 4", "Month 5", "Month 6", "Month 7", "Month 8", "Month 9", "Month 10", "Month 11", "Month 12"],
+                currentMonth: "Current Month",
+                confirmWA: "Confirm Payment via WhatsApp",
+                printReport: "Print Report / Save PDF"
+            }
+        };
+
+        // --- AMBIL DATA ---
+        async function ambilData() {
+            try {
+                renderLoading();
+                const respon = await fetch(API_URL);
+                const data = await respon.json();
+                DATA_SISWA = data.students;
+                DATA_HARGA = data.prices;
+                renderApp();
+            } catch (error) {
+                alert(TEKS.id.connectFail);
+            }
+        }
+
+        // --- LOGIKA HARGA ---
+        function hitungSPP(student) {
+            let totalMurni = 0;
+            let rincian = [];
+
+            student.classes.forEach(kelasSiswa => {
+                let harga = 0;
+                if (DATA_HARGA[kelasSiswa]) {
+                    harga = DATA_HARGA[kelasSiswa];
+                } else {
+                    for (const [namaKelasDB, hargaDB] of Object.entries(DATA_HARGA)) {
+                        if (kelasSiswa.includes(namaKelasDB) || namaKelasDB.includes(kelasSiswa)) {
+                            harga = hargaDB;
+                            if (namaKelasDB.includes("8x") || namaKelasDB.includes("4x")) { break; }
+                        }
+                    }
+                }
+                totalMurni += harga;
+                rincian.push({ nama: kelasSiswa, harga: harga });
+            });
+
+            let isDiskon = (student.role == 2);
+            let diskon = isDiskon ? (totalMurni * 0.5) : 0;
+            let totalAkhir = totalMurni - diskon;
+
+            return { totalMurni, rincian, isDiskon, diskon, totalAkhir };
+        }
+
+        const formatYen = (angka) => "¥" + angka.toLocaleString('ja-JP');
+
+        // --- HELPER: TEBAK KELAS DARI TANGGAL ---
+        function getMapelByDate(dateString, schedule) {
+            if (!dateString) return "-";
+            const parts = dateString.split('/');
+            let dateObj;
+            if(parts.length === 3) dateObj = new Date(parts[2], parts[1]-1, parts[0]);
+            else dateObj = new Date(dateString);
+            
+            if(isNaN(dateObj)) return "-";
+
+            const days = ['Minggu', 'Senin', 'Selasa', 'Rabu', 'Kamis', 'Jumat', 'Sabtu'];
+            const dayName = days[dateObj.getDay()];
+            
+            const found = schedule.find(s => s.day === dayName);
+            return found ? found.subject : "Kelas Tambahan";
+        }
+
+        // --- ACTIONS: WA & PRINT ---
+        function kirimWA(nama, id, total) {
+            const pesan = `Assalamualaikum Admin RBM Japan, saya wali dari siswa:\nNama: ${nama}\nID: ${id}\n\nIngin konfirmasi pembayaran SPP bulan ini sebesar ${total}.\nMohon dicek. Terima kasih.`;
+            const url = `https://wa.me/${ADMIN_WA}?text=${encodeURIComponent(pesan)}`;
+            window.open(url, '_blank');
+        }
+
+        function cetakLaporan() {
+            window.print();
+        }
+
+        // --- RENDER HELPERS ---
+        function renderLoading() {
+            const app = document.getElementById('app');
+            app.innerHTML = `
+             <div class="flex flex-col items-center justify-center min-h-screen">
+                <div class="animate-spin rounded-full h-12 w-12 border-b-2 border-emerald-700"></div>
+                <p class="mt-4 text-emerald-800 font-semibold">${TEKS[STATE.lang].loading}</p>
+            </div>`;
+        }
+
+        function renderApp() {
+            const app = document.getElementById('app');
+            const t = TEKS[STATE.lang];
+
+            // --- VIEW: LOGIN ---
+            if (STATE.view === 'login') {
+                let opsiSiswa = `<option value="">-- ${t.select} --</option>`;
+                DATA_SISWA.forEach(s => opsiSiswa += `<option value="${s.id}">${s.name}</option>`);
+
+                app.innerHTML = `
+                <div class="min-h-screen flex flex-col items-center justify-center p-4 bg-emerald-800 fade-enter">
+                    <div class="bg-white p-8 rounded-2xl shadow-2xl w-full max-w-md relative overflow-hidden">
+                        <div class="absolute top-0 left-0 w-full h-2 bg-gradient-to-r from-yellow-400 to-emerald-500"></div>
+                        <div class="text-center mb-6">
+                            <h1 class="text-2xl font-bold text-emerald-800">RBM Japan</h1>
+                            <p class="text-gray-500">${t.loginSub}</p>
+                        </div>
+                        <select id="pilihSiswa" class="w-full p-3 border rounded-lg mb-4 bg-gray-50 focus:ring-2 focus:ring-emerald-500 outline-none">${opsiSiswa}</select>
+                        <button onclick="login()" class="w-full bg-emerald-600 text-white py-3 rounded-lg font-bold hover:bg-emerald-700 shadow-lg transition transform active:scale-95">${t.btnMasuk}</button>
+                    </div>
+                    <div class="absolute top-4 right-4">
+                        <button onclick="gantiBahasa()" class="bg-white/10 text-white px-3 py-1 rounded-full text-sm border border-white/20 hover:bg-white/20 transition flex items-center gap-1">
+                            <i data-lucide="globe" width="14"></i> ${STATE.lang === 'id' ? 'ID' : 'EN'}
+                        </button>
+                    </div>
+                </div>`;
+            }
+
+            // --- VIEW: DASHBOARD ---
+            else if (STATE.view === 'dashboard') {
+                const s = STATE.user;
+                const spp = hitungSPP(s); 
+                
+                // HTML: List Kelas
+                const listSPP = spp.rincian.map(item => `
+                    <div class="flex justify-between text-sm py-2 border-b border-dashed border-gray-200">
+                        <span class="text-gray-600 flex items-center gap-1">
+                           ${item.nama.includes("8x") ? '<span class="bg-purple-100 text-purple-700 text-[10px] px-1 rounded font-bold">8x</span>' : ''}
+                           ${item.nama.includes("4x") ? '<span class="bg-blue-100 text-blue-700 text-[10px] px-1 rounded font-bold">4x</span>' : ''}
+                           ${item.nama.replace(/\(.\w\)/g, '')}
+                        </span>
+                        <span class="font-mono font-bold text-gray-800">${formatYen(item.harga)}</span>
+                    </div>
+                `).join('');
+
+                // Status Logic
+                const tgl = new Date().getDate();
+                let rawStatus = s.payments ? (Object.values(s.payments)[0] || "Belum Bayar") : "Belum Bayar";
+                let warnaStatus = "bg-yellow-100 text-yellow-700";
+                let teksStatus = t.statusBelum; 
+
+                if (rawStatus.toLowerCase().includes('lunas')) {
+                    warnaStatus = "bg-green-100 text-green-700";
+                    teksStatus = t.statusLunas;
+                } else if (tgl > 25) {
+                    warnaStatus = "bg-red-100 text-red-700";
+                    teksStatus = t.statusTelat;
+                }
+
+                // Diskon Display
+                let diskonHTML = '';
+                if (spp.isDiskon) {
+                    diskonHTML = `
+                    <div class="flex justify-between text-sm py-2 text-emerald-600 font-bold bg-emerald-50 px-2 rounded mt-1">
+                        <span>${t.discount}</span>
+                        <span>- ${formatYen(spp.diskon)}</span>
+                    </div>`;
+                }
+
+                // Absensi (UPDATED: Menampilkan Nama Kelas)
+                const absensiHTML = (s.attendance && s.attendance.length > 0)
+                    ? s.attendance.map(att => {
+                        const namaKelas = getMapelByDate(att.date, s.schedule);
+                        return `
+                        <div class="flex justify-between items-center py-3 border-b border-gray-100 last:border-0">
+                            <div class="flex flex-col">
+                                <span class="text-xs text-gray-400 mb-0.5">${att.date}</span>
+                                <span class="text-sm font-bold text-gray-700 leading-tight">${namaKelas}</span>
+                            </div>
+                            <span class="text-xs font-bold px-2 py-1 rounded ${att.status==='Hadir'?'bg-emerald-100 text-emerald-700':'bg-red-100 text-red-600'}">
+                                ${att.status}
+                            </span>
+                        </div>`;
+                    }).join('')
+                    : `<p class="text-xs text-gray-400 italic text-center py-2">${t.noData}</p>`;
+                
+                // History Pembayaran
+                const currentMonthIndex = new Date().getMonth();
+                const prevMonthIndex = currentMonthIndex === 0 ? 11 : currentMonthIndex - 1;
+                const prevPrevMonthIndex = prevMonthIndex === 0 ? 11 : prevMonthIndex - 1;
+
+                app.innerHTML = `
+                <div class="max-w-md mx-auto min-h-screen bg-gray-50 pb-20 fade-enter shadow-2xl">
+                    <!-- Header -->
+                    <div class="bg-emerald-700 pt-8 pb-16 px-6 rounded-b-[40px] shadow-lg text-white relative">
+                        <div class="flex justify-between items-start relative z-10">
+                            <div class="flex gap-3 items-center">
+                                <div class="w-12 h-12 bg-white/20 rounded-full flex items-center justify-center text-xl font-bold border border-white/30 backdrop-blur-sm">
+                                    ${s.name.charAt(0)}
+                                </div>
+                                <div>
+                                    <p class="text-emerald-200 text-xs uppercase tracking-wider">${t.studentId}</p>
+                                    <h1 class="font-bold text-lg leading-none">${s.id}</h1>
+                                </div>
+                            </div>
+                            <button onclick="logout()" class="bg-red-500/80 p-2 rounded-full text-white no-print"><i data-lucide="log-out" width="16"></i></button>
+                        </div>
+                    </div>
+
+                    <!-- Total Tagihan -->
+                    <div class="px-6 -mt-10 relative z-20">
+                        <div class="bg-white p-5 rounded-2xl shadow-lg border border-gray-100">
+                             <div class="flex justify-between items-center mb-2">
+                                <p class="text-xs text-gray-400 uppercase font-bold tracking-wider">${t.total}</p>
+                                <span class="${warnaStatus} px-2 py-0.5 rounded-full text-[10px] font-bold uppercase">${teksStatus}</span>
+                             </div>
+                             <p class="text-3xl font-mono font-bold text-emerald-800">${formatYen(spp.totalAkhir)}</p>
+                             ${spp.isDiskon ? `<p class="text-xs text-gray-400 line-through">${formatYen(spp.totalMurni)}</p>` : ''}
+                        </div>
+                    </div>
+
+                    <!-- Konten -->
+                    <div class="p-6 space-y-5">
+                        
+                        <!-- Rincian Biaya -->
+                        <div class="bg-white p-5 rounded-2xl shadow-sm border border-gray-100">
+                            <h3 class="font-bold text-gray-800 mb-3 flex items-center gap-2 text-sm">
+                                <span class="w-6 h-6 rounded bg-yellow-100 flex items-center justify-center text-yellow-600"><i data-lucide="coins" width="14"></i></span> 
+                                ${t.menu1}
+                            </h3>
+                            <div class="bg-gray-50 p-3 rounded-xl border border-gray-100">
+                                ${listSPP}
+                                ${diskonHTML}
+                                <div class="flex justify-between text-sm font-bold border-t border-gray-200 pt-2 mt-2 text-emerald-800">
+                                    <span>${t.totalFinal}</span>
+                                    <span>${formatYen(spp.totalAkhir)}</span>
+                                </div>
+                                
+                                <!-- Tombol WA -->
+                                <button onclick="kirimWA('${s.name}', '${s.id}', '${formatYen(spp.totalAkhir)}')" 
+                                    class="w-full mt-3 bg-green-500 hover:bg-green-600 text-white py-2 rounded-lg text-sm font-bold flex items-center justify-center gap-2 transition no-print">
+                                    <i data-lucide="message-circle" width="16"></i> ${t.confirmWA}
+                                </button>
+                            </div>
+                        </div>
+
+                        <!-- Jadwal -->
+                        <div class="bg-white p-5 rounded-2xl shadow-sm border border-gray-100">
+                            <h3 class="font-bold text-gray-800 mb-3 flex items-center gap-2 text-sm">
+                                <span class="w-6 h-6 rounded bg-purple-100 flex items-center justify-center text-purple-600"><i data-lucide="calendar" width="14"></i></span> 
+                                ${t.menu2}
+                            </h3>
+                            <div class="space-y-2">
+                                ${s.schedule.map(sc => `
+                                    <div class="flex items-center justify-between text-sm bg-gray-50 p-2 rounded-lg border border-gray-100">
+                                        <span class="font-bold text-gray-600 w-16">${sc.day}</span>
+                                        <span class="text-xs bg-white border border-gray-200 px-2 py-0.5 rounded text-gray-500">${sc.time}</span>
+                                        <span class="text-emerald-700 font-semibold text-right flex-1">${sc.subject}</span>
+                                    </div>`).join('')}
+                            </div>
+                        </div>
+                        
+                        <!-- Absensi (UPDATED) -->
+                        <div class="bg-white p-5 rounded-2xl shadow-sm border border-gray-100">
+                            <h3 class="font-bold text-gray-800 mb-3 flex items-center gap-2 text-sm">
+                                <span class="w-6 h-6 rounded bg-blue-100 flex items-center justify-center text-blue-600"><i data-lucide="user-check" width="14"></i></span> 
+                                ${t.menu3}
+                            </h3>
+                            ${absensiHTML}
+                        </div>
+
+                        <!-- History -->
+                         <div class="bg-white p-5 rounded-2xl shadow-sm border border-gray-100 opacity-80 hover:opacity-100 transition">
+                            <h3 class="font-bold text-gray-800 mb-3 flex items-center gap-2 text-sm">
+                                <span class="w-6 h-6 rounded bg-gray-100 flex items-center justify-center text-gray-600"><i data-lucide="history" width="14"></i></span> 
+                                ${t.history}
+                            </h3>
+                            <table class="w-full text-left">
+                                <thead class="text-[10px] text-gray-400 uppercase bg-gray-50 border-b">
+                                    <tr><th class="py-2 pl-2">${t.month}</th><th class="text-center">${t.date}</th><th class="text-center">${t.status}</th></tr>
+                                </thead>
+                                <tbody>
+                                    <tr class="border-b"><td class="py-2 text-xs">${t.monthNames[prevPrevMonthIndex]}</td><td class="text-center text-xs">25</td><td class="text-center"><span class="bg-green-100 text-green-700 px-2 rounded text-[10px] font-bold">${t.statusLunas}</span></td></tr>
+                                    <tr class="border-b"><td class="py-2 text-xs">${t.monthNames[prevMonthIndex]}</td><td class="text-center text-xs">25</td><td class="text-center"><span class="bg-green-100 text-green-700 px-2 rounded text-[10px] font-bold">${t.statusLunas}</span></td></tr>
+                                    <tr><td class="py-2 font-bold text-xs">${t.currentMonth}</td><td class="text-center text-xs">-</td><td class="text-center"><span class="${warnaStatus} px-2 rounded text-[10px] font-bold uppercase">${teksStatus}</span></td></tr>
+                                </tbody>
+                            </table>
+                        </div>
+                        
+                        <!-- Tombol Print -->
+                        <button onclick="cetakLaporan()" class="w-full bg-gray-200 hover:bg-gray-300 text-gray-700 py-3 rounded-xl font-bold text-sm flex items-center justify-center gap-2 no-print">
+                            <i data-lucide="printer" width="16"></i> ${t.printReport}
+                        </button>
+
+                    </div>
+                    
+                    <div class="fixed bottom-6 right-6 z-50 no-print">
+                        <button onclick="gantiBahasa()" class="bg-emerald-800 text-white w-12 h-12 rounded-full shadow-xl font-bold text-xs border-2 border-emerald-600 flex items-center justify-center hover:scale-110 transition">
+                            ${STATE.lang === 'id' ? 'ID' : 'EN'}
+                        </button>
+                    </div>
+                </div>`;
+            }
+            lucide.createIcons();
+        }
+
+        function login() {
+            const id = document.getElementById('pilihSiswa').value;
+            if(!id) return alert("Pilih siswa dulu!");
+            STATE.user = DATA_SISWA.find(s => s.id === id);
+            STATE.view = 'dashboard';
+            renderApp();
+        }
+        function logout() { STATE.user = null; STATE.view = 'login'; renderApp(); }
+        function gantiBahasa() { STATE.lang = STATE.lang === 'id' ? 'en' : 'id'; renderApp(); }
+
+        ambilData();
+    </script>
+</body>
+</html>
