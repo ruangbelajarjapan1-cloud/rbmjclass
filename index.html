@@ -277,13 +277,16 @@
                             <p class="text-xs text-gray-400 font-medium tracking-wide uppercase">${t.loginSub}</p>
                         </div>
                         <div class="space-y-3">
-                            <div class="relative">
-                                <i data-lucide="user" class="absolute left-3 top-3.5 text-gray-400 w-5 h-5"></i>
-                                <select id="pilihSiswa" class="w-full pl-10 pr-4 py-3 border border-gray-200 rounded-xl bg-gray-50 focus:ring-2 focus:ring-emerald-500 outline-none text-sm appearance-none font-medium text-gray-700">
+                            <div class="relative group">
+                                <i data-lucide="user" class="absolute left-3 top-3.5 text-gray-400 w-5 h-5 pointer-events-none z-10"></i>
+                                <!-- FIX: Added Chevron Down for Desktop Visibility -->
+                                <i data-lucide="chevron-down" class="absolute right-3 top-3.5 text-gray-400 w-5 h-5 pointer-events-none z-10"></i>
+                                
+                                <select id="pilihSiswa" class="w-full pl-10 pr-10 py-3 border border-gray-200 rounded-xl bg-gray-50 focus:ring-2 focus:ring-emerald-500 outline-none text-sm appearance-none font-medium text-gray-700 cursor-pointer">
                                     ${opsiSiswa}
                                 </select>
                             </div>
-                            <button onclick="login()" class="w-full bg-emerald-600 text-white py-3.5 rounded-xl font-bold text-sm shadow-lg shadow-emerald-200 active:scale-95 transition-transform">${t.btnMasuk}</button>
+                            <button onclick="login()" class="w-full bg-emerald-600 text-white py-3.5 rounded-xl font-bold text-sm shadow-lg shadow-emerald-200 active:scale-95 transition-transform hover:bg-emerald-700">${t.btnMasuk}</button>
                         </div>
                         <div class="mt-6 pt-4 border-t border-gray-100 text-center">
                             <p class="text-xs italic text-gray-400 leading-relaxed">"${RANDOM_QUOTE.text}"</p>
