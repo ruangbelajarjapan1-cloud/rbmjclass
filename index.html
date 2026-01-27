@@ -323,7 +323,14 @@
                 let cleanStatus = safeText(rawStatus).toString().trim().toLowerCase();
                 
                 let isLunas = cleanStatus.includes('lunas');
-                let isTelat = !isLunas && new Date().getDate() > 25 && cleanStatus.includes('belum');
+               // Ganti kode lama dengan ini:
+let isLunas = cleanStatus.includes('lunas');
+
+// Status TELAT hanya muncul jika:
+// 1. Belum lunas
+// 2. Status mengandung kata 'belum'
+// 3. Sekarang sudah lewat tanggal 28 (Ustadzah bisa ganti angka 28 ini)
+let isTelat = !isLunas && new Date().getDate() > 28 && cleanStatus.includes('belum');    
                 
                 let statusColor = isLunas ? "bg-green-100 text-green-700" : (isTelat ? "bg-red-100 text-red-600" : "bg-amber-100 text-amber-700");
                 let statusText = isLunas ? t.statusLunas : (isTelat ? t.statusTelat : (rawStatus || t.statusBelum));
