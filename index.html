@@ -19,17 +19,32 @@
     <div id="app" class="relative z-10">
         <div class="flex flex-col items-center justify-center min-h-screen">
             <div class="animate-spin rounded-full h-10 w-10 border-b-2 border-emerald-700"></div>
-            <p class="mt-4 text-emerald-800 font-bold">Memuat Aplikasi...</p>
+            <p class="mt-4 text-emerald-800 font-bold">Sinkronisasi Database...</p>
         </div>
     </div>
 
     <script>
-        // MASUKKAN LINK GOOGLE APPS SCRIPT ANDA DI SINI
-        const API_URL = "https://script.google.com/macros/s/AKfycbw49kZ84bMIxXsEScQI0Kf2AG9CRBnsFIosgSaOe2pH575BrIifHy6NrjGVw1f6cB9VMA/exec"; 
+        // MASUKKAN URL WEB APP ANDA DI SINI
+        const API_URL = "GANTI_DENGAN_URL_WEB_APP_ANDA"; 
         const ADMIN_WA = "6285819809668";
 
         let DATA_SISWA = []; let DATA_HARGA = {}; let INFO_PENGUMUMAN = {};
-        let STATE = { view: 'login', user: null };
+        let STATE = { view: 'login', user: null, lang: 'id' };
+
+        const TEKS = {
+            id: {
+                select: "Pilih Nama Siswa", btnMasuk: "MASUK", loginSub: "Student Portal",
+                studentId: "ID Siswa", total: "TAGIHAN", report: "LAPOR IZIN",
+                notes: "CATATAN GURU", schedule: "JADWAL KELAS", history: "RIWAYAT BAYAR",
+                noData: "Belum ada data"
+            },
+            en: {
+                select: "Select Student Name", btnMasuk: "LOGIN", loginSub: "Student Portal",
+                studentId: "Student ID", total: "BILL", report: "REPORT ABSENCE",
+                notes: "TEACHER NOTES", schedule: "CLASS SCHEDULE", history: "PAYMENT HISTORY",
+                noData: "No data available"
+            }
+        };
 
         async function ambilData() {
             try {
@@ -37,87 +52,71 @@
                 const data = await res.json();
                 DATA_SISWA = data.students; DATA_HARGA = data.prices; INFO_PENGUMUMAN = data.info;
                 renderApp();
-            } catch (e) {
-                document.getElementById('app').innerHTML = `<div class="p-10 text-center"><p class="text-red-500 font-bold">Error: Pastikan API URL sudah benar.</p></div>`;
-            }
+            } catch (e) { document.getElementById('app').innerHTML = `<p class='p-10 text-center text-red-500'>Koneksi Gagal. Cek URL Web App.</p>`; }
         }
 
         function renderApp() {
             const app = document.getElementById('app');
+            const t = TEKS[STATE.lang];
+
             if (STATE.view === 'login') {
-                let opsi = DATA_SISWA.map(s => `<option value="${s.id}">${s.name}</option>`).join('');
+                let opsi = `<option value="" disabled selected>-- ${t.select} --</option>` + DATA_SISWA.map(s => `<option value="${s.id}">${s.name}</option>`).join('');
                 app.innerHTML = `
                 <div class="min-h-screen flex flex-col items-center justify-center p-6 bg-emerald-800 fade-enter">
-                    <div class="bg-white p-8 rounded-[2rem] shadow-2xl w-full max-w-sm text-center">
+                    <button onclick="toggleLang()" class="absolute top-6 right-6 text-white text-xs font-bold border border-white/30 px-3 py-1 rounded-full uppercase">${STATE.lang}</button>
+                    <div class="bg-white p-8 rounded-[2.5rem] shadow-2xl w-full max-w-sm text-center">
                         <img src="logo.png" class="h-20 mx-auto mb-4" onerror="this.src='https://ui-avatars.com/api/?name=RBM+Japan&background=065f46&color=fff'">
-                        <h1 class="text-2xl font-bold text-emerald-800 tracking-tighter">RBM JAPAN</h1>
-                        <p class="text-[10px] text-gray-400 mb-8 uppercase font-bold tracking-widest">Student Portal</p>
-                        <select id="selSiswa" class="w-full p-4 border rounded-2xl mb-4 bg-gray-50 text-sm font-bold text-gray-700">${opsi}</select>
-                        <button onclick="login()" class="w-full bg-emerald-600 text-white py-4 rounded-2xl font-bold uppercase text-sm tracking-widest hover:bg-emerald-700 transition-all">MASUK</button>
+                        <h1 class="text-2xl font-black text-emerald-800 tracking-tighter">RBM JAPAN</h1>
+                        <p class="text-[10px] text-gray-400 mb-8 uppercase font-bold tracking-widest">${t.loginSub}</p>
+                        <select id="selSiswa" class="w-full p-4 border rounded-2xl mb-4 bg-gray-50 text-sm font-bold text-gray-700 focus:border-emerald-500 outline-none">${opsi}</select>
+                        <button onclick="login()" class="w-full bg-emerald-600 text-white py-4 rounded-2xl font-bold uppercase tracking-widest text-sm shadow-lg active:scale-95 transition-all">${t.btnMasuk}</button>
                     </div>
                 </div>`;
             } else {
                 const s = STATE.user;
-                let total = 0; s.classes.forEach(c => { total += (DATA_HARGA[c] || 0); });
+                let total = 0; s.classes.forEach(c => { total += (DATA_HARGA[c.trim()] || 0); });
                 if (s.role == 2) total *= 0.5;
-
-                let sts = s.payments["Bulan Ini"] || "Belum Bayar";
-                let stsColor = sts.toLowerCase().includes('lunas') ? "bg-green-100 text-green-700" : "bg-amber-100 text-amber-700";
 
                 app.innerHTML = `
                 <div class="max-w-md mx-auto pb-10 fade-enter">
-                    <div class="bg-emerald-700 pt-12 pb-24 px-6 rounded-b-[3rem] shadow-xl text-white relative">
+                    <div class="bg-emerald-700 pt-12 pb-24 px-6 rounded-b-[3.5rem] shadow-xl text-white relative">
                         <div class="flex justify-between items-start">
-                            <div><p class="text-[10px] uppercase font-bold opacity-50">ID: ${s.id}</p><h1 class="text-3xl font-black lowercase">${s.name}</h1></div>
+                            <div><p class="text-[10px] uppercase font-bold opacity-50 tracking-widest">ID: ${s.id}</p><h1 class="text-3xl font-black lowercase">${s.name}</h1></div>
                             <button onclick="location.reload()" class="bg-white/20 p-2 rounded-full no-print"><i data-lucide="log-out" width="20"></i></button>
                         </div>
                     </div>
 
-                    <div class="px-6 -mt-16">
+                    <div class="px-6 -mt-16 relative z-20">
                         <div class="bg-white p-7 rounded-[2.5rem] shadow-2xl border">
                             <div class="flex justify-between items-center mb-4">
-                                <span class="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Tagihan</span>
-                                <span class="${stsColor} px-3 py-1 rounded-full text-[10px] font-bold uppercase">${sts}</span>
+                                <span class="text-[10px] font-bold text-gray-400 uppercase tracking-widest">${t.total}</span>
+                                <button onclick="laporIzin('${s.name}', '${s.id}')" class="text-[10px] font-bold text-blue-600 bg-blue-50 px-3 py-1 rounded-full flex items-center gap-1"><i data-lucide="send" width="10"></i> ${t.report}</button>
                             </div>
-                            <h2 class="text-4xl font-black text-emerald-900 mb-8 tracking-tighter">¥${total.toLocaleString('ja-JP')}</h2>
+                            <h2 class="text-4xl font-black text-emerald-900 mb-6 tracking-tighter">¥${total.toLocaleString('ja-JP')}</h2>
                             <div class="grid grid-cols-2 gap-3 no-print">
-                                <button onclick="window.open('https://wa.me/${ADMIN_WA}?text=Konfirmasi SPP ${s.name}')" class="bg-emerald-600 text-white py-3 rounded-2xl text-[10px] font-bold flex items-center justify-center gap-2"><i data-lucide="send" width="14"></i> KONFIRMASI</button>
-                                <button onclick="window.print()" class="bg-gray-100 text-gray-600 py-3 rounded-2xl text-[10px] font-bold flex items-center justify-center gap-2"><i data-lucide="printer" width="14"></i> SIMPAN PDF</button>
+                                <button onclick="window.open('https://wa.me/${ADMIN_WA}?text=Konfirmasi SPP ${s.name} (${s.id})')" class="bg-emerald-600 text-white py-3 rounded-2xl text-[10px] font-bold">KONFIRMASI WA</button>
+                                <button onclick="window.print()" class="bg-gray-100 text-gray-600 py-3 rounded-2xl text-[10px] font-bold">SIMPAN PDF</button>
                             </div>
                         </div>
                     </div>
 
                     <div class="p-6 space-y-8">
-                        ${INFO_PENGUMUMAN.aktif ? `<div class="bg-amber-50 p-4 rounded-2xl border border-amber-100 flex gap-3 text-xs text-amber-900 fade-enter"><i data-lucide="megaphone" class="shrink-0"></i>${INFO_PENGUMUMAN.teks_id}</div>` : ''}
-
-                        <section>
-                            <h3 class="font-bold text-gray-800 mb-4 flex items-center gap-3"><i data-lucide="message-square" class="text-blue-500" width="18"></i> CATATAN GURU</h3>
-                            ${s.notes.map(n => `<div class="bg-blue-50 p-4 rounded-2xl mb-3"><p class="text-[10px] font-bold text-blue-600 mb-1">${n.date}</p><p class="text-xs text-blue-900">${n.message}</p></div>`).join('') || '<p class="text-xs text-gray-400 italic">Belum ada catatan.</p>'}
+                        <section><h3 class="font-bold text-gray-800 mb-4 flex items-center gap-3"><i data-lucide="message-square" class="text-blue-500" width="18"></i> ${t.notes}</h3>
+                            ${s.notes.map(n => `<div class="bg-blue-50 p-4 rounded-2xl mb-3 font-medium text-xs text-blue-900"><p class="text-[9px] font-bold text-blue-600 mb-1">${n.date}</p>${n.message}</div>`).join('') || `<p class="text-xs text-gray-400 italic">${t.noData}</p>`}
                         </section>
 
-                        <section>
-                            <h3 class="font-bold text-gray-800 mb-4 flex items-center gap-3"><i data-lucide="calendar" class="text-purple-500" width="18"></i> JADWAL KELAS</h3>
-                            ${s.schedule.map(sc => `
-                                <div class="bg-white p-4 rounded-2xl border shadow-sm flex justify-between items-center mb-3">
-                                    <div class="flex items-center gap-3">
-                                        <div class="bg-gray-100 text-gray-500 font-bold px-3 py-1 rounded-lg text-[10px] uppercase">${sc.day}</div>
-                                        <div><p class="text-xs font-bold text-emerald-800">${sc.subject}</p><p class="text-[10px] text-gray-400 font-bold">${sc.time} JST</p></div>
-                                    </div>
-                                </div>`).join('') || '<p class="text-xs text-gray-400 italic">Belum ada jadwal.</p>'}
+                        <section><h3 class="font-bold text-gray-800 mb-4 flex items-center gap-3"><i data-lucide="calendar" class="text-purple-500" width="18"></i> ${t.schedule}</h3>
+                            ${s.schedule.map(sc => `<div class="bg-white p-4 rounded-2xl border shadow-sm flex justify-between items-center mb-3">
+                                <div class="flex items-center gap-3"><div class="bg-gray-100 text-gray-500 font-bold px-3 py-1 rounded-lg text-[10px] uppercase">${sc.day}</div>
+                                <div><p class="text-xs font-bold text-emerald-800">${sc.subject}</p><p class="text-[10px] text-gray-400 font-bold">${sc.time} JST</p></div></div>
+                            </div>`).join('') || `<p class="text-xs text-gray-400 italic">${t.noData}</p>`}
                         </section>
 
-                        <section>
-                            <h3 class="font-bold text-gray-800 mb-4 flex items-center gap-3"><i data-lucide="history" class="text-emerald-500" width="18"></i> RIWAYAT PEMBAYARAN</h3>
-                            <div class="bg-white rounded-2xl border overflow-hidden">
-                                <table class="w-full text-left text-[10px]">
-                                    <thead class="bg-gray-50 text-gray-400 uppercase font-bold">
-                                        <tr><th class="p-3">Bulan/Kelas</th><th class="p-3 text-right">Status</th></tr>
-                                    </thead>
-                                    <tbody class="divide-y font-bold text-gray-700">
-                                        ${s.history.map(h => `<tr><td class="p-3"><div>${h.bulan}</div><div class="text-[8px] text-gray-400 font-normal">${h.kelas}</div></td><td class="p-3 text-right"><span class="text-green-600">${h.status}</span></td></tr>`).join('') || '<tr><td colspan="2" class="p-3 text-center italic">Kosong</td></tr>'}
-                                    </tbody>
-                                </table>
-                            </div>
+                        <section><h3 class="font-bold text-gray-800 mb-4 flex items-center gap-3"><i data-lucide="history" class="text-emerald-500" width="18"></i> ${t.history}</h3>
+                            <div class="bg-white rounded-2xl border overflow-hidden text-[10px]"><table class="w-full text-left font-bold text-gray-700">
+                                <thead class="bg-gray-50 text-gray-400 uppercase"><tr><th class="p-3">Bulan/Kelas</th><th class="p-3 text-right">Status</th></tr></thead>
+                                <tbody class="divide-y">${s.history.map(h => `<tr><td class="p-3">${h.bulan}<br><span class="font-normal text-gray-400">${h.kelas}</span></td><td class="p-3 text-right text-green-600">${h.status}</td></tr>`).join('') || '<tr><td colspan="2" class="p-3 text-center italic text-gray-400">Kosong</td></tr>'}</tbody>
+                            </table></div>
                         </section>
                     </div>
                 </div>`;
@@ -125,7 +124,9 @@
             lucide.createIcons();
         }
 
-        function login() { const id = document.getElementById('selSiswa').value; STATE.user = DATA_SISWA.find(s => s.id === id); STATE.view = 'dashboard'; renderApp(); }
+        function toggleLang() { STATE.lang = STATE.lang === 'id' ? 'en' : 'id'; renderApp(); }
+        function login() { const id = document.getElementById('selSiswa').value; if(!id) return; STATE.user = DATA_SISWA.find(s => s.id === id); STATE.view = 'dashboard'; renderApp(); }
+        function laporIzin(nama, id) { window.open(`https://wa.me/${ADMIN_WA}?text=Assalamu’alaikum, saya ingin lapor izin tidak masuk kelas atas nama ${nama} (${id}) karena...`, '_blank'); }
         ambilData();
     </script>
 </body>
