@@ -40,17 +40,14 @@
     <div class="pattern-grid absolute inset-0 z-0 pointer-events-none"></div>
 
     <div id="app" class="relative z-10 safe-pb">
-        <!-- Default Loading State -->
         <div class="flex flex-col items-center justify-center min-h-screen">
             <div class="animate-spin rounded-full h-10 w-10 border-b-2 border-emerald-700"></div>
             <p class="mt-4 text-emerald-800 font-semibold text-sm">Memuat Aplikasi...</p>
         </div>
     </div>
 
-    <!-- TOAST MSG -->
     <div id="toast" class="toast">Sedang sinkronisasi...</div>
 
-    <!-- MODAL INSTALL GUIDE -->
     <div id="installModal" class="fixed inset-0 z-50 flex items-end sm:items-center justify-center pointer-events-none opacity-0 transition-opacity duration-300">
         <div class="absolute inset-0 bg-black/50" onclick="toggleInstallModal(false)"></div>
         <div class="bg-white w-full max-w-sm mx-auto p-6 rounded-t-2xl sm:rounded-2xl transform translate-y-full sm:translate-y-0 transition-transform duration-300 pointer-events-auto shadow-2xl relative">
@@ -103,10 +100,11 @@
 
         const RANDOM_QUOTE = { text: "Barangsiapa menempuh jalan untuk menuntut ilmu, Allah akan mudahkan jalannya ke surga.", source: "HR. Muslim" };
 
-        // --- CORE FUNCTIONS (SMART CACHING & SANITIZING) ---
+        // --- CORE FUNCTIONS (V3 CACHE SYSTEM) ---
         async function ambilData() {
-            // 1. Cek Cache
-            const cachedData = localStorage.getItem('rbm_cache_v2');
+            // Menggunakan V3 untuk memaksa refresh data dari masalah sebelumnya
+            const cachedData = localStorage.getItem('rbm_cache_v3');
+            
             if (cachedData) {
                 try {
                     const parsed = JSON.parse(cachedData);
@@ -117,13 +115,11 @@
                 renderLoading();
             }
 
-            // 2. Ambil Data Baru
             try {
                 const respon = await fetch(API_URL);
                 const data = await respon.json();
                 
-                // Simpan cache
-                localStorage.setItem('rbm_cache_v2', JSON.stringify(data));
+                localStorage.setItem('rbm_cache_v3', JSON.stringify(data));
                 processData(data);
                 
                 if(cachedData) showToast("Data berhasil diperbarui!", 2000);
@@ -138,20 +134,24 @@
             DATA_HARGA = data.prices || {};
             if (data.info) INFO_PENGUMUMAN = data.info;
             
-            // Sanitasi data siswa agar tidak ada null/undefined yang lolos
             DATA_SISWA = (data.students || []).map(s => ({
-                id: s.id || "-",
-                name: s.name || "Tanpa Nama",
+                id: safeText(s.id),
+                name: safeText(s.name),
                 classes: Array.isArray(s.classes) ? s.classes : [],
                 role: s.role || 1,
                 payments: s.payments || {},
-                // Pastikan array selalu ada
                 schedule: Array.isArray(s.schedule) ? s.schedule : [],
                 attendance: Array.isArray(s.attendance) ? s.attendance : [],
                 notes: Array.isArray(s.notes) ? s.notes : []
             }));
 
             renderApp();
+        }
+
+        // Helper: Mengubah null/undefined menjadi "-"
+        function safeText(txt) {
+            if (txt === null || txt === undefined || txt === "undefined") return "-";
+            return txt;
         }
 
         function showToast(msg, duration = 3000) {
@@ -166,16 +166,13 @@
         function hitungSPP(student) {
             let totalMurni = 0;
             let rincian = [];
-            // Safety check
             if (!student.classes) return { totalMurni: 0, rincian: [], totalAkhir: 0 };
 
             student.classes.forEach(kelasSiswa => {
                 let harga = 0;
-                // Cek harga eksak
                 if (DATA_HARGA[kelasSiswa]) {
                     harga = DATA_HARGA[kelasSiswa];
                 } else {
-                    // Cek harga mirip (misal Tahfidz 8x)
                     for (const [namaKelasDB, hargaDB] of Object.entries(DATA_HARGA)) {
                         if (kelasSiswa.includes(namaKelasDB) || namaKelasDB.includes(kelasSiswa)) {
                             harga = hargaDB;
@@ -193,14 +190,24 @@
 
         const formatYen = (angka) => "¥" + (angka || 0).toLocaleString('ja-JP');
 
-        // FIX MAPEL & UNDEFINED (Final Robust Version)
+        // FIX JADWAL: Memastikan hanya menampilkan jadwal yang sesuai dengan kelas siswa
+        function getMySchedule(student) {
+            if (!student.schedule || student.schedule.length === 0) return [];
+            
+            // Filter: Jadwal Subject harus mengandung nama salah satu kelas yang diambil siswa
+            return student.schedule.filter(sc => {
+                const subject = (sc.subject || "").toLowerCase();
+                return student.classes.some(cls => subject.includes(cls.toLowerCase()) || cls.toLowerCase().includes(subject));
+            });
+        }
+
+        // FIX MAPEL & UNDEFINED
         function getMapelByDate(dateString, schedule) {
-            if (!dateString || !schedule || schedule.length === 0) return "Kegiatan Sekolah"; 
+            if (!dateString || !schedule || schedule.length === 0) return "Kegiatan"; 
             
             const parts = dateString.split('/');
             let dateObj;
-            
-            if(parts.length === 3) dateObj = new Date(parts[2], parts[1]-1, parts[0]); // Format dd/mm/yyyy
+            if(parts.length === 3) dateObj = new Date(parts[2], parts[1]-1, parts[0]);
             else dateObj = new Date(dateString);
             
             if(isNaN(dateObj.getTime())) return "Kegiatan"; 
@@ -208,7 +215,6 @@
             const days = ['Minggu', 'Senin', 'Selasa', 'Rabu', 'Kamis', 'Jumat', 'Sabtu'];
             const dayName = days[dateObj.getDay()];
             
-            // Cari jadwal yang harinya sama. Jika ada banyak, ambil yang pertama.
             const found = schedule.find(s => s.day === dayName);
             return found && found.subject ? found.subject : "Kegiatan";
         }
@@ -218,13 +224,15 @@
             catch (e) { return ""; }
         }
 
-        // --- ACTIONS ---
         function kirimWA(text) { window.open(`https://wa.me/${ADMIN_WA}?text=${encodeURIComponent(text)}`, '_blank'); }
+        
         function laporIzin(nama, id) {
             const pesan = `Assalamualaikum Admin RBM, saya wali dari siswa ${nama} (${id}) ingin izin tidak masuk kelas hari ini dikarenakan sakit/berhalangan. Mohon doanya.`;
             kirimWA(pesan);
         }
+
         function cetakLaporan() { window.print(); }
+        
         function toggleInstallModal(show) {
             const modal = document.getElementById('installModal');
             const content = modal.querySelector('div.bg-white');
@@ -311,37 +319,38 @@
                         <span class="font-mono font-bold text-gray-800">${formatYen(item.harga)}</span>
                     </div>`).join('');
 
-                // LOGIKA STATUS: 
-                // Hanya tampilkan "Telat" jika > tgl 25 DAN status bukan "Lunas".
+                // LOGIKA STATUS: Telat hanya jika > tgl 25 DAN Status "Belum Bayar"
                 let rawStatus = s.payments ? (Object.values(s.payments)[0] || "Belum Bayar") : "Belum Bayar";
-                let cleanStatus = (rawStatus || "").toString().trim().toLowerCase();
+                let cleanStatus = rawStatus.toString().trim().toLowerCase();
                 
                 let isLunas = cleanStatus.includes('lunas');
-                let isTelat = !isLunas && new Date().getDate() > 25;
+                // Fix: Cek apakah status 'belum bayar' sebelum memvonis telat
+                let isTelat = !isLunas && new Date().getDate() > 25 && cleanStatus.includes('belum');
                 
                 let statusColor = isLunas ? "bg-green-100 text-green-700" : (isTelat ? "bg-red-100 text-red-600" : "bg-amber-100 text-amber-700");
                 let statusText = isLunas ? t.statusLunas : (isTelat ? t.statusTelat : (rawStatus || t.statusBelum));
 
-                // ABSENSI: Pastikan tidak undefined
                 const absensiHTML = (s.attendance && s.attendance.length > 0) ? s.attendance.map(att => `
                     <div class="flex items-center justify-between py-2.5 border-b border-gray-50 last:border-0">
                         <div class="flex items-center gap-3">
                             <div class="w-1.5 h-8 rounded-full ${att.status==='Hadir'?'bg-emerald-400':'bg-red-400'}"></div>
                             <div>
-                                <p class="text-xs text-gray-400 font-medium">${att.date || '-'}</p>
+                                <p class="text-xs text-gray-400 font-medium">${safeText(att.date)}</p>
                                 <p class="text-sm font-bold text-gray-700">${getMapelByDate(att.date, s.schedule)}</p>
                             </div>
                         </div>
-                        <span class="text-[10px] font-bold px-2 py-1 rounded-md ${att.status==='Hadir'?'bg-emerald-50 text-emerald-600':'bg-red-50 text-red-600'}">${att.status || '-'}</span>
+                        <span class="text-[10px] font-bold px-2 py-1 rounded-md ${att.status==='Hadir'?'bg-emerald-50 text-emerald-600':'bg-red-50 text-red-600'}">${safeText(att.status)}</span>
                     </div>`).join('') : `<p class="text-xs text-gray-400 text-center py-4 italic">${t.noData}</p>`;
 
-                const scheduleHTML = (s.schedule && s.schedule.length > 0) ? s.schedule.map(sc => `
+                // FIX JADWAL: Filter jadwal milik siswa saja (bukan semua jadwal)
+                const mySchedule = getMySchedule(s);
+                const scheduleHTML = (mySchedule.length > 0) ? mySchedule.map(sc => `
                     <div class="bg-gray-50 p-3 rounded-xl border border-gray-100 flex justify-between items-center mb-2">
                         <div class="flex items-center gap-3">
-                            <span class="text-xs font-bold text-gray-500 bg-white border border-gray-200 px-2 py-1 rounded-md w-16 text-center">${sc.day}</span>
+                            <span class="text-xs font-bold text-gray-500 bg-white border border-gray-200 px-2 py-1 rounded-md w-16 text-center">${safeText(sc.day)}</span>
                             <div>
-                                <p class="text-xs font-bold text-emerald-800">${sc.subject}</p>
-                                <p class="text-[10px] text-gray-400">${sc.time}</p>
+                                <p class="text-xs font-bold text-emerald-800">${safeText(sc.subject)}</p>
+                                <p class="text-[10px] text-gray-400">${safeText(sc.time)}</p>
                             </div>
                         </div>
                     </div>`).join('') : `<p class="text-xs text-gray-400 text-center py-4 italic">Belum ada jadwal.</p>`;
@@ -349,10 +358,10 @@
                 const notesHTML = (s.notes && s.notes.length > 0) ? s.notes.map(n => `
                     <div class="bg-blue-50 p-3 rounded-xl border border-blue-100 mb-2">
                         <div class="flex justify-between items-start mb-1">
-                            <span class="text-[10px] font-bold text-blue-600 uppercase tracking-wider">${n.date}</span>
-                            <span class="text-[10px] text-blue-400 italic">${n.teacher}</span>
+                            <span class="text-[10px] font-bold text-blue-600 uppercase tracking-wider">${safeText(n.date)}</span>
+                            <span class="text-[10px] text-blue-400 italic">${safeText(n.teacher)}</span>
                         </div>
-                        <p class="text-xs text-blue-800 leading-relaxed">"${n.message}"</p>
+                        <p class="text-xs text-blue-800 leading-relaxed">"${safeText(n.message)}"</p>
                     </div>`).join('') : `<p class="text-xs text-gray-400 text-center py-2 italic">${t.noData}</p>`;
 
                 const banner = INFO_PENGUMUMAN.aktif ? `
