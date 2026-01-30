@@ -11,13 +11,7 @@
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@500;700;900&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap');
         
-        :root {
-            --gold-dark: #b48811;
-            --gold-light: #fcd34d;
-            --gold-grad-start: #d4af37;
-            --gold-grad-end: #aa8c2c;
-            --bg-cream: #fdfbf7;
-        }
+        :root { --bg-cream: #fdfbf7; }
 
         body { 
             font-family: 'Plus Jakarta Sans', sans-serif; 
@@ -26,10 +20,8 @@
             -webkit-tap-highlight-color: transparent; 
         }
 
-        /* FONT KHUSUS JUDUL (SERIF) */
         .font-serif-display { font-family: 'Playfair Display', serif; }
 
-        /* BACKGROUND MEWAH (MARBLE FEEL) */
         .royal-bg {
             background-color: #fdfbf7;
             background-image: 
@@ -37,7 +29,6 @@
                 radial-gradient(at 90% 90%, hsla(38, 100%, 92%, 1) 0, transparent 50%);
         }
 
-        /* GLASS CARD PREMIUM */
         .glass-panel {
             background: rgba(255, 255, 255, 0.75);
             backdrop-filter: blur(20px);
@@ -45,45 +36,38 @@
             box-shadow: 0 10px 30px -10px rgba(89, 74, 30, 0.08);
         }
 
-        /* GOLD CARD (KARTU SPP) */
         .gold-card {
             background: linear-gradient(135deg, #d6ad3d 0%, #b08d28 100%);
             position: relative; overflow: hidden; color: white;
             box-shadow: 0 20px 30px -10px rgba(180, 136, 17, 0.4);
             border: 1px solid rgba(255,255,255,0.2);
         }
-        /* Efek Kilau Emas */
         .gold-card::before {
             content: ''; position: absolute; top: -50%; left: -50%; width: 200%; height: 200%;
             background: radial-gradient(circle, rgba(255,255,255,0.3) 0%, transparent 70%);
             transform: rotate(30deg); pointer-events: none;
         }
 
-        /* BUTTON GRADIENT GOLD */
         .btn-gold {
             background: linear-gradient(to right, #cc9c2b, #b58922);
-            color: white;
-            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            color: white; transition: all 0.3s;
         }
         .btn-gold:active { transform: scale(0.97); filter: brightness(90%); }
 
-        /* ANIMATIONS */
         .fade-up { animation: fadeUp 0.8s cubic-bezier(0.16, 1, 0.3, 1); }
         @keyframes fadeUp { from { opacity: 0; transform: translateY(30px); } to { opacity: 1; transform: translateY(0); } }
 
-        .ticker-wrap { overflow: hidden; white-space: nowrap; }
-        .ticker-text { animation: marquee 30s linear infinite; display: inline-block; }
+        .ticker-text { animation: marquee 30s linear infinite; display: inline-block; white-space: nowrap; }
         @keyframes marquee { 0% { transform: translateX(100%); } 100% { transform: translateX(-100%); } }
 
-        /* CUSTOM SCROLLBAR (Hidden) */
         .hide-scroll::-webkit-scrollbar { display: none; }
         
-        /* TOAST & MODAL */
         #toast { visibility: hidden; opacity: 0; transition: all 0.4s; transform: translateY(20px); }
         #toast.show { visibility: visible; opacity: 1; transform: translateY(0); }
+        
         .modal-backdrop { opacity: 0; pointer-events: none; transition: all 0.3s; background: rgba(28, 25, 23, 0.4); backdrop-filter: blur(4px); }
         .modal-backdrop.active { opacity: 1; pointer-events: auto; }
-        .modal-content { transform: scale(0.90); opacity: 0; transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1); }
+        .modal-content { transform: scale(0.90); opacity: 0; transition: all 0.4s; }
         .modal-backdrop.active .modal-content { transform: scale(1); opacity: 1; }
     </style>
 </head>
@@ -111,31 +95,26 @@
         <div class="modal-content bg-[#fdfbf7] w-full max-w-sm rounded-[2rem] p-8 shadow-2xl relative z-10 border border-white">
             <div class="flex justify-between items-center mb-8">
                 <h3 class="font-serif-display font-bold text-xl text-stone-800" id="modal-title">Bank Info</h3>
-                <button onclick="toggleModal(false)" class="w-8 h-8 rounded-full bg-stone-100 flex items-center justify-center hover:bg-stone-200 transition"><i data-lucide="x" width="16" class="text-stone-500"></i></button>
+                <button onclick="toggleModal(false)" class="w-8 h-8 rounded-full bg-stone-100 flex items-center justify-center hover:bg-stone-200"><i data-lucide="x" width="16" class="text-stone-500"></i></button>
             </div>
             
             <div class="bg-gradient-to-br from-white to-stone-50 border border-stone-200 rounded-2xl p-8 text-center shadow-sm mb-6 relative overflow-hidden">
                 <div class="absolute top-0 right-0 w-16 h-16 bg-amber-50 rounded-bl-full -mr-8 -mt-8"></div>
-                
                 <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/c/c2/Japan_Post_Bank_logo.svg/1200px-Japan_Post_Bank_logo.svg.png" class="h-6 mx-auto mb-6 opacity-80 mix-blend-multiply">
-                
                 <div class="mb-2">
                     <p class="text-[10px] text-stone-400 font-bold uppercase tracking-widest mb-1">Account Number</p>
-                    <div class="flex items-center justify-center gap-2">
-                        <h2 class="font-serif-display font-bold text-2xl text-stone-800 tracking-tight">10120-12345678</h2>
-                    </div>
+                    <h2 class="font-serif-display font-bold text-2xl text-stone-800 tracking-tight">10120-12345678</h2>
                 </div>
                 <p class="text-xs font-bold text-amber-700 uppercase tracking-wider mt-2">a.n RBM JAPAN ADMIN</p>
             </div>
 
-            <button onclick="copyText('10120-12345678', 'No. Rekening')" class="w-full btn-gold py-4 rounded-xl text-xs font-bold uppercase tracking-widest shadow-lg shadow-amber-200/50">
-                Copy Number
+            <button onclick="copyText('10120-12345678', 'No. Rekening')" class="w-full btn-gold py-4 rounded-xl text-xs font-bold uppercase tracking-widest shadow-lg shadow-amber-200/50 btn-copy-text">
+                Salin Nomor
             </button>
         </div>
     </div>
 
     <script>
-        // --- CONFIG ---
         const API_URL = "https://script.google.com/macros/s/AKfycbz2a5-sm2_gLBPF5jpTmZfBuN9PppkvUI3nXIyOJbYJ4XDZA3SDE7-FNU784ZxfSZjr/exec"; 
         const WEBSITE_URL = "https://rbj-site.vercel.app/";
         const ADMIN_WA = "6285819809668";
@@ -148,7 +127,6 @@
             en: { 'Senin': 'Monday', 'Selasa': 'Tuesday', 'Rabu': 'Wednesday', 'Kamis': 'Thursday', 'Jumat': 'Friday', 'Sabtu': 'Saturday', 'Ahad': 'Sunday' }
         };
 
-        // --- LANGUAGE DICTIONARY ---
         const TEKS = {
             id: { 
                 btn: "Masuk Portal", search_ph: "Cari Nama Siswa...", web_link: "Website Ruang Belajar",
@@ -160,6 +138,7 @@
                 news_title: "Kabar Terbaru", no_news: "Belum ada kabar terbaru",
                 schedule_title: "Jadwal Kelas", no_schedule: "Tidak ada jadwal",
                 notes_title: "Catatan Ustadz/ah", no_notes: "Tidak ada catatan",
+                history: "Riwayat Pembayaran", no_history: "Belum ada riwayat",
                 toast_copy: "Berhasil disalin", modal_title: "Info Rekening", copy_btn: "Salin Nomor"
             },
             en: { 
@@ -172,13 +151,13 @@
                 news_title: "Latest News", no_news: "No news available",
                 schedule_title: "Class Schedule", no_schedule: "No schedule",
                 notes_title: "Teacher Notes", no_notes: "No notes available",
+                history: "Payment History", no_history: "No history available",
                 toast_copy: "Copied to clipboard", modal_title: "Bank Details", copy_btn: "Copy Number"
             }
         };
 
-        // --- FUNCTIONS ---
         async function ambilData() {
-            const cache = localStorage.getItem('rbm_gold_cache');
+            const cache = localStorage.getItem('rbm_gold_cache_v2');
             if (cache) {
                 const p = JSON.parse(cache);
                 DATA_SISWA = p.s; DATA_HARGA = p.p; KABAR_RBM = p.n; INFO_PENGUMUMAN = p.i;
@@ -187,7 +166,7 @@
             try {
                 const res = await fetch(API_URL);
                 const d = await res.json();
-                localStorage.setItem('rbm_gold_cache', JSON.stringify({s:d.students, p:d.prices, n:d.news, i:d.info}));
+                localStorage.setItem('rbm_gold_cache_v2', JSON.stringify({s:d.students, p:d.prices, n:d.news, i:d.info}));
                 DATA_SISWA = d.students; DATA_HARGA = d.prices; KABAR_RBM = d.news; INFO_PENGUMUMAN = d.info;
                 if(!cache) finishLoad(); else renderApp();
             } catch (e) { if(!cache) finishLoad(); }
@@ -202,9 +181,8 @@
         function toggleModal(show) {
             const m = document.getElementById('modal-transfer');
             document.getElementById('modal-title').innerText = TEKS[STATE.lang].modal_title;
-            const btn = m.querySelector('button.btn-gold');
+            const btn = m.querySelector('.btn-copy-text');
             if(btn) btn.innerText = TEKS[STATE.lang].copy_btn;
-            
             if(show) m.classList.add('active'); else m.classList.remove('active');
         }
 
@@ -229,7 +207,6 @@
             if (h < 11) return g[0]; if (h < 15) return g[1]; if (h < 19) return g[2]; return g[3];
         }
 
-        // --- RENDER ---
         function renderApp() {
             const app = document.getElementById('app');
             const t = TEKS[STATE.lang];
@@ -240,7 +217,6 @@
                 
                 app.innerHTML = `
                 <div class="min-h-screen flex flex-col items-center justify-center p-8 fade-up relative">
-                    
                     <button onclick="STATE.lang=STATE.lang==='id'?'en':'id';renderApp()" class="absolute top-8 right-8 text-[10px] font-bold bg-white border border-amber-200 text-amber-800 px-4 py-2 rounded-full uppercase shadow-sm tracking-widest hover:bg-amber-50 transition z-30">
                         ${STATE.lang}
                     </button>
@@ -250,9 +226,7 @@
                             <div class="inline-flex items-center justify-center w-24 h-24 bg-white rounded-full shadow-[0_10px_40px_-10px_rgba(217,119,6,0.3)] mb-8 border border-amber-50">
                                 <img src="logo.png" class="h-10 object-contain opacity-90" onerror="this.src='https://cdn-icons-png.flaticon.com/512/2991/2991148.png'">
                             </div>
-                            
                             <h1 class="font-serif-display font-bold text-4xl text-stone-800 mb-3 tracking-tight">RBM Portal</h1>
-                            
                             <div class="flex items-center justify-center gap-2">
                                 <div class="h-[1px] w-8 bg-amber-300"></div>
                                 <p class="text-amber-700 text-[10px] font-bold uppercase tracking-[0.2em]">Istiqomah di atas Sunnah</p>
@@ -269,7 +243,6 @@
                                 <button onclick="const id=document.getElementById('selSiswa').value; if(id){STATE.user=DATA_SISWA.find(s=>s.id===id);STATE.view='dashboard';renderApp()}" class="w-full btn-gold py-4 rounded-2xl font-bold text-xs uppercase tracking-[0.15em] shadow-lg shadow-amber-500/30">
                                     ${t.btn}
                                 </button>
-                                
                                 <div class="mt-8 text-center">
                                     <a href="${WEBSITE_URL}" target="_blank" class="text-[10px] font-semibold text-stone-400 hover:text-amber-600 transition flex items-center justify-center gap-2">
                                         <span>${t.web_link}</span> <i data-lucide="arrow-up-right" width="12"></i>
@@ -302,7 +275,6 @@
                     </div>
 
                     <div class="px-6 space-y-6">
-                        
                         <div class="gold-card rounded-[2.5rem] p-8 group transform transition duration-500 hover:scale-[1.01]">
                             <div class="flex justify-between items-start mb-10 relative z-10">
                                 <div>
@@ -313,7 +285,6 @@
                                     <div class="w-8 h-5 border border-white/40 rounded-[2px]"></div>
                                 </div>
                             </div>
-                            
                             <div class="flex justify-between items-end relative z-10">
                                 <div>
                                     <p class="text-[9px] text-amber-100 uppercase mb-2 font-bold tracking-wider">${t.pay_status}</p>
@@ -333,12 +304,10 @@
                                 <div class="w-12 h-12 bg-amber-50 text-amber-600 rounded-full flex items-center justify-center group-hover:scale-110 transition border border-amber-100 shadow-sm"><i data-lucide="message-circle" width="20"></i></div>
                                 <span class="text-[10px] font-bold text-stone-600 text-center leading-tight whitespace-pre-line uppercase tracking-wide">${t.btn_wa}</span>
                             </button>
-                            
                             <button onclick="toggleModal(true)" class="glass-panel p-5 rounded-3xl flex flex-col items-center gap-3 hover:bg-white transition group">
                                 <div class="w-12 h-12 bg-amber-50 text-amber-600 rounded-full flex items-center justify-center group-hover:scale-110 transition border border-amber-100 shadow-sm"><i data-lucide="landmark" width="20"></i></div>
                                 <span class="text-[10px] font-bold text-stone-600 text-center leading-tight whitespace-pre-line uppercase tracking-wide">${t.btn_bank}</span>
                             </button>
-
                             <button onclick="salinRincian('${s.name}', '${total}', '${stRaw}')" class="glass-panel p-5 rounded-3xl flex flex-col items-center gap-3 hover:bg-white transition group">
                                 <div class="w-12 h-12 bg-amber-50 text-amber-600 rounded-full flex items-center justify-center group-hover:scale-110 transition border border-amber-100 shadow-sm"><i data-lucide="copy" width="20"></i></div>
                                 <span class="text-[10px] font-bold text-stone-600 text-center leading-tight whitespace-pre-line uppercase tracking-wide">${t.btn_copy}</span>
@@ -351,6 +320,28 @@
                                 <div class="ticker-text text-[11px] font-bold text-amber-800 italic font-serif-display">🔔 ${STATE.lang==='id'?INFO_PENGUMUMAN.teks_id:INFO_PENGUMUMAN.teks_en}</div>
                             </div>
                         </div>` : ''}
+                        
+                        <section>
+                            <div class="flex items-center gap-3 mb-4 px-1">
+                                <div class="h-6 w-1 bg-stone-300 rounded-full"></div>
+                                <h3 class="font-serif-display font-bold text-stone-800 text-lg">${t.history}</h3>
+                            </div>
+                            <div class="glass-panel p-1 rounded-[1.5rem]">
+                                <div class="bg-white/60 rounded-[1.3rem] overflow-hidden">
+                                    ${s.history.map(h => `
+                                    <div class="flex justify-between items-center p-4 border-b border-stone-100 last:border-0 hover:bg-white transition">
+                                        <div>
+                                            <p class="font-serif-display font-bold text-stone-800 text-sm">${h.bulan}</p>
+                                            <p class="text-[9px] text-stone-400 font-semibold tracking-wide uppercase">${h.kelas}</p>
+                                        </div>
+                                        <div class="text-right">
+                                            <p class="font-bold text-stone-700 text-xs">¥${parseInt(h.nominal).toLocaleString('ja-JP')}</p>
+                                            <span class="text-[9px] font-bold uppercase tracking-wider ${h.status.toLowerCase().includes('lunas') ? 'text-emerald-600' : 'text-stone-400'}">${h.status}</span>
+                                        </div>
+                                    </div>`).join('') || `<div class="p-6 text-center text-xs text-stone-400 italic">${t.no_history}</div>`}
+                                </div>
+                            </div>
+                        </section>
 
                         <div class="space-y-8 pb-4">
                             <section>
@@ -417,7 +408,6 @@
             }
             lucide.createIcons();
         }
-
         ambilData();
         function laporIzin(nama, id) { window.open(`https://wa.me/${ADMIN_WA}?text=Assalamu'alaikum, izin untuk murid ${nama} (${id})...`); }
     </script>
