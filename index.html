@@ -3,79 +3,161 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-    <title>RBJ Portal</title>
+    <title>RBM Japan Portal</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://unpkg.com/lucide@latest"></script>
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;700;800&display=swap');
+        @import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;800&family=Plus+Jakarta+Sans:wght@400;600;700&display=swap');
         
-        body { font-family: 'Plus Jakarta Sans', sans-serif; background: #f0fdf4; }
-        
-        /* Glass Effect Styles */
-        .glass { background: rgba(255, 255, 255, 0.9); backdrop-filter: blur(10px); border: 1px solid rgba(255,255,255,0.5); }
-        
+        :root { --primary: #059669; --dark: #022c22; }
+        body { font-family: 'Plus Jakarta Sans', sans-serif; background-color: #f0fdf4; -webkit-tap-highlight-color: transparent; }
+        .font-display { font-family: 'Outfit', sans-serif; }
+
+        /* MESH GRADIENT BACKGROUND (Premium Feel) */
+        .mesh-bg {
+            background-color: #ecfdf5;
+            background-image: 
+                radial-gradient(at 0% 0%, hsla(147,100%,77%,1) 0, transparent 50%), 
+                radial-gradient(at 50% 0%, hsla(126,100%,86%,1) 0, transparent 50%), 
+                radial-gradient(at 100% 0%, hsla(158,100%,76%,1) 0, transparent 50%);
+        }
+
+        /* CARD STYLES */
+        .glass-card {
+            background: rgba(255, 255, 255, 0.85);
+            backdrop-filter: blur(16px);
+            border: 1px solid rgba(255, 255, 255, 0.5);
+            box-shadow: 0 10px 40px -10px rgba(0, 50, 30, 0.1);
+        }
+
+        /* PREMIUM VIRTUAL CARD (Kartu SPP) */
+        .virtual-card {
+            background: linear-gradient(135deg, #059669 0%, #047857 100%);
+            color: white;
+            position: relative;
+            overflow: hidden;
+            box-shadow: 0 20px 25px -5px rgba(5, 150, 105, 0.4), 0 10px 10px -5px rgba(5, 150, 105, 0.2);
+        }
+        .virtual-card::before {
+            content: ''; position: absolute; top: -50%; left: -50%; width: 200%; height: 200%;
+            background: radial-gradient(circle, rgba(255,255,255,0.1) 0%, transparent 60%);
+            transform: rotate(30deg); pointer-events: none;
+        }
+
         /* Animations */
-        .fade-enter { animation: fadeIn 0.6s ease-out; }
-        @keyframes fadeIn { from { opacity: 0; transform: translateY(15px); } to { opacity: 1; transform: translateY(0); } }
+        .fade-in { animation: fadeIn 0.8s cubic-bezier(0.2, 0.8, 0.2, 1); }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
         
-        .ticker-text { display: inline-block; animation: marquee 20s linear infinite; }
+        .ticker-text { animation: marquee 25s linear infinite; display: inline-block; white-space: nowrap; }
         @keyframes marquee { 0% { transform: translateX(100%); } 100% { transform: translateX(-100%); } }
 
-        /* Custom Toast Notification */
-        #toast-container { visibility: hidden; min-width: 250px; background-color: #333; color: #fff; text-align: center; border-radius: 50px; padding: 16px; position: fixed; z-index: 50; left: 50%; bottom: 30px; transform: translateX(-50%); font-size: 14px; opacity: 0; transition: opacity 0.3s, bottom 0.3s; box-shadow: 0 4px 12px rgba(0,0,0,0.15); font-weight: bold; }
-        #toast-container.show { visibility: visible; opacity: 1; bottom: 50px; }
+        /* Toast & Modal */
+        #toast { visibility: hidden; opacity: 0; transition: all 0.3s; transform: translateY(20px); }
+        #toast.show { visibility: visible; opacity: 1; transform: translateY(0); }
+        
+        .modal-backdrop { opacity: 0; pointer-events: none; transition: all 0.3s; }
+        .modal-backdrop.active { opacity: 1; pointer-events: auto; }
+        .modal-content { transform: scale(0.95); opacity: 0; transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1); }
+        .modal-backdrop.active .modal-content { transform: scale(1); opacity: 1; }
     </style>
 </head>
-<body class="min-h-screen relative">
-    
-    <div id="app" class="relative z-10">
-        <div class="flex flex-col items-center justify-center min-h-screen">
-            <div class="animate-spin rounded-full h-12 w-12 border-b-4 border-emerald-600"></div>
+<body class="min-h-screen mesh-bg text-slate-800 selection:bg-emerald-200">
+
+    <div id="loader" class="fixed inset-0 z-50 bg-white flex flex-col items-center justify-center transition-opacity duration-500">
+        <div class="relative">
+            <div class="w-16 h-16 border-4 border-emerald-100 rounded-full"></div>
+            <div class="w-16 h-16 border-4 border-emerald-600 rounded-full border-t-transparent animate-spin absolute top-0 left-0"></div>
+        </div>
+        <p class="mt-4 text-xs font-bold text-emerald-800 tracking-widest uppercase animate-pulse">Memuat Portal</p>
+    </div>
+
+    <div id="app" class="relative z-10 hidden max-w-md mx-auto min-h-screen shadow-2xl bg-white/50"></div>
+
+    <div class="fixed bottom-8 left-0 right-0 z-[60] flex justify-center pointer-events-none">
+        <div id="toast" class="bg-slate-900 text-white px-6 py-3 rounded-full shadow-2xl flex items-center gap-3 text-xs font-bold shadow-slate-500/30">
+            <i data-lucide="check-circle" class="text-emerald-400" width="16"></i>
+            <span id="toast-msg">Berhasil!</span>
         </div>
     </div>
 
-    <div id="toast-container">Teks berhasil disalin!</div>
+    <div id="modal-transfer" class="modal-backdrop fixed inset-0 z-[70] flex items-center justify-center px-6">
+        <div class="absolute inset-0 bg-black/40 backdrop-blur-sm" onclick="toggleModal(false)"></div>
+        <div class="modal-content bg-white w-full max-w-sm rounded-[2rem] p-6 shadow-2xl relative z-10">
+            <div class="flex justify-between items-center mb-6">
+                <h3 class="font-display font-bold text-lg text-slate-800">Info Transfer</h3>
+                <button onclick="toggleModal(false)" class="bg-slate-100 p-2 rounded-full hover:bg-slate-200 transition"><i data-lucide="x" width="16"></i></button>
+            </div>
+            
+            <div class="bg-slate-50 border border-slate-200 rounded-2xl p-5 mb-4 text-center">
+                <p class="text-[10px] text-slate-400 font-bold uppercase tracking-wider mb-2">Japan Post Bank (Yucho)</p>
+                <div class="flex items-center justify-center gap-2 mb-1">
+                    <h2 class="text-2xl font-black text-slate-800 tracking-tighter" id="rek-number">10120-12345678</h2>
+                    <button onclick="copyText('10120-12345678', 'Nomor Rekening')" class="text-emerald-600 hover:bg-emerald-50 p-1.5 rounded-lg transition"><i data-lucide="copy" width="16"></i></button>
+                </div>
+                <p class="text-xs font-bold text-slate-500">a.n RBM JAPAN ADMIN</p>
+            </div>
+
+            <div class="text-[10px] text-slate-400 text-center leading-relaxed">
+                Pastikan nama penerima sesuai. Simpan bukti transfer untuk konfirmasi.
+            </div>
+        </div>
+    </div>
 
     <script>
-        // KONFIGURASI UTAMA
+        // --- SETTINGS ---
         const API_URL = "https://script.google.com/macros/s/AKfycbz2a5-sm2_gLBPF5jpTmZfBuN9PppkvUI3nXIyOJbYJ4XDZA3SDE7-FNU784ZxfSZjr/exec"; 
         const WEBSITE_URL = "https://rbj-site.vercel.app/";
         const ADMIN_WA = "6285819809668";
-
-        // STATE MANAGEMENT
-        let DATA_SISWA = []; let DATA_HARGA = {}; let KABAR_RBM = []; let INFO_PENGUMUMAN = {};
+        
+        // --- DATA ---
+        let DATA_SISWA = [], DATA_HARGA = {}, KABAR_RBM = [], INFO_PENGUMUMAN = {};
         let STATE = { view: 'login', user: null, lang: 'id' };
-
-        // DATA STATIS (Hari & Teks)
+        
         const DAY_NAMES = {
             id: { 'Senin': 'Senin', 'Selasa': 'Selasa', 'Rabu': 'Rabu', 'Kamis': 'Kamis', 'Jumat': 'Jumat', 'Sabtu': 'Sabtu', 'Ahad': 'Ahad' },
             en: { 'Senin': 'Monday', 'Selasa': 'Tuesday', 'Rabu': 'Wednesday', 'Kamis': 'Thursday', 'Jumat': 'Friday', 'Sabtu': 'Saturday', 'Ahad': 'Sunday' }
         };
 
-        const HADITS = [
-            { text: "Barangsiapa menempuh jalan untuk mencari ilmu, Allah mudahkan jalannya ke surga.", ref: "HR. Muslim" },
-            { text: "Sebaik-baik kalian adalah yang belajar Al-Qur'an dan mengajarkannya.", ref: "HR. Bukhari" }
-        ];
-
         const TEKS = {
-            id: { select: "Pilih Nama Siswa", btn: "MASUK PORTAL", report: "LAPOR IZIN", notes: "CATATAN GURU", schedule: "JADWAL KELAS", history: "RIWAYAT & KWITANSI", greet: ["Selamat Pagi", "Selamat Siang", "Selamat Sore", "Selamat Malam"], noData: "Belum ada data" },
-            en: { select: "Select Name", btn: "LOGIN", report: "REPORT ABSENCE", notes: "TEACHER NOTES", schedule: "SCHEDULE", history: "HISTORY", greet: ["Good Morning", "Good Afternoon", "Good Evening", "Good Night"], noData: "No data available" }
+            id: { btn: "MASUK PORTAL", report: "IZIN", notes: "Catatan Guru", schedule: "Jadwal", history: "Riwayat", greet: ["Pagi", "Siang", "Sore", "Malam"], spp_label: "Total SPP (Bulan Ini)", pay_status: "Status Pembayaran" },
+            en: { btn: "LOGIN", report: "ABSENCE", notes: "Teacher Notes", schedule: "Schedule", history: "History", greet: ["Morning", "Afternoon", "Evening", "Night"], spp_label: "Total Fee (This Month)", pay_status: "Payment Status" }
         };
 
-        // --- FUNGSI UTAMA ---
-
+        // --- CORE FUNCTIONS ---
         async function ambilData() {
             try {
                 const res = await fetch(API_URL);
                 const data = await res.json();
-                DATA_SISWA = data.students; 
-                DATA_HARGA = data.prices; 
-                KABAR_RBM = data.news; 
-                INFO_PENGUMUMAN = data.info;
+                DATA_SISWA = data.students; DATA_HARGA = data.prices; KABAR_RBM = data.news; INFO_PENGUMUMAN = data.info;
+                finishLoad();
+            } catch (e) { alert("Gagal memuat data. Periksa koneksi internet."); finishLoad(); }
+        }
+
+        function finishLoad() {
+            document.getElementById('loader').style.opacity = '0';
+            setTimeout(() => {
+                document.getElementById('loader').style.display = 'none';
+                document.getElementById('app').classList.remove('hidden');
                 renderApp();
-            } catch (e) { 
-                document.getElementById('app').innerHTML = `<p class='p-10 text-center text-red-500 font-bold'>Gagal terhubung ke API.<br><span class="text-xs font-normal text-gray-500">Coba refresh halaman</span></p>`; 
-            }
+            }, 500);
+        }
+
+        function toggleModal(show) {
+            const m = document.getElementById('modal-transfer');
+            if(show) m.classList.add('active'); else m.classList.remove('active');
+        }
+
+        function copyText(text, label) {
+            navigator.clipboard.writeText(text).then(() => {
+                document.getElementById('toast-msg').innerText = `${label} Disalin!`;
+                document.getElementById('toast').classList.add('show');
+                setTimeout(() => document.getElementById('toast').classList.remove('show'), 3000);
+            });
+        }
+
+        function salinRincian(nama, total, status) {
+            const txt = `INVOICE SPP RBM JAPAN\n------------------\nNama: ${nama}\nNominal: JPY ¥${parseInt(total).toLocaleString('ja-JP')}\nStatus: ${status}\n\nMohon konfirmasi setelah transfer.`;
+            copyText(txt, "Rincian SPP");
         }
 
         function getGreet() {
@@ -84,248 +166,167 @@
             if (h < 11) return g[0]; if (h < 15) return g[1]; if (h < 19) return g[2]; return g[3];
         }
 
-        // Fungsi Toast Notification (Pengganti Alert)
-        function showToast(message) {
-            const x = document.getElementById("toast-container");
-            x.innerText = message;
-            x.className = "show";
-            setTimeout(function(){ x.className = x.className.replace("show", ""); }, 3000);
-        }
-
-        // Fungsi Salin Tagihan (PENGGANTI PDF)
-        function salinTagihan(nama, total) {
-            // Format angka ke format mata uang agar rapi
-            const totalFormatted = "¥" + parseInt(total).toLocaleString('ja-JP');
-            
-            const teksTagihan = 
-`TAGIHAN RBM JAPAN
-------------------
-Nama : ${nama}
-Total: ${totalFormatted}
-Status: Belum Lunas
-
-Mohon sertakan bukti transfer.
-Terima kasih.`;
-
-            navigator.clipboard.writeText(teksTagihan).then(() => {
-                showToast("Rincian Tagihan Disalin! 📋");
-            }).catch(err => {
-                showToast("Gagal menyalin, browser tidak support.");
-            });
-        }
-
         function renderApp() {
             const app = document.getElementById('app');
             const t = TEKS[STATE.lang];
-            
-            // Random Hadits saat login
-            const h = HADITS[Math.floor(Math.random() * HADITS.length)];
 
             if (STATE.view === 'login') {
-                // TAMPILAN LOGIN
-                let opsi = `<option value="" disabled selected>-- ${t.select} --</option>` + DATA_SISWA.map(s => `<option value="${s.id}">${s.name}</option>`).join('');
+                let opsi = `<option value="" disabled selected>Pilih Nama Siswa...</option>` + DATA_SISWA.map(s => `<option value="${s.id}">${s.name}</option>`).join('');
                 
                 app.innerHTML = `
-                <div class="min-h-screen bg-emerald-900 flex flex-col items-center justify-center p-6 fade-enter">
-                    <button onclick="STATE.lang=STATE.lang==='id'?'en':'id';renderApp()" class="absolute top-8 right-8 text-white text-xs border border-white/40 px-3 py-1 rounded-full uppercase font-bold hover:bg-white/10 transition">${STATE.lang}</button>
-                    
-                    <div class="bg-white p-10 rounded-[2.5rem] shadow-2xl w-full max-w-sm text-center relative overflow-hidden">
-                        <div class="absolute -top-10 -right-10 w-32 h-32 bg-emerald-50 rounded-full blur-2xl"></div>
-                        
-                        <img src="logo.png" class="h-16 mx-auto mb-4 relative z-10" onerror="this.src='https://ui-avatars.com/api/?name=RBJ&background=065f46&color=fff&size=128&rounded=true'">
-                        <h1 class="text-2xl font-black text-emerald-900 uppercase mb-6 relative z-10">RBM JAPAN</h1>
-                        
-                        <div class="p-4 bg-emerald-50 rounded-2xl text-left border border-emerald-100 mb-6 relative z-10">
-                            <p class="text-[10px] text-emerald-800 italic leading-relaxed">"${h.text}"</p>
-                            <p class="text-[9px] text-emerald-500 font-bold mt-2">— ${h.ref}</p>
+                <div class="min-h-screen flex flex-col items-center justify-center p-8 fade-in relative overflow-hidden">
+                    <div class="absolute top-0 left-0 w-full h-1/2 bg-gradient-to-b from-emerald-500/10 to-transparent pointer-events-none"></div>
+
+                    <button onclick="STATE.lang=STATE.lang==='id'?'en':'id';renderApp()" class="absolute top-6 right-6 text-[10px] font-bold bg-white border border-gray-200 px-3 py-1 rounded-full uppercase shadow-sm z-20">${STATE.lang}</button>
+
+                    <div class="w-full max-w-sm relative z-10">
+                        <div class="text-center mb-10">
+                            <div class="inline-flex items-center justify-center w-20 h-20 bg-white rounded-3xl shadow-lg shadow-emerald-100 mb-6 transform rotate-3 hover:rotate-0 transition duration-500">
+                                <img src="logo.png" class="h-10" onerror="this.src='https://cdn-icons-png.flaticon.com/512/2991/2991148.png'">
+                            </div>
+                            <h1 class="font-display font-black text-3xl text-slate-800 tracking-tight mb-2">RBM PORTAL</h1>
+                            <p class="text-slate-400 text-xs font-medium">Platform Belajar Mengaji & Bahasa Jepang</p>
                         </div>
 
-                        <div class="relative z-10">
-                            <select id="selSiswa" class="w-full p-4 border rounded-2xl mb-4 bg-gray-50 text-sm font-bold outline-none focus:ring-2 focus:ring-emerald-500 transition">${opsi}</select>
-                            <button onclick="login()" class="w-full bg-emerald-600 text-white py-4 rounded-2xl font-black text-xs uppercase mb-4 shadow-lg hover:bg-emerald-700 transition active:scale-95">${t.btn}</button>
-                            <a href="${WEBSITE_URL}" target="_blank" class="text-[10px] font-bold text-emerald-600 flex items-center justify-center gap-1 hover:underline"><i data-lucide="globe" width="12"></i> Website Ruang Belajar</a>
+                        <div class="glass-card p-8 rounded-[2rem]">
+                            <label class="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-2 pl-1">Identitas Siswa</label>
+                            <div class="relative mb-4">
+                                <select id="selSiswa" class="w-full p-4 pl-5 bg-slate-50 border border-slate-200 rounded-2xl text-sm font-bold text-slate-700 outline-none focus:ring-2 focus:ring-emerald-500 appearance-none transition shadow-inner">${opsi}</select>
+                                <div class="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none"><i data-lucide="chevron-down" width="16"></i></div>
+                            </div>
+                            <button onclick="const id=document.getElementById('selSiswa').value; if(id){STATE.user=DATA_SISWA.find(s=>s.id===id);STATE.view='dashboard';renderApp()}" class="w-full bg-emerald-600 hover:bg-emerald-700 text-white py-4 rounded-2xl font-display font-bold text-sm tracking-wide shadow-lg shadow-emerald-200 transition active:scale-[0.98]">${t.btn}</button>
+                            
+                            <div class="mt-6 pt-6 border-t border-dashed border-slate-200 text-center">
+                                <a href="${WEBSITE_URL}" target="_blank" class="text-[10px] font-bold text-emerald-600 hover:underline flex items-center justify-center gap-1">
+                                    <i data-lucide="globe" width="10"></i> Kunjungi Website Resmi
+                                </a>
+                            </div>
                         </div>
                     </div>
                 </div>`;
             } else {
-                // TAMPILAN DASHBOARD
                 const s = STATE.user;
-                
-                // Hitung Total Tagihan
-                let total = 0; 
-                s.classes.forEach(c => { total += (DATA_HARGA[c.split('(')[0].trim()] || 0); });
-                if (s.role == 2) total *= 0.5; // Diskon jika role 2
+                let total = 0; s.classes.forEach(c => { total += (DATA_HARGA[c.split('(')[0].trim()] || 0); });
+                if (s.role == 2) total *= 0.5;
 
                 app.innerHTML = `
-                <div class="max-w-md mx-auto pb-24 fade-enter bg-slate-50 min-h-screen">
-                    
-                    <div class="bg-emerald-800 pt-16 pb-28 px-8 rounded-b-[3.5rem] text-white shadow-xl relative overflow-hidden">
-                        <div class="absolute top-0 left-0 w-full h-full opacity-10 bg-[url('https://www.transparenttextures.com/patterns/cubes.png')]"></div>
-                        <div class="flex justify-between items-start relative z-10">
-                            <div>
-                                <p class="text-emerald-300 text-[10px] font-bold mb-1 italic opacity-90">${getGreet()},</p>
-                                <h1 class="text-3xl font-black tracking-tight leading-none">${s.name}</h1>
-                                <p class="text-[10px] text-emerald-200 mt-1 font-medium bg-emerald-900/30 px-2 py-0.5 rounded inline-block">ID: ${s.id}</p>
-                            </div>
-                            <button onclick="location.reload()" class="bg-white/10 p-2.5 rounded-xl hover:bg-white/20 transition backdrop-blur-sm"><i data-lucide="log-out" width="18"></i></button>
+                <div class="pb-24 fade-in">
+                    <div class="pt-12 px-8 pb-6 flex justify-between items-end">
+                        <div>
+                            <p class="text-slate-400 text-[10px] font-bold uppercase tracking-wider mb-1">Selamat ${getGreet()},</p>
+                            <h2 class="font-display font-black text-2xl text-slate-800 leading-none">${s.name.split(' ')[0]}</h2>
                         </div>
+                        <button onclick="location.reload()" class="bg-white p-2.5 rounded-2xl shadow-sm border border-slate-100 text-slate-400 hover:text-red-500 transition"><i data-lucide="log-out" width="18"></i></button>
                     </div>
 
-                    <div class="px-6 -mt-20 relative z-20 space-y-6">
+                    <div class="px-6 space-y-6">
                         
-                        ${s.progres ? `
-                        <div class="bg-white p-6 rounded-[2rem] shadow-lg border-l-8 border-blue-400 transform transition hover:-translate-y-1">
-                            <div class="flex justify-between items-center mb-2">
-                                <h4 class="text-[10px] font-black text-gray-400 uppercase tracking-widest">Hafalan</h4>
-                                <span class="text-xs font-black text-blue-600 bg-blue-50 px-2 py-0.5 rounded-lg">${s.progres.persen}%</span>
-                            </div>
-                            <div class="w-full bg-gray-100 h-3 rounded-full mb-2 overflow-hidden">
-                                <div class="bg-blue-400 h-3 rounded-full transition-all duration-1000" style="width: ${s.progres.persen}%"></div>
-                            </div>
-                            <p class="text-[9px] text-gray-500 font-bold text-right italic flex items-center justify-end gap-1">
-                                <i data-lucide="target" width="10"></i> Target: ${s.progres.target}
-                            </p>
-                        </div>` : ''}
-
-                        <div class="glass p-8 rounded-[2.5rem] shadow-2xl relative overflow-hidden group">
-                            <div class="absolute top-0 right-0 p-10 bg-emerald-50 rounded-full blur-3xl -z-10 group-hover:bg-emerald-100 transition"></div>
-                            
-                            <div class="flex justify-between items-center mb-4">
-                                <span class="text-[10px] font-black text-emerald-600 uppercase tracking-widest border border-emerald-100 px-2 py-1 rounded-lg bg-white">Tagihan Bulan Ini</span>
-                                <button onclick="laporIzin('${s.name}', '${s.id}')" class="text-[10px] font-bold text-blue-600 bg-blue-50 px-3 py-1.5 rounded-full flex items-center gap-1 hover:bg-blue-100 transition"><i data-lucide="send" width="10"></i> ${t.report}</button>
-                            </div>
-                            
-                            <h2 class="text-5xl font-black text-emerald-900 mb-2 tracking-tighter">¥${total.toLocaleString('ja-JP')}</h2>
-                            <p class="text-[10px] text-gray-400 mb-8 font-medium">Status: ${s.payments["Bulan Ini"]}</p>
-                            
-                            <div class="grid grid-cols-2 gap-3">
-                                <button onclick="window.open('https://wa.me/${ADMIN_WA}?text=Konfirmasi SPP ${s.name} sebesar ¥${total}')" class="bg-emerald-600 hover:bg-emerald-700 text-white py-3.5 rounded-2xl text-[10px] font-bold uppercase shadow-lg shadow-emerald-200 transition active:scale-95 flex items-center justify-center gap-2">
-                                    <i data-lucide="message-circle" width="14"></i> Konfirmasi WA
-                                </button>
-                                
-                                <button onclick="salinTagihan('${s.name}', '${total}')" class="bg-slate-800 hover:bg-slate-900 text-white py-3.5 rounded-2xl text-[10px] font-bold uppercase shadow-lg transition active:scale-95 flex items-center justify-center gap-2">
-                                    <i data-lucide="copy" width="14"></i> Salin Tagihan
-                                </button>
-                            </div>
-                        </div>
-                    </div>
-
-                    <div class="p-8 space-y-10">
-                        ${INFO_PENGUMUMAN.aktif ? `
-                        <div class="bg-amber-50 p-1 rounded-3xl border border-amber-200 shadow-sm">
-                            <div class="bg-amber-100/50 rounded-[1.3rem] px-4 py-3 overflow-hidden">
-                                <div class="ticker-text text-xs font-bold italic text-amber-900 whitespace-nowrap">
-                                    📢 ${STATE.lang==='id'?INFO_PENGUMUMAN.teks_id:INFO_PENGUMUMAN.teks_en}
+                        <div class="virtual-card rounded-[2.5rem] p-8 relative group transform transition hover:scale-[1.01]">
+                            <div class="flex justify-between items-start mb-8 relative z-10">
+                                <div>
+                                    <p class="text-[10px] font-medium opacity-80 uppercase tracking-widest mb-1">${t.spp_label}</p>
+                                    <h1 class="font-display font-black text-4xl tracking-tight">JPY ¥${total.toLocaleString('ja-JP')}</h1>
+                                </div>
+                                <div class="w-10 h-6 rounded-md bg-yellow-200/20 border border-yellow-200/40 flex items-center justify-center">
+                                    <div class="w-6 h-4 border border-white/30 rounded-sm"></div>
                                 </div>
                             </div>
+                            
+                            <div class="flex justify-between items-end relative z-10">
+                                <div>
+                                    <p class="text-[9px] opacity-60 uppercase mb-1">${t.pay_status}</p>
+                                    <span class="inline-block bg-white/20 backdrop-blur-md px-3 py-1 rounded-lg text-[10px] font-bold border border-white/10 flex items-center gap-1">
+                                        <div class="w-1.5 h-1.5 rounded-full ${s.payments['Bulan Ini']==='Lunas'?'bg-emerald-300':'bg-amber-300'} animate-pulse"></div> ${s.payments["Bulan Ini"]}
+                                    </span>
+                                </div>
+                                <button onclick="laporIzin('${s.name}', '${s.id}')" class="bg-white text-emerald-700 px-4 py-2 rounded-xl text-[10px] font-bold shadow-lg hover:bg-emerald-50 transition flex items-center gap-1">
+                                    <i data-lucide="send" width="12"></i> ${t.report}
+                                </button>
+                            </div>
+                        </div>
+
+                        <div class="grid grid-cols-3 gap-3">
+                            <button onclick="window.open('https://wa.me/${ADMIN_WA}?text=Konfirmasi SPP ${s.name} Total: ¥${total}')" class="bg-white p-4 rounded-3xl border border-slate-100 shadow-sm flex flex-col items-center gap-2 hover:bg-emerald-50 transition group">
+                                <div class="w-10 h-10 bg-emerald-100 text-emerald-600 rounded-full flex items-center justify-center group-hover:scale-110 transition"><i data-lucide="message-circle" width="18"></i></div>
+                                <span class="text-[10px] font-bold text-slate-600 text-center">Konfirmasi<br>WhatsApp</span>
+                            </button>
+                            
+                            <button onclick="toggleModal(true)" class="bg-white p-4 rounded-3xl border border-slate-100 shadow-sm flex flex-col items-center gap-2 hover:bg-blue-50 transition group">
+                                <div class="w-10 h-10 bg-blue-100 text-blue-600 rounded-full flex items-center justify-center group-hover:scale-110 transition"><i data-lucide="credit-card" width="18"></i></div>
+                                <span class="text-[10px] font-bold text-slate-600 text-center">Info<br>Transfer</span>
+                            </button>
+
+                            <button onclick="salinRincian('${s.name}', '${total}', '${s.payments["Bulan Ini"]}')" class="bg-white p-4 rounded-3xl border border-slate-100 shadow-sm flex flex-col items-center gap-2 hover:bg-slate-50 transition group">
+                                <div class="w-10 h-10 bg-slate-100 text-slate-600 rounded-full flex items-center justify-center group-hover:scale-110 transition"><i data-lucide="copy" width="18"></i></div>
+                                <span class="text-[10px] font-bold text-slate-600 text-center">Salin<br>Rincian</span>
+                            </button>
+                        </div>
+
+                        ${INFO_PENGUMUMAN.aktif ? `
+                        <div class="bg-orange-50 border border-orange-100 rounded-2xl p-1 overflow-hidden">
+                            <div class="bg-orange-100/50 rounded-xl px-3 py-2">
+                                <div class="ticker-text text-[10px] font-bold text-orange-800 italic">📢 ${STATE.lang==='id'?INFO_PENGUMUMAN.teks_id:INFO_PENGUMUMAN.teks_en}</div>
+                            </div>
                         </div>` : ''}
-                        
-                        <section>
-                            <h3 class="font-black text-emerald-900 mb-4 flex items-center gap-3 uppercase tracking-tighter text-sm">
-                                <span class="bg-emerald-100 p-1.5 rounded-lg"><i data-lucide="newspaper" class="text-emerald-600" width="16"></i></span> 
-                                Kabar RBM Japan
-                            </h3>
-                            <div class="flex gap-4 overflow-x-auto pb-6 pt-2 snap-x hide-scrollbar">
-                                ${KABAR_RBM.map(k => `
-                                <div class="min-w-[260px] bg-white rounded-3xl shadow-sm border border-gray-100 overflow-hidden snap-center transition hover:shadow-md">
-                                    <div class="h-32 bg-gray-200 overflow-hidden relative">
-                                        <img src="${k.foto}" class="w-full h-full object-cover" onerror="this.src='https://placehold.co/400x200/e2e8f0/94a3b8?text=No+Image'">
-                                        <div class="absolute bottom-0 left-0 w-full bg-gradient-to-t from-black/50 to-transparent h-10"></div>
-                                    </div>
-                                    <div class="p-4">
-                                        <p class="text-[9px] font-bold text-emerald-600 uppercase mb-1 flex items-center gap-1"><i data-lucide="calendar" width="8"></i> ${k.tgl}</p>
-                                        <h4 class="text-sm font-bold text-gray-800 leading-tight line-clamp-2">${k.judul}</h4>
-                                    </div>
-                                </div>`).join('') || '<div class="w-full text-center py-8 bg-white rounded-3xl border border-dashed"><p class="text-xs text-gray-400 italic">Belum ada kabar terbaru</p></div>'}
-                            </div>
-                        </section>
 
-                        <section>
-                            <h3 class="font-black text-emerald-900 mb-4 flex items-center gap-3 uppercase tracking-tighter text-sm">
-                                <span class="bg-blue-100 p-1.5 rounded-lg"><i data-lucide="message-square" class="text-blue-600" width="16"></i></span>
-                                ${t.notes}
-                            </h3>
-                            <div class="space-y-3">
-                                ${s.notes.map(n => `
-                                <div class="bg-white p-5 rounded-3xl border border-blue-100 shadow-sm relative overflow-hidden">
-                                    <div class="absolute top-0 left-0 w-1 h-full bg-blue-400"></div>
-                                    <div class="flex justify-between items-start mb-2">
-                                        <p class="text-[9px] font-black text-blue-500 bg-blue-50 px-2 py-1 rounded-md uppercase">${n.date}</p>
-                                        <i data-lucide="quote" class="text-blue-100" width="20"></i>
-                                    </div>
-                                    <p class="text-xs text-slate-600 leading-relaxed font-medium">"${n.message}"</p>
-                                    ${n.teacher ? `<p class="text-[9px] text-slate-400 mt-2 text-right">— ${n.teacher}</p>` : ''}
-                                </div>`).join('') || `<div class="bg-gray-50 rounded-2xl p-6 text-center border border-dashed"><p class="text-xs text-gray-400 italic">${t.noData}</p></div>`}
-                            </div>
-                        </section>
-
-                        <section>
-                            <h3 class="font-black text-emerald-900 mb-4 flex items-center gap-3 uppercase tracking-tighter text-sm">
-                                <span class="bg-purple-100 p-1.5 rounded-lg"><i data-lucide="calendar-clock" class="text-purple-600" width="16"></i></span>
-                                ${t.schedule}
-                            </h3>
-                            <div class="space-y-3">
-                                ${s.schedule.map(sc => `
-                                <div class="bg-white p-4 rounded-3xl border border-gray-100 flex items-center justify-between shadow-sm">
-                                    <div class="flex items-center gap-4">
-                                        <div class="bg-emerald-50 text-emerald-700 font-black h-12 w-14 rounded-2xl text-[10px] flex flex-col items-center justify-center uppercase leading-tight border border-emerald-100">
-                                            <span>${(DAY_NAMES[STATE.lang][sc.day] || sc.day).substring(0,3)}</span>
+                        <div class="space-y-6 pb-4">
+                            <section>
+                                <div class="flex items-center justify-between mb-3 px-1">
+                                    <h3 class="font-display font-bold text-slate-800 text-sm">Kabar Terbaru</h3>
+                                </div>
+                                <div class="flex gap-4 overflow-x-auto pb-4 px-1 snap-x hide-scroll">
+                                    ${KABAR_RBM.map(k => `
+                                    <div class="min-w-[240px] bg-white rounded-3xl border border-slate-100 overflow-hidden shadow-sm snap-center">
+                                        <div class="h-28 bg-slate-200 relative"><img src="${k.foto}" class="w-full h-full object-cover"></div>
+                                        <div class="p-4">
+                                            <span class="text-[9px] font-bold text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded uppercase">${k.tgl}</span>
+                                            <h4 class="text-xs font-bold text-slate-800 mt-2 line-clamp-2">${k.judul}</h4>
                                         </div>
-                                        <div>
-                                            <p class="text-xs font-bold text-gray-800">${sc.subject}</p>
-                                            <p class="text-[10px] text-gray-400 font-bold flex items-center gap-1 mt-0.5"><i data-lucide="clock" width="10"></i> ${sc.time} JST</p>
-                                        </div>
-                                    </div>
-                                </div>`).join('') || `<div class="bg-gray-50 rounded-2xl p-6 text-center border border-dashed"><p class="text-xs text-gray-400 italic">${t.noData}</p></div>`}
-                            </div>
-                        </section>
+                                    </div>`).join('') || '<div class="w-full p-6 text-center text-xs text-slate-400 italic bg-white rounded-2xl border border-dashed">Belum ada kabar</div>'}
+                                </div>
+                            </section>
 
-                        <section>
-                            <h3 class="font-black text-emerald-900 mb-4 flex items-center gap-3 uppercase tracking-tighter text-sm">
-                                <span class="bg-orange-100 p-1.5 rounded-lg"><i data-lucide="history" class="text-orange-600" width="16"></i></span>
-                                ${t.history}
-                            </h3>
-                            <div class="bg-white rounded-[2rem] border border-gray-100 overflow-hidden shadow-sm text-[11px] font-bold">
-                                <table class="w-full text-left font-bold">
-                                    <thead class="bg-gray-50 text-gray-500 uppercase text-[9px] tracking-wider">
-                                        <tr><th class="p-4 pl-6">Bulan</th><th class="p-4 text-right pr-6">Status</th></tr>
-                                    </thead>
-                                    <tbody class="divide-y divide-gray-100">
-                                        ${s.history.map(h => `
-                                        <tr class="hover:bg-gray-50 transition">
-                                            <td class="p-4 pl-6 text-gray-800">
-                                                ${h.bulan}
-                                                <br><span class="font-normal text-[9px] text-gray-400">${h.kelas}</span>
-                                            </td>
-                                            <td class="p-4 pr-6 text-right">
-                                                <button onclick="alert('Bukti Pembayaran\\n------------------\\nNama: ${s.name}\\nBulan: ${h.bulan}\\nNominal: ${h.nominal}\\nStatus: ${h.status}')" class="text-emerald-600 bg-emerald-50 hover:bg-emerald-100 px-3 py-1.5 rounded-lg text-[9px] transition">
-                                                    Lihat
-                                                </button>
-                                            </td>
-                                        </tr>`).join('') || '<tr><td colspan="2" class="p-6 text-center italic text-gray-300">Belum ada riwayat</td></tr>'}
-                                    </tbody>
-                                </table>
+                            <div class="grid gap-4">
+                                <section>
+                                    <h3 class="font-display font-bold text-slate-800 text-sm mb-3 px-1">${t.schedule}</h3>
+                                    <div class="space-y-2">
+                                        ${s.schedule.map(sc => `
+                                        <div class="bg-white p-3 rounded-2xl border border-slate-100 flex items-center gap-3 shadow-[0_2px_10px_-4px_rgba(0,0,0,0.05)]">
+                                            <div class="bg-slate-50 w-12 h-12 rounded-xl flex flex-col items-center justify-center text-[9px] font-black text-slate-500 uppercase leading-none border border-slate-200">
+                                                ${(DAY_NAMES[STATE.lang][sc.day] || sc.day).substring(0,3)}
+                                            </div>
+                                            <div>
+                                                <p class="text-xs font-bold text-slate-800">${sc.subject}</p>
+                                                <p class="text-[10px] text-emerald-600 font-bold flex items-center gap-1"><i data-lucide="clock" width="8"></i> ${sc.time} JST</p>
+                                            </div>
+                                        </div>`).join('') || '<p class="text-xs text-slate-400 italic text-center py-4">Tidak ada jadwal</p>'}
+                                    </div>
+                                </section>
+
+                                <section>
+                                    <h3 class="font-display font-bold text-slate-800 text-sm mb-3 px-1">${t.notes}</h3>
+                                    <div class="space-y-2">
+                                        ${s.notes.map(n => `
+                                        <div class="bg-blue-50/50 p-4 rounded-2xl border border-blue-100">
+                                            <div class="flex justify-between items-center mb-1">
+                                                <span class="text-[9px] font-bold text-blue-500 uppercase">${n.date}</span>
+                                                <i data-lucide="message-square" class="text-blue-200" width="12"></i>
+                                            </div>
+                                            <p class="text-xs text-slate-600 font-medium">"${n.message}"</p>
+                                        </div>`).join('') || '<p class="text-xs text-slate-400 italic text-center py-4">Tidak ada catatan</p>'}
+                                    </div>
+                                </section>
                             </div>
-                        </section>
+
+                        </div>
                     </div>
                 </div>`;
             }
             lucide.createIcons();
         }
 
-        function login() { 
-            const id = document.getElementById('selSiswa').value; 
-            if(!id) return; 
-            STATE.user = DATA_SISWA.find(s => s.id === id); 
-            STATE.view = 'dashboard'; 
-            renderApp(); 
-        }
-        
-        function laporIzin(nama, id) { 
-            window.open(`https://wa.me/${ADMIN_WA}?text=Assalamu'alaikum, saya ingin izin untuk murid ${nama} (${id}) hari ini dikarenakan...`); 
-        }
-
-        // Jalankan aplikasi
+        function login() { const id = document.getElementById('selSiswa').value; if(!id) return; STATE.user = DATA_SISWA.find(s => s.id === id); STATE.view = 'dashboard'; renderApp(); }
+        function laporIzin(nama, id) { window.open(`https://wa.me/${ADMIN_WA}?text=Assalamu'alaikum, izin untuk murid ${nama} (${id}) hari ini dikarenakan...`); }
         ambilData();
     </script>
 </body>
