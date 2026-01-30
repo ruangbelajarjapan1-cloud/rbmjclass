@@ -53,7 +53,7 @@
             box-shadow: 0 15px 25px -5px rgba(2, 132, 199, 0.3);
             border: 2px solid rgba(255,255,255,0.2);
         }
-        /* Motif Awan Abstrak (Syar'i: Bukan Makhluk Hidup) */
+        /* Motif Awan Abstrak (Syar'i) */
         .sky-card::before {
             content: ''; position: absolute; top: -30px; right: -30px; width: 120px; height: 120px;
             background: radial-gradient(circle, rgba(255,255,255,0.15) 0%, transparent 70%);
@@ -91,7 +91,7 @@
     <div id="loader" class="fixed inset-0 z-50 bg-[#f0f9ff] flex flex-col items-center justify-center transition-opacity duration-500">
         <div class="relative mb-4">
             <div class="w-20 h-20 bg-white rounded-2xl flex items-center justify-center shadow-xl animate-bounce">
-                <img src="logo.png" class="h-10 w-10 object-contain" onerror="this.style.display='none'">
+                <img src="logo.png" class="h-10 w-10 object-contain" onerror="this.src='https://cdn-icons-png.flaticon.com/512/2991/2991148.png'">
             </div>
         </div>
         <p class="text-xs font-black text-sky-600 tracking-widest uppercase font-fun animate-pulse">Memuat...</p>
@@ -133,14 +133,13 @@
         const ADMIN_WA = "6285819809668";
         
         let DATA_SISWA = [], DATA_HARGA = {}, KABAR_RBM = [], INFO_PENGUMUMAN = {};
-        let STATE = { view: 'login', user: null, lang: 'id' }; 
+        let STATE = { view: 'login', user: null, lang: 'id' };
         
         const DAY_NAMES = {
             id: { 'Senin': 'Senin', 'Selasa': 'Selasa', 'Rabu': 'Rabu', 'Kamis': 'Kamis', 'Jumat': 'Jumat', 'Sabtu': 'Sabtu', 'Ahad': 'Ahad' },
             en: { 'Senin': 'Monday', 'Selasa': 'Tuesday', 'Rabu': 'Wednesday', 'Kamis': 'Thursday', 'Jumat': 'Friday', 'Sabtu': 'Saturday', 'Ahad': 'Sunday' }
         };
 
-        // --- KAMUS BAHASA ---
         const TEKS = {
             id: { 
                 btn: "Mulai Belajar!", search_ph: "Cari Nama Kamu...", web_link: "Website Ruang Belajar",
@@ -172,19 +171,15 @@
 
         // --- CORE FUNCTIONS ---
         async function ambilData() {
-            const cache = localStorage.getItem('rbm_final_v3_cache');
-            if (cache) {
-                const p = JSON.parse(cache);
-                DATA_SISWA = p.s; DATA_HARGA = p.p; KABAR_RBM = p.n; INFO_PENGUMUMAN = p.i;
-                finishLoad();
-            }
+            // Hapus cache lama agar data baru yang diperbaiki bisa masuk
+            localStorage.removeItem('rbm_kids_v2_cache'); 
+            
             try {
                 const res = await fetch(API_URL);
                 const d = await res.json();
-                localStorage.setItem('rbm_final_v3_cache', JSON.stringify({s:d.students, p:d.prices, n:d.news, i:d.info}));
                 DATA_SISWA = d.students; DATA_HARGA = d.prices; KABAR_RBM = d.news; INFO_PENGUMUMAN = d.info;
-                if(!cache) finishLoad(); else renderApp();
-            } catch (e) { if(!cache) finishLoad(); }
+                finishLoad();
+            } catch (e) { alert("Gagal mengambil data. Cek koneksi."); finishLoad(); }
         }
 
         function finishLoad() {
@@ -222,23 +217,28 @@
             });
         }
 
-        // --- LOGIKA AKUMULASI SPP (DIPERTAJAM) ---
+        // --- LOGIKA HITUNG HARGA (ANTI-TYPO) ---
         function hitungTotalTagihan(siswa) {
             let total = 0;
             let rincian = [];
             
             siswa.classes.forEach(c => {
-                // Ambil nama kelas murni (misal "Tahfidz (Senin)" jadi "Tahfidz")
-                const namaKelas = c.split('(')[0].trim();
-                const harga = DATA_HARGA[namaKelas] || 0;
+                // BUG FIX: Ganti tanda petik keriting (’) menjadi lurus (') agar tidak error
+                let namaBersih = c.split('(')[0].trim().replace(/’/g, "'");
+                
+                // Cari harga (jika tidak ketemu, anggap 0)
+                const harga = DATA_HARGA[namaBersih] || 0;
                 
                 if(harga > 0) {
                     total += harga;
                     rincian.push(`${c} (¥${harga.toLocaleString()})`);
+                } else {
+                    // Jika harga 0, mungkin typo di nama kelas
+                    rincian.push(`${c} (Harga tdk ditemukan)`);
                 }
             });
 
-            // Cek Diskon (Role 2)
+            // Cek Diskon (Anak Ke-2 dst / Role 2)
             let statusDiskon = "";
             if (siswa.role == 2) {
                 total = total * 0.5;
@@ -251,11 +251,9 @@
         function salinRincian(nama, siswa, status) {
             const t = TEKS[STATE.lang];
             const dataTagihan = hitungTotalTagihan(siswa);
-            
             const st = status && status.toLowerCase().includes('lunas') ? t.status_paid : t.status_unpaid;
-            // FITUR BARU: Menampilkan rincian kelas saat disalin
-            const txt = `RBM INVOICE\nName: ${nama}\n\nClasses:\n- ${dataTagihan.rincian.join('\n- ')}${dataTagihan.statusDiskon}\n\nTotal: ¥${parseInt(dataTagihan.total).toLocaleString('ja-JP')}\nStatus: ${st}`;
             
+            const txt = `RBM INVOICE\nName: ${nama}\n\nClasses:\n- ${dataTagihan.rincian.join('\n- ')}${dataTagihan.statusDiskon}\n\nTotal: ¥${parseInt(dataTagihan.total).toLocaleString('ja-JP')}\nStatus: ${st}`;
             copyText(txt, "Invoice");
         }
 
@@ -275,7 +273,6 @@
                 
                 app.innerHTML = `
                 <div class="min-h-screen flex flex-col items-center justify-center p-6 pop-up relative overflow-hidden">
-                    
                     <button onclick="STATE.lang=STATE.lang==='id'?'en':'id';renderApp()" class="absolute top-6 right-6 px-4 py-2 rounded-full bg-white border-2 border-sky-100 text-sky-600 font-black uppercase shadow-md hover:scale-105 transition z-30 text-xs flex items-center gap-2">
                         <i data-lucide="languages" width="14"></i> ${STATE.lang}
                     </button>
@@ -285,9 +282,7 @@
                             <div class="inline-flex items-center justify-center w-24 h-24 bg-white rounded-3xl shadow-lg mb-6 border-4 border-white transform rotate-3">
                                 <img src="logo.png" class="h-12 object-contain" onerror="this.src='https://cdn-icons-png.flaticon.com/512/2991/2991148.png'">
                             </div>
-                            
                             <h1 class="font-fun font-black text-4xl text-sky-600 mb-2 tracking-tight drop-shadow-sm">RBM Portal</h1>
-                            
                             <div class="inline-block bg-orange-100 text-orange-600 px-4 py-1.5 rounded-full border-2 border-orange-200">
                                 <p class="text-[10px] font-bold uppercase tracking-widest">✨ Istiqomah di atas Sunnah ✨</p>
                             </div>
@@ -302,7 +297,6 @@
                                 <button onclick="const id=document.getElementById('selSiswa').value; if(id){STATE.user=DATA_SISWA.find(s=>s.id===id);STATE.view='dashboard';renderApp(); setTimeout(fireConfetti, 300);}" class="w-full btn-orange py-4 rounded-2xl font-black text-sm uppercase tracking-wider shadow-md transform hover:scale-[1.02] transition">
                                     ${t.btn} 🚀
                                 </button>
-                                
                                 <div class="mt-6 text-center">
                                     <a href="${WEBSITE_URL}" target="_blank" class="text-xs font-bold text-sky-400 hover:text-orange-500 transition flex items-center justify-center gap-2">
                                         <span>${t.web_link}</span> <i data-lucide="external-link" width="12"></i>
@@ -314,9 +308,11 @@
                 </div>`;
             } else {
                 const s = STATE.user;
-                // HITUNG TAGIHAN MENGGUNAKAN FUNGSI BARU
+                
+                // --- PAKAI FUNGSI BARU (KEBAL ERROR) ---
                 const dataTagihan = hitungTotalTagihan(s);
                 const total = dataTagihan.total;
+                // ---------------------------------------
 
                 const stRaw = s.payments["Bulan Ini"];
                 const isPaid = stRaw && stRaw.toLowerCase().includes('lunas');
@@ -339,7 +335,6 @@
                     </div>
 
                     <div class="px-6 space-y-6">
-                        
                         <div class="sky-card rounded-[2.5rem] p-8 group transform transition hover:scale-[1.02]">
                             <div class="flex justify-between items-start mb-8 relative z-10">
                                 <div>
@@ -370,12 +365,10 @@
                                 <div class="w-12 h-12 bg-green-100 text-green-600 rounded-2xl flex items-center justify-center group-hover:scale-110 transition shadow-sm"><i data-lucide="message-circle" width="24"></i></div>
                                 <span class="text-[10px] font-bold text-slate-600 text-center leading-tight whitespace-pre-line uppercase">${t.btn_wa}</span>
                             </button>
-                            
                             <button onclick="toggleModal(true)" class="glass-panel p-4 flex flex-col items-center gap-2 hover:bg-white transition group border-b-4 border-slate-200/50 active:border-b-0 active:translate-y-1">
                                 <div class="w-12 h-12 bg-sky-100 text-sky-600 rounded-2xl flex items-center justify-center group-hover:scale-110 transition shadow-sm"><i data-lucide="credit-card" width="24"></i></div>
                                 <span class="text-[10px] font-bold text-slate-600 text-center leading-tight whitespace-pre-line uppercase">${t.btn_bank}</span>
                             </button>
-
                             <button onclick="salinRincian('${s.name}', s, '${stRaw}')" class="glass-panel p-4 flex flex-col items-center gap-2 hover:bg-white transition group border-b-4 border-slate-200/50 active:border-b-0 active:translate-y-1">
                                 <div class="w-12 h-12 bg-orange-100 text-orange-500 rounded-2xl flex items-center justify-center group-hover:scale-110 transition shadow-sm"><i data-lucide="copy" width="24"></i></div>
                                 <span class="text-[10px] font-bold text-slate-600 text-center leading-tight whitespace-pre-line uppercase">${t.btn_copy}</span>
