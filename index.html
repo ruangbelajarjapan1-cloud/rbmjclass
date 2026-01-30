@@ -53,7 +53,7 @@
             box-shadow: 0 15px 25px -5px rgba(2, 132, 199, 0.3);
             border: 2px solid rgba(255,255,255,0.2);
         }
-        /* Motif Awan Abstrak (Bukan Makhluk Hidup) */
+        /* Motif Awan Abstrak (Syar'i: Bukan Makhluk Hidup) */
         .sky-card::before {
             content: ''; position: absolute; top: -30px; right: -30px; width: 120px; height: 120px;
             background: radial-gradient(circle, rgba(255,255,255,0.15) 0%, transparent 70%);
@@ -91,7 +91,8 @@
     <div id="loader" class="fixed inset-0 z-50 bg-[#f0f9ff] flex flex-col items-center justify-center transition-opacity duration-500">
         <div class="relative mb-4">
             <div class="w-20 h-20 bg-white rounded-2xl flex items-center justify-center shadow-xl animate-bounce">
-                <img src="logo.png" class="h-10 w-10 object-contain" onerror="this.style.display='none'"> </div>
+                <img src="logo.png" class="h-10 w-10 object-contain" onerror="this.style.display='none'">
+            </div>
         </div>
         <p class="text-xs font-black text-sky-600 tracking-widest uppercase font-fun animate-pulse">Memuat...</p>
     </div>
@@ -132,14 +133,14 @@
         const ADMIN_WA = "6285819809668";
         
         let DATA_SISWA = [], DATA_HARGA = {}, KABAR_RBM = [], INFO_PENGUMUMAN = {};
-        let STATE = { view: 'login', user: null, lang: 'id' }; // Lang default ID
+        let STATE = { view: 'login', user: null, lang: 'id' }; 
         
         const DAY_NAMES = {
             id: { 'Senin': 'Senin', 'Selasa': 'Selasa', 'Rabu': 'Rabu', 'Kamis': 'Kamis', 'Jumat': 'Jumat', 'Sabtu': 'Sabtu', 'Ahad': 'Ahad' },
             en: { 'Senin': 'Monday', 'Selasa': 'Tuesday', 'Rabu': 'Wednesday', 'Kamis': 'Thursday', 'Jumat': 'Friday', 'Sabtu': 'Saturday', 'Ahad': 'Sunday' }
         };
 
-        // --- KAMUS BAHASA (Bilingual Feature) ---
+        // --- KAMUS BAHASA ---
         const TEKS = {
             id: { 
                 btn: "Mulai Belajar!", search_ph: "Cari Nama Kamu...", web_link: "Website Ruang Belajar",
@@ -169,9 +170,9 @@
             }
         };
 
-        // --- CORE ---
+        // --- CORE FUNCTIONS ---
         async function ambilData() {
-            const cache = localStorage.getItem('rbm_kids_v2_cache');
+            const cache = localStorage.getItem('rbm_final_v3_cache');
             if (cache) {
                 const p = JSON.parse(cache);
                 DATA_SISWA = p.s; DATA_HARGA = p.p; KABAR_RBM = p.n; INFO_PENGUMUMAN = p.i;
@@ -180,7 +181,7 @@
             try {
                 const res = await fetch(API_URL);
                 const d = await res.json();
-                localStorage.setItem('rbm_kids_v2_cache', JSON.stringify({s:d.students, p:d.prices, n:d.news, i:d.info}));
+                localStorage.setItem('rbm_final_v3_cache', JSON.stringify({s:d.students, p:d.prices, n:d.news, i:d.info}));
                 DATA_SISWA = d.students; DATA_HARGA = d.prices; KABAR_RBM = d.news; INFO_PENGUMUMAN = d.info;
                 if(!cache) finishLoad(); else renderApp();
             } catch (e) { if(!cache) finishLoad(); }
@@ -192,7 +193,7 @@
             setTimeout(() => { l.style.display = 'none'; document.getElementById('app').classList.remove('hidden'); renderApp(); }, 600);
         }
 
-        // --- CONFETTI (Expert Idea) ---
+        // --- CONFETTI ---
         function fireConfetti() {
             var count = 200;
             var defaults = { origin: { y: 0.7 } };
@@ -221,10 +222,40 @@
             });
         }
 
-        function salinRincian(nama, total, status) {
+        // --- LOGIKA AKUMULASI SPP (DIPERTAJAM) ---
+        function hitungTotalTagihan(siswa) {
+            let total = 0;
+            let rincian = [];
+            
+            siswa.classes.forEach(c => {
+                // Ambil nama kelas murni (misal "Tahfidz (Senin)" jadi "Tahfidz")
+                const namaKelas = c.split('(')[0].trim();
+                const harga = DATA_HARGA[namaKelas] || 0;
+                
+                if(harga > 0) {
+                    total += harga;
+                    rincian.push(`${c} (¥${harga.toLocaleString()})`);
+                }
+            });
+
+            // Cek Diskon (Role 2)
+            let statusDiskon = "";
+            if (siswa.role == 2) {
+                total = total * 0.5;
+                statusDiskon = " (Diskon 50%)";
+            }
+            
+            return { total: total, rincian: rincian, statusDiskon: statusDiskon };
+        }
+
+        function salinRincian(nama, siswa, status) {
             const t = TEKS[STATE.lang];
+            const dataTagihan = hitungTotalTagihan(siswa);
+            
             const st = status && status.toLowerCase().includes('lunas') ? t.status_paid : t.status_unpaid;
-            const txt = `RBM INVOICE\nName: ${nama}\nTotal: ¥${parseInt(total).toLocaleString('ja-JP')}\nStatus: ${st}`;
+            // FITUR BARU: Menampilkan rincian kelas saat disalin
+            const txt = `RBM INVOICE\nName: ${nama}\n\nClasses:\n- ${dataTagihan.rincian.join('\n- ')}${dataTagihan.statusDiskon}\n\nTotal: ¥${parseInt(dataTagihan.total).toLocaleString('ja-JP')}\nStatus: ${st}`;
+            
             copyText(txt, "Invoice");
         }
 
@@ -240,7 +271,7 @@
 
             if (STATE.view === 'login') {
                 const sorted = [...DATA_SISWA].sort((a,b) => a.name.localeCompare(b.name));
-                let opsi = `<option value="" disabled selected>${t.search_ph}</option>` + sorted.map(s => `<option value="${s.id}">${s.name}</option>`).join(''); // FULL NAME
+                let opsi = `<option value="" disabled selected>${t.search_ph}</option>` + sorted.map(s => `<option value="${s.id}">${s.name}</option>`).join('');
                 
                 app.innerHTML = `
                 <div class="min-h-screen flex flex-col items-center justify-center p-6 pop-up relative overflow-hidden">
@@ -283,13 +314,14 @@
                 </div>`;
             } else {
                 const s = STATE.user;
-                let total = 0; s.classes.forEach(c => { total += (DATA_HARGA[c.split('(')[0].trim()] || 0); });
-                if (s.role == 2) total *= 0.5;
+                // HITUNG TAGIHAN MENGGUNAKAN FUNGSI BARU
+                const dataTagihan = hitungTotalTagihan(s);
+                const total = dataTagihan.total;
 
                 const stRaw = s.payments["Bulan Ini"];
                 const isPaid = stRaw && stRaw.toLowerCase().includes('lunas');
                 const stText = isPaid ? t.status_paid : t.status_unpaid;
-                const displayName = s.name; // FULL NAME
+                const displayName = s.name; 
 
                 app.innerHTML = `
                 <div class="pb-28 pop-up">
@@ -344,7 +376,7 @@
                                 <span class="text-[10px] font-bold text-slate-600 text-center leading-tight whitespace-pre-line uppercase">${t.btn_bank}</span>
                             </button>
 
-                            <button onclick="salinRincian('${s.name}', '${total}', '${stRaw}')" class="glass-panel p-4 flex flex-col items-center gap-2 hover:bg-white transition group border-b-4 border-slate-200/50 active:border-b-0 active:translate-y-1">
+                            <button onclick="salinRincian('${s.name}', s, '${stRaw}')" class="glass-panel p-4 flex flex-col items-center gap-2 hover:bg-white transition group border-b-4 border-slate-200/50 active:border-b-0 active:translate-y-1">
                                 <div class="w-12 h-12 bg-orange-100 text-orange-500 rounded-2xl flex items-center justify-center group-hover:scale-110 transition shadow-sm"><i data-lucide="copy" width="24"></i></div>
                                 <span class="text-[10px] font-bold text-slate-600 text-center leading-tight whitespace-pre-line uppercase">${t.btn_copy}</span>
                             </button>
