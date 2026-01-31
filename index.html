@@ -10,13 +10,17 @@
     <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
     
     <style>
-        /* Font Bulat Ramah Anak */
-        @import url('https://fonts.googleapis.com/css2?family=Fredoka:wght@400;500;600;700&family=Nunito:wght@400;600;700;800&display=swap');
+        /* Font Bulat Ramah Anak + Font Jepang Lucu (Zen Maru Gothic) */
+        @import url('https://fonts.googleapis.com/css2?family=Fredoka:wght@400;500;600;700&family=Nunito:wght@400;600;700;800&family=Zen+Maru+Gothic:wght@500;700;900&display=swap');
         
         :root { --sky-blue: #0ea5e9; --sun-orange: #f97316; --cloud-white: #f0f9ff; }
-        body { font-family: 'Nunito', sans-serif; background-color: var(--cloud-white); color: #0c4a6e; -webkit-tap-highlight-color: transparent; }
         
-        .font-fun { font-family: 'Fredoka', sans-serif; }
+        /* Logika Font: Jika Jepang, pakai Zen Maru, jika tidak pakai Nunito */
+        body { font-family: 'Nunito', 'Zen Maru Gothic', sans-serif; background-color: var(--cloud-white); color: #0c4a6e; -webkit-tap-highlight-color: transparent; }
+        body.lang-jp { font-family: 'Zen Maru Gothic', sans-serif; }
+
+        .font-fun { font-family: 'Fredoka', 'Zen Maru Gothic', sans-serif; }
+        
         .kids-bg { background-color: #f0f9ff; background-image: radial-gradient(at 0% 0%, hsla(195, 100%, 85%, 1) 0, transparent 50%), radial-gradient(at 100% 100%, hsla(35, 100%, 85%, 1) 0, transparent 50%); }
         .glass-panel { background: rgba(255, 255, 255, 0.9); backdrop-filter: blur(10px); border: 2px solid rgba(255, 255, 255, 0.8); box-shadow: 0 8px 20px rgba(14, 165, 233, 0.1); border-radius: 1.5rem; }
         .sky-card { background: linear-gradient(135deg, #0284c7 0%, #38bdf8 100%); position: relative; overflow: hidden; color: white; box-shadow: 0 15px 25px -5px rgba(2, 132, 199, 0.3); border: 2px solid rgba(255,255,255,0.2); }
@@ -80,18 +84,58 @@
         let DATA_SISWA = [], DATA_HARGA = {}, KABAR_RBM = [], INFO_PENGUMUMAN = {};
         let STATE = { view: 'login', user: null, lang: 'id' };
         
+        // --- DATA HARI (Trilingual) ---
         const DAY_NAMES = {
             id: { 'Senin': 'Senin', 'Selasa': 'Selasa', 'Rabu': 'Rabu', 'Kamis': 'Kamis', 'Jumat': 'Jumat', 'Sabtu': 'Sabtu', 'Ahad': 'Ahad' },
-            en: { 'Senin': 'Monday', 'Selasa': 'Tuesday', 'Rabu': 'Wednesday', 'Kamis': 'Thursday', 'Jumat': 'Friday', 'Sabtu': 'Saturday', 'Ahad': 'Sunday' }
+            en: { 'Senin': 'Monday', 'Selasa': 'Tuesday', 'Rabu': 'Wednesday', 'Kamis': 'Thursday', 'Jumat': 'Friday', 'Sabtu': 'Saturday', 'Ahad': 'Sunday' },
+            jp: { 'Senin': '月曜日', 'Selasa': '火曜日', 'Rabu': '水曜日', 'Kamis': '木曜日', 'Jumat': '金曜日', 'Sabtu': '土曜日', 'Ahad': '日曜日' }
         };
 
+        // --- KAMUS BAHASA (3 BAHASA) ---
         const TEKS = {
-            id: { btn: "Mulai Belajar!", search_ph: "Cari Nama Kamu...", web_link: "Website Ruang Belajar", greet: ["Selamat Pagi", "Selamat Siang", "Selamat Sore", "Selamat Malam"], spp_label: "Tabungan Akhirat (SPP)", pay_status: "Status", status_unpaid: "Belum Ada Pembayaran", status_paid: "Lunas", report: "Izin", btn_wa: "Konfirmasi\nWhatsApp", btn_bank: "Info\nRekening", btn_copy: "Salin\nRincian", news_title: "Kabar RBM", no_news: "Belum ada kabar baru", schedule_title: "Jadwal Belajar", no_schedule: "Libur dulu ya!", notes_title: "Pesan Guru", no_notes: "Belum ada pesan", history: "Riwayat SPP", no_history: "Masih kosong", toast_copy: "Berhasil disalin!", modal_title: "Info Rekening", copy_btn: "Salin Nomor" },
-            en: { btn: "Let's Start!", search_ph: "Find Your Name...", web_link: "Official Website", greet: ["Good Morning", "Good Afternoon", "Good Evening", "Good Night"], spp_label: "Tuition Fee", pay_status: "Status", status_unpaid: "Payment Pending", status_paid: "Paid", report: "Absence", btn_wa: "Confirm\nWhatsApp", btn_bank: "Bank\nDetails", btn_copy: "Copy\nDetails", news_title: "RBM News", no_news: "No news yet", schedule_title: "My Schedule", no_schedule: "No class today!", notes_title: "Teacher's Note", no_notes: "No notes yet", history: "Payment History", no_history: "Empty history", toast_copy: "Copied!", modal_title: "Bank Details", copy_btn: "Copy Number" }
+            id: { 
+                lang_name: "ID",
+                btn: "Mulai Belajar!", search_ph: "Cari Nama Kamu...", web_link: "Website Ruang Belajar", 
+                greet: ["Selamat Pagi", "Selamat Siang", "Selamat Sore", "Selamat Malam"], 
+                spp_label: "Tabungan Akhirat (SPP)", 
+                pay_status: "Status", status_unpaid: "Belum Ada Pembayaran", status_paid: "Lunas", 
+                report: "Izin", btn_wa: "Konfirmasi\nWhatsApp", btn_bank: "Info\nRekening", btn_copy: "Salin\nRincian", 
+                news_title: "Kabar RBM", no_news: "Belum ada kabar baru", 
+                schedule_title: "Jadwal Belajar", no_schedule: "Libur dulu ya!", 
+                notes_title: "Pesan Guru", no_notes: "Belum ada pesan", 
+                history: "Riwayat SPP", no_history: "Masih kosong", 
+                toast_copy: "Berhasil disalin!", modal_title: "Info Rekening", copy_btn: "Salin Nomor" 
+            },
+            en: { 
+                lang_name: "EN",
+                btn: "Let's Start!", search_ph: "Find Your Name...", web_link: "Official Website", 
+                greet: ["Good Morning", "Good Afternoon", "Good Evening", "Good Night"], 
+                spp_label: "Tuition Fee", 
+                pay_status: "Status", status_unpaid: "Payment Pending", status_paid: "Paid", 
+                report: "Absence", btn_wa: "Confirm\nWhatsApp", btn_bank: "Bank\nDetails", btn_copy: "Copy\nDetails", 
+                news_title: "RBM News", no_news: "No news yet", 
+                schedule_title: "My Schedule", no_schedule: "No class today!", 
+                notes_title: "Teacher's Note", no_notes: "No notes yet", 
+                history: "Payment History", no_history: "Empty history", 
+                toast_copy: "Copied!", modal_title: "Bank Details", copy_btn: "Copy Number" 
+            },
+            jp: { 
+                lang_name: "JP",
+                btn: "勉強を始める", search_ph: "名前を探してね...", web_link: "公式サイト", 
+                greet: ["おはよう", "こんにちは", "こんばんは", "おやすみ"], 
+                spp_label: "今月の月謝", 
+                pay_status: "支払い状況", status_unpaid: "未払い", status_paid: "支払い済み", 
+                report: "欠席連絡", btn_wa: "WhatsApp\n確認", btn_bank: "銀行\n口座", btn_copy: "詳細\nコピー", 
+                news_title: "お知らせ", no_news: "新しいお知らせはありません", 
+                schedule_title: "時間割", no_schedule: "今日は授業がありません", 
+                notes_title: "先生からのメッセージ", no_notes: "メッセージはありません", 
+                history: "支払い履歴", no_history: "履歴はありません", 
+                toast_copy: "コピーしました！", modal_title: "口座情報", copy_btn: "番号をコピー" 
+            }
         };
 
         async function ambilData() {
-            localStorage.removeItem('rbm_v4_fix_cache'); 
+            localStorage.removeItem('rbm_v5_jp_cache'); 
             try {
                 const res = await fetch(API_URL);
                 const d = await res.json();
@@ -129,11 +173,23 @@
             });
         }
 
-        // FUNGSI HITUNG TOTAL (KEBAL ERROR)
+        // --- FUNGSI GANTI BAHASA (CYCLE ID -> EN -> JP) ---
+        function cycleLanguage() {
+            if (STATE.lang === 'id') STATE.lang = 'en';
+            else if (STATE.lang === 'en') STATE.lang = 'jp';
+            else STATE.lang = 'id';
+            
+            // Set Font Jepang jika JP
+            if (STATE.lang === 'jp') document.body.classList.add('lang-jp');
+            else document.body.classList.remove('lang-jp');
+            
+            renderApp();
+        }
+
         function hitungTotalTagihan(siswa) {
             let total = 0; let rincian = [];
             siswa.classes.forEach(c => {
-                let namaBersih = c.split('(')[0].trim().replace(/’/g, "'"); // Fix petik miring
+                let namaBersih = c.split('(')[0].trim().replace(/’/g, "'"); 
                 const harga = DATA_HARGA[namaBersih] || 0;
                 if(harga > 0) { total += harga; rincian.push(`${c} (¥${harga.toLocaleString()})`); } 
                 else { rincian.push(`${c} (Harga tdk ditemukan)`); }
@@ -145,7 +201,7 @@
         function salinRincian(nama, siswa, status) {
             const t = TEKS[STATE.lang];
             const dataTagihan = hitungTotalTagihan(siswa);
-            const statusAman = (status || '').toString().toLowerCase(); // Fix error undefined
+            const statusAman = (status || '').toString().toLowerCase(); 
             const st = statusAman.includes('lunas') ? t.status_paid : t.status_unpaid;
             const txt = `RBM INVOICE\nName: ${nama}\n\nClasses:\n- ${dataTagihan.rincian.join('\n- ')}${dataTagihan.statusDiskon}\n\nTotal: ¥${parseInt(dataTagihan.total).toLocaleString('ja-JP')}\nStatus: ${st}`;
             copyText(txt, "Invoice");
@@ -155,12 +211,14 @@
 
         function renderApp() {
             const app = document.getElementById('app'); const t = TEKS[STATE.lang];
+            
+            // Tampilan LOGIN
             if (STATE.view === 'login') {
                 const sorted = [...DATA_SISWA].sort((a,b) => a.name.localeCompare(b.name));
                 let opsi = `<option value="" disabled selected>${t.search_ph}</option>` + sorted.map(s => `<option value="${s.id}">${s.name}</option>`).join('');
                 app.innerHTML = `
                 <div class="min-h-screen flex flex-col items-center justify-center p-6 pop-up relative overflow-hidden">
-                    <button onclick="STATE.lang=STATE.lang==='id'?'en':'id';renderApp()" class="absolute top-6 right-6 px-4 py-2 rounded-full bg-white border-2 border-sky-100 text-sky-600 font-black uppercase shadow-md hover:scale-105 transition z-30 text-xs flex items-center gap-2"><i data-lucide="languages" width="14"></i> ${STATE.lang}</button>
+                    <button onclick="cycleLanguage()" class="absolute top-6 right-6 px-4 py-2 rounded-full bg-white border-2 border-sky-100 text-sky-600 font-black uppercase shadow-md hover:scale-105 transition z-30 text-xs flex items-center gap-2"><i data-lucide="languages" width="14"></i> ${t.lang_name}</button>
                     <div class="w-full max-w-sm relative z-10">
                         <div class="text-center mb-8">
                             <div class="inline-flex items-center justify-center w-24 h-24 bg-white rounded-3xl shadow-lg mb-6 border-4 border-white transform rotate-3"><img src="logo.png" class="h-12 object-contain" onerror="this.src='https://cdn-icons-png.flaticon.com/512/2991/2991148.png'"></div>
@@ -175,20 +233,22 @@
                     </div>
                 </div>`;
             } else {
+                // Tampilan DASHBOARD
                 const s = STATE.user;
                 const dataTagihan = hitungTotalTagihan(s); const total = dataTagihan.total;
                 
-                // --- PERBAIKAN STATUS ---
-                // Menggunakan || '' agar tidak crash jika status dari sheet kosong/undefined
                 const stRaw = s.payments["Bulan Ini"] || ""; 
-                const isPaid = stRaw.toString().toLowerCase().includes('lunas');
+                const statusAman = stRaw.toString().toLowerCase();
+                const isPaid = statusAman.includes('lunas');
+                
+                // --- DISINI FIX NYA: Translate Status Visual ---
                 const stText = isPaid ? t.status_paid : t.status_unpaid;
 
                 app.innerHTML = `
                 <div class="pb-28 pop-up">
                     <div class="pt-10 px-8 pb-4 flex justify-between items-center">
                         <div><p class="text-sky-500 text-xs font-black uppercase tracking-widest mb-1 flex items-center gap-1">${getGreet()} <span>☀️</span></p><h2 class="font-fun font-black text-xl text-slate-800 leading-tight">${s.name}</h2></div>
-                        <div class="flex gap-2"><button onclick="STATE.lang=STATE.lang==='id'?'en':'id';renderApp()" class="w-10 h-10 rounded-2xl bg-white text-sky-600 border-2 border-sky-100 flex items-center justify-center font-black text-xs uppercase hover:bg-sky-50 transition shadow-sm">${STATE.lang}</button><button onclick="location.reload()" class="w-10 h-10 rounded-2xl bg-white text-slate-400 border-2 border-slate-100 flex items-center justify-center hover:bg-red-50 hover:text-red-500 transition shadow-sm"><i data-lucide="log-out" width="18"></i></button></div>
+                        <div class="flex gap-2"><button onclick="cycleLanguage()" class="w-10 h-10 rounded-2xl bg-white text-sky-600 border-2 border-sky-100 flex items-center justify-center font-black text-xs uppercase hover:bg-sky-50 transition shadow-sm">${t.lang_name}</button><button onclick="location.reload()" class="w-10 h-10 rounded-2xl bg-white text-slate-400 border-2 border-slate-100 flex items-center justify-center hover:bg-red-50 hover:text-red-500 transition shadow-sm"><i data-lucide="log-out" width="18"></i></button></div>
                     </div>
                     <div class="px-6 space-y-6">
                         <div class="sky-card rounded-[2.5rem] p-8 group transform transition hover:scale-[1.02]">
@@ -201,17 +261,35 @@
                             <button onclick="salinRincian('${s.name}', s, '${stRaw}')" class="glass-panel p-4 flex flex-col items-center gap-2 hover:bg-white transition group border-b-4 border-slate-200/50 active:border-b-0 active:translate-y-1"><div class="w-12 h-12 bg-orange-100 text-orange-500 rounded-2xl flex items-center justify-center group-hover:scale-110 transition shadow-sm"><i data-lucide="copy" width="24"></i></div><span class="text-[10px] font-bold text-slate-600 text-center leading-tight whitespace-pre-line uppercase">${t.btn_copy}</span></button>
                         </div>
                         ${INFO_PENGUMUMAN.aktif ? `<div class="bg-yellow-50 border-2 border-yellow-200 rounded-2xl p-1 overflow-hidden shadow-sm"><div class="bg-white/60 rounded-xl px-4 py-3"><div class="ticker-text text-xs font-bold text-orange-700 italic">📣 ${STATE.lang==='id'?INFO_PENGUMUMAN.teks_id:INFO_PENGUMUMAN.teks_en}</div></div></div>` : ''}
+                        
                         <div class="space-y-8 pb-4">
                             <section><div class="flex items-center gap-3 mb-4 px-1"><div class="h-8 w-2 bg-orange-400 rounded-full"></div><h3 class="font-fun font-bold text-slate-700 text-xl">${t.news_title}</h3></div><div class="flex gap-4 overflow-x-auto pb-6 px-1 snap-x hide-scroll">${KABAR_RBM.map(k => `<div class="min-w-[260px] bg-white rounded-[2rem] border-2 border-slate-100 overflow-hidden shadow-sm snap-center group"><div class="h-32 bg-slate-100 relative overflow-hidden"><img src="${k.foto}" class="w-full h-full object-cover group-hover:scale-110 transition duration-500" onerror="this.src='https://img.freepik.com/free-vector/abstract-geometric-wireframe-background_52683-59421.jpg'"><span class="absolute bottom-3 left-3 text-[10px] font-black text-sky-600 bg-white/90 px-3 py-1 rounded-full uppercase tracking-wider shadow-sm">${k.tgl}</span></div><div class="p-5"><h4 class="text-sm font-bold text-slate-700 line-clamp-2 leading-snug font-fun">${k.judul}</h4></div></div>`).join('') || `<div class="w-full py-8 text-center text-xs text-slate-400 italic bg-white/50 rounded-3xl border-2 border-dashed border-slate-200">${t.no_news}</div>`}</div></section>
+                            
                             <div class="grid gap-6">
-                                <section><div class="flex items-center gap-3 mb-4 px-1"><div class="h-8 w-2 bg-sky-400 rounded-full"></div><h3 class="font-fun font-bold text-slate-700 text-xl">${t.schedule_title}</h3></div><div class="space-y-3">${s.schedule.map(sc => `<div class="bg-white p-4 rounded-[1.5rem] border-2 border-slate-50 flex items-center gap-4 shadow-sm hover:shadow-md transition"><div class="w-14 h-14 bg-sky-50 rounded-2xl flex flex-col items-center justify-center border-2 border-sky-100 text-sky-500"><span class="text-xs font-black uppercase tracking-widest">${(DAY_NAMES[STATE.lang][sc.day] || sc.day).substring(0,3)}</span></div><div><p class="text-sm font-bold text-slate-700 font-fun">${sc.subject}</p><p class="text-[10px] text-slate-400 font-bold flex items-center gap-1 mt-0.5"><i data-lucide="clock" width="12"></i> ${sc.time} JST</p></div></div>`).join('') || `<p class="text-xs text-slate-400 italic text-center py-6 bg-white/50 rounded-3xl border-2 border-dashed border-slate-200">${t.no_schedule}</p>`}</div></section>
+                                <section>
+                                    <div class="flex items-center gap-3 mb-4 px-1"><div class="h-8 w-2 bg-sky-400 rounded-full"></div><h3 class="font-fun font-bold text-slate-700 text-xl">${t.schedule_title}</h3></div>
+                                    <div class="space-y-3">
+                                        ${s.schedule.map(sc => {
+                                            // FIX: Gunakan variabel t.day untuk hari
+                                            const hariDisplay = DAY_NAMES[STATE.lang][sc.day] || sc.day;
+                                            // Untuk jepang, ambil huruf pertama aja biar kotak nya rapi (月, 火...)
+                                            const hariKotak = STATE.lang === 'jp' ? hariDisplay.substring(0,1) : hariDisplay.substring(0,3);
+                                            
+                                            return `<div class="bg-white p-4 rounded-[1.5rem] border-2 border-slate-50 flex items-center gap-4 shadow-sm hover:shadow-md transition"><div class="w-14 h-14 bg-sky-50 rounded-2xl flex flex-col items-center justify-center border-2 border-sky-100 text-sky-500"><span class="text-xs font-black uppercase tracking-widest">${hariKotak}</span></div><div><p class="text-sm font-bold text-slate-700 font-fun">${sc.subject}</p><p class="text-[10px] text-slate-400 font-bold flex items-center gap-1 mt-0.5"><i data-lucide="clock" width="12"></i> ${sc.time} JST</p></div></div>`
+                                        }).join('') || `<p class="text-xs text-slate-400 italic text-center py-6 bg-white/50 rounded-3xl border-2 border-dashed border-slate-200">${t.no_schedule}</p>`}
+                                    </div>
+                                </section>
+                                
                                 <section><div class="flex items-center gap-3 mb-4 px-1"><div class="h-8 w-2 bg-purple-400 rounded-full"></div><h3 class="font-fun font-bold text-slate-700 text-xl">${t.notes_title}</h3></div><div class="space-y-3">${s.notes.map(n => `<div class="bg-white p-6 rounded-[1.5rem] border-l-[6px] border-l-purple-400 border-y-2 border-r-2 border-slate-50 shadow-sm relative overflow-hidden"><div class="flex justify-between items-center mb-3"><span class="text-[10px] font-bold text-purple-500 bg-purple-50 px-2 py-1 rounded-lg uppercase tracking-wider">${n.date}</span></div><p class="text-xs text-slate-600 font-bold leading-relaxed relative z-10">"${n.message}"</p></div>`).join('') || `<p class="text-xs text-slate-400 italic text-center py-6 bg-white/50 rounded-3xl border-2 border-dashed border-slate-200">${t.no_notes}</p>`}</div></section>
-                                <section><div class="flex items-center gap-3 mb-4 px-1"><div class="h-8 w-2 bg-green-400 rounded-full"></div><h3 class="font-fun font-bold text-slate-700 text-xl">${t.history}</h3></div><div class="glass-panel p-2 rounded-[1.8rem] border-2 border-white"><div class="bg-white/60 rounded-[1.5rem] overflow-hidden">
+                                
+                                <section>
+                                    <div class="flex items-center gap-3 mb-4 px-1"><div class="h-8 w-2 bg-green-400 rounded-full"></div><h3 class="font-fun font-bold text-slate-700 text-xl">${t.history}</h3></div>
+                                    <div class="glass-panel p-2 rounded-[1.8rem] border-2 border-white"><div class="bg-white/60 rounded-[1.5rem] overflow-hidden">
                                     ${s.history.map(h => {
-                                        // --- PERBAIKAN FATAL DISINI ---
-                                        // Gunakan (h.status || '') untuk mencegah error undefined
                                         const hStat = (h.status || '').toString().toLowerCase();
-                                        return `<div class="flex justify-between items-center p-4 border-b border-slate-100 last:border-0 hover:bg-white transition"><div><p class="font-bold text-slate-700 text-sm">${h.bulan}</p><p class="text-[10px] text-slate-400 font-bold tracking-wide uppercase">${h.kelas}</p></div><div class="text-right"><p class="font-black text-slate-600 text-xs">¥${parseInt(h.nominal).toLocaleString('ja-JP')}</p><span class="text-[10px] font-black uppercase tracking-wider ${hStat.includes('lunas') ? 'text-green-500 bg-green-100 px-2 py-0.5 rounded-full' : 'text-slate-400'}">${h.status}</span></div></div>`
+                                        // FIX: Terjemahkan status Lunas/Belum di History List
+                                        const statusDisplay = hStat.includes('lunas') ? t.status_paid : t.status_unpaid;
+                                        return `<div class="flex justify-between items-center p-4 border-b border-slate-100 last:border-0 hover:bg-white transition"><div><p class="font-bold text-slate-700 text-sm">${h.bulan}</p><p class="text-[10px] text-slate-400 font-bold tracking-wide uppercase">${h.kelas}</p></div><div class="text-right"><p class="font-black text-slate-600 text-xs">¥${parseInt(h.nominal).toLocaleString('ja-JP')}</p><span class="text-[10px] font-black uppercase tracking-wider ${hStat.includes('lunas') ? 'text-green-500 bg-green-100 px-2 py-0.5 rounded-full' : 'text-slate-400'}">${statusDisplay}</span></div></div>`
                                     }).join('') || `<div class="p-6 text-center text-xs text-slate-400 italic">${t.no_history}</div>`}
                                 </div></div></section>
                             </div>
