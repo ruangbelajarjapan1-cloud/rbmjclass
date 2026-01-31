@@ -93,14 +93,14 @@
             </div>
             <div class="space-y-4">
                 <div>
-                    <label class="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-2 block">Pilih Alasan</label>
+                    <label id="lbl-pilih-alasan" class="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-2 block">Pilih Alasan</label>
                     <div class="flex gap-2">
                         <button onclick="pilihAlasan('Sakit', this)" class="btn-alasan flex-1 py-3 border-2 border-slate-100 rounded-2xl text-sm font-bold text-slate-500 hover:bg-slate-50 transition" id="btn-sakit">🤒 Sakit</button>
                         <button onclick="pilihAlasan('Izin', this)" class="btn-alasan flex-1 py-3 border-2 border-slate-100 rounded-2xl text-sm font-bold text-slate-500 hover:bg-slate-50 transition" id="btn-izin">📅 Izin</button>
                     </div>
                 </div>
                 <div>
-                    <label class="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-2 block">Pesan Tambahan</label>
+                    <label id="lbl-pesan-tambahan" class="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-2 block">Pesan Tambahan</label>
                     <textarea id="pesanIzin" class="w-full bg-slate-50 border-2 border-slate-100 rounded-2xl p-3 text-sm font-bold text-slate-700 outline-none focus:border-sky-500 transition" rows="2" placeholder="..."></textarea>
                 </div>
                 <button onclick="kirimIzin()" id="btn-kirim-izin" class="w-full btn-orange py-4 font-black uppercase tracking-wider shadow-md mt-2 flex items-center justify-center gap-2">
@@ -138,8 +138,9 @@
                 toast_copy: "Berhasil disalin!", modal_title: "Info Rekening", copy_btn: "Salin Nomor",
                 absensi_title: "Riwayat Absensi", absensi_back: "Kembali", no_absensi: "Belum ada data absensi",
                 status_map: { 'hadir': 'Hadir', 'sakit': 'Sakit', 'izin': 'Izin', 'alpha': 'Alpha' },
-                // IZIN FORM
-                izin_title: "Form Izin", sakit: "Sakit", izin: "Izin", placeholder: "Keterangan tambahan...", btn_kirim: "Kirim Data", kirim_sukses: "Data Izin Terkirim!"
+                // IZIN FORM (LENGKAP)
+                izin_title: "Form Izin", sakit: "Sakit", izin: "Izin", placeholder: "Keterangan tambahan...", btn_kirim: "Kirim Data", kirim_sukses: "Data Izin Terkirim!",
+                lbl_alasan: "PILIH ALASAN", lbl_pesan: "PESAN TAMBAHAN"
             },
             en: { 
                 lang_name: "EN", btn: "Let's Start!", search_ph: "Find Your Name...", web_link: "Official Website", greet: ["Good Morning", "Good Afternoon", "Good Evening", "Good Night"], 
@@ -150,8 +151,9 @@
                 toast_copy: "Copied!", modal_title: "Bank Details", copy_btn: "Copy Number",
                 absensi_title: "Attendance History", absensi_back: "Back", no_absensi: "No attendance data",
                 status_map: { 'hadir': 'Present', 'sakit': 'Sick', 'izin': 'Permission', 'alpha': 'Absent' },
-                // IZIN FORM
-                izin_title: "Absence Form", sakit: "Sick", izin: "Permit", placeholder: "Additional notes...", btn_kirim: "Submit", kirim_sukses: "Submitted Successfully!"
+                // IZIN FORM (LENGKAP)
+                izin_title: "Absence Form", sakit: "Sick", izin: "Absence", placeholder: "Additional notes...", btn_kirim: "Submit", kirim_sukses: "Submitted Successfully!",
+                lbl_alasan: "SELECT REASON", lbl_pesan: "ADDITIONAL MESSAGE"
             },
             jp: { 
                 lang_name: "JP", btn: "勉強を始める", search_ph: "名前を探してね...", web_link: "公式サイト", greet: ["おはよう", "こんにちは", "こんばんは", "おやすみ"], 
@@ -162,12 +164,13 @@
                 toast_copy: "コピーしました！", modal_title: "口座情報", copy_btn: "番号をコピー",
                 absensi_title: "出席履歴", absensi_back: "戻る", no_absensi: "履歴はありません",
                 status_map: { 'hadir': '出席', 'sakit': '病欠', 'izin': '欠席', 'alpha': '無断欠席' },
-                // IZIN FORM
-                izin_title: "欠席届", sakit: "病欠", izin: "欠席", placeholder: "備考...", btn_kirim: "送信する", kirim_sukses: "送信しました！"
+                // IZIN FORM (LENGKAP)
+                izin_title: "欠席届", sakit: "病欠", izin: "欠席", placeholder: "備考...", btn_kirim: "送信する", kirim_sukses: "送信しました！",
+                lbl_alasan: "理由を選択", lbl_pesan: "備考 (任意)"
             }
         };
 
-        // --- SKELETON RENDER (Agar terlihat cepat) ---
+        // --- SKELETON RENDER ---
         function renderSkeleton() {
             const app = document.getElementById('app');
             app.innerHTML = `
@@ -183,13 +186,12 @@
         }
 
         async function ambilData() {
-            renderSkeleton(); // Tampilkan skeleton dulu
-            localStorage.removeItem('rbm_cache_final_v15'); 
+            renderSkeleton(); 
+            localStorage.removeItem('rbm_cache_fix_translate_v1'); 
             try {
                 const res = await fetch(API_URL);
                 const d = await res.json();
                 DATA_SISWA = d.students; DATA_HARGA = d.prices; KABAR_RBM = d.news; INFO_PENGUMUMAN = d.info;
-                // Jeda sedikit biar transisi halus
                 setTimeout(() => renderApp(), 300);
             } catch (e) { console.error(e); alert("Koneksi lambat, coba refresh."); }
         }
@@ -206,14 +208,17 @@
             const m = document.getElementById('modal-izin');
             const t = TEKS[STATE.lang];
             
-            // Set Bahasa Modal Izin
+            // Set Bahasa Modal Izin (FULL TERJEMAHAN)
             if(show) {
                 document.getElementById('lbl-izin-title').innerText = t.izin_title;
+                document.getElementById('lbl-pilih-alasan').innerText = t.lbl_alasan; // NEW
+                document.getElementById('lbl-pesan-tambahan').innerText = t.lbl_pesan; // NEW
                 document.getElementById('btn-sakit').innerText = "🤒 " + t.sakit;
                 document.getElementById('btn-izin').innerText = "📅 " + t.izin;
                 document.getElementById('pesanIzin').placeholder = t.placeholder;
                 document.getElementById('btn-kirim-izin').innerHTML = `<span>${t.btn_kirim}</span> <i data-lucide="send" width="16"></i>`;
-                alasanTerpilih = ''; // Reset pilihan
+                
+                alasanTerpilih = ''; 
                 document.querySelectorAll('.btn-alasan').forEach(b => b.classList.remove('bg-orange-100', 'text-orange-600', 'border-orange-200'));
                 if(window.lucide) lucide.createIcons();
             }
@@ -223,9 +228,7 @@
 
         function pilihAlasan(alasan, el) {
             alasanTerpilih = alasan;
-            // Reset style
             document.querySelectorAll('.btn-alasan').forEach(b => b.classList.remove('bg-orange-100', 'text-orange-600', 'border-orange-200'));
-            // Set active
             el.classList.add('bg-orange-100', 'text-orange-600', 'border-orange-200');
         }
 
@@ -236,7 +239,7 @@
             
             // Loading State
             const btnText = btn.innerHTML;
-            btn.innerHTML = `<i data-lucide="loader-2" class="animate-spin" width="16"></i> Sending...`;
+            btn.innerHTML = `<i data-lucide="loader-2" class="animate-spin" width="16"></i> ...`;
             if(window.lucide) lucide.createIcons();
 
             fetch(API_URL, {
