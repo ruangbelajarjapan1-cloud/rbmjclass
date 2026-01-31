@@ -19,7 +19,6 @@
             theme: {
                 extend: {
                     colors: {
-                        // WARNA LEBIH GELAP (High Contrast) untuk Aksesibilitas Tinggi
                         sky: { 50: '#f0f9ff', 100: '#e0f2fe', 600: '#0284c7', 700: '#0369a1', 800: '#075985', 900: '#0c4a6e' },
                         orange: { 50: '#fff7ed', 100: '#ffedd5', 500: '#f97316', 600: '#ea580c', 700: '#c2410c' }
                     },
@@ -33,7 +32,6 @@
     </script>
     
     <style>
-        /* CSS KRITIKAL */
         body { background-color: #f0f9ff; color: #0c4a6e; -webkit-tap-highlight-color: transparent; overflow-x: hidden; }
         body.lang-jp { font-family: 'Zen Maru Gothic', sans-serif; }
         
@@ -43,11 +41,11 @@
             min-height: 100vh;
         }
         
-        /* Glass Panel Lebih Ringan */
+        /* Glass Panel */
         .glass-panel { 
             background: rgba(255, 255, 255, 0.95); 
             border: 2px solid rgba(255, 255, 255, 1); 
-            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -1px rgba(0, 0, 0, 0.03);
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
             border-radius: 1.5rem; 
         }
         
@@ -65,7 +63,6 @@
         .ticker-text { animation: marquee 25s linear infinite; display: inline-block; white-space: nowrap; will-change: transform; }
         @keyframes marquee { 0% { transform: translateX(100%); } 100% { transform: translateX(-100%); } }
         
-        /* Utilitas */
         .hide-scroll::-webkit-scrollbar { display: none; }
         .pop-in { animation: popIn 0.4s ease-out forwards; opacity: 0; }
         @keyframes popIn { from { opacity: 0; transform: scale(0.95); } to { opacity: 1; transform: scale(1); } }
@@ -97,14 +94,14 @@
     </div>
 
     <div id="modal-transfer" class="modal-backdrop fixed inset-0 z-[70] flex items-center justify-center px-6">
-        <div class="absolute inset-0" onclick="toggleModal(false)" aria-label="Close Modal"></div>
+        <div class="absolute inset-0" onclick="toggleModal(false)" aria-label="Close"></div>
         <div class="modal-content bg-white w-full max-w-sm rounded-3xl p-6 shadow-2xl relative z-10 border-4 border-sky-100">
             <div class="flex justify-between items-center mb-6">
                 <h3 class="font-fun font-bold text-xl text-sky-800" id="modal-title">Info Bank</h3>
-                <button onclick="toggleModal(false)" class="w-8 h-8 rounded-full bg-slate-100 flex items-center justify-center hover:bg-slate-200 transition" aria-label="Close"><i data-lucide="x" width="18"></i></button>
+                <button onclick="toggleModal(false)" class="w-8 h-8 rounded-full bg-slate-100 flex items-center justify-center hover:bg-slate-200 transition"><i data-lucide="x" width="18"></i></button>
             </div>
             <div class="bg-sky-50 border-2 border-dashed border-sky-200 rounded-2xl p-6 text-center mb-6">
-                <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/c/c2/Japan_Post_Bank_logo.svg/1200px-Japan_Post_Bank_logo.svg.png" width="120" height="24" class="h-6 mx-auto mb-3 object-contain" alt="Yucho Bank">
+                <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/c/c2/Japan_Post_Bank_logo.svg/1200px-Japan_Post_Bank_logo.svg.png" width="120" height="24" class="h-6 mx-auto mb-3 object-contain" alt="Yucho">
                 <p class="text-[10px] text-sky-600 font-bold uppercase tracking-widest mb-1">Account Number</p>
                 <h2 class="font-fun font-black text-3xl text-slate-800 tracking-tight">10120-12345678</h2>
                 <div class="mt-3 inline-block bg-white border border-sky-200 text-sky-700 px-3 py-1 rounded-full text-[10px] font-bold uppercase shadow-sm">a.n RBM JAPAN ADMIN</div>
@@ -131,24 +128,19 @@
         };
 
         const TEKS = {
-            id: { lang_name: "ID", btn: "Mulai Belajar!", search_ph: "Cari Nama Kamu...", web_link: "Website Ruang Belajar", greet: ["Selamat Pagi", "Selamat Siang", "Selamat Sore", "Selamat Malam"], spp_label: "SPP", pay_status: "Status", status_unpaid: "Belum Ada Pembayaran", status_paid: "Lunas", report: "Izin", btn_wa: "Konfirmasi\nWhatsApp", btn_bank: "Info\nRekening", btn_copy: "Salin\nRincian", news_title: "Kabar RBM Japan", no_news: "Belum ada kabar terbaru", schedule_title: "Jadwal Belajar", no_schedule: "Libur dulu ya!", notes_title: "Pesan Guru", no_notes: "Belum ada pesan", history: "Riwayat SPP", no_history: "Masih kosong", toast_copy: "Berhasil disalin!", modal_title: "Info Rekening", copy_btn: "Salin Nomor" },
+            id: { lang_name: "ID", btn: "Mulai Belajar!", search_ph: "Cari Nama Kamu...", web_link: "Website Ruang Belajar", greet: ["Selamat Pagi", "Selamat Siang", "Selamat Sore", "Selamat Malam"], spp_label: "SPP", pay_status: "Status", status_unpaid: "Belum Ada Pembayaran", status_paid: "Lunas", report: "Izin", btn_wa: "Konfirmasi\nWhatsApp", btn_bank: "Info\nRekening", btn_copy: "Salin\nRincian", news_title: "Kabar RBM Japan", no_news: "Belum ada kabar baru", schedule_title: "Jadwal Belajar", no_schedule: "Libur dulu ya!", notes_title: "Pesan Guru", no_notes: "Belum ada pesan", history: "Riwayat SPP", no_history: "Masih kosong", toast_copy: "Berhasil disalin!", modal_title: "Info Rekening", copy_btn: "Salin Nomor" },
             en: { lang_name: "EN", btn: "Let's Start!", search_ph: "Find Your Name...", web_link: "Official Website", greet: ["Good Morning", "Good Afternoon", "Good Evening", "Good Night"], spp_label: "Tuition Fee", pay_status: "Status", status_unpaid: "Payment Pending", status_paid: "Paid", report: "Absence", btn_wa: "Confirm\nWhatsApp", btn_bank: "Bank\nDetails", btn_copy: "Copy\nDetails", news_title: "RBM News", no_news: "No news yet", schedule_title: "My Schedule", no_schedule: "No class today!", notes_title: "Teacher's Note", no_notes: "No notes yet", history: "Payment History", no_history: "Empty history", toast_copy: "Copied!", modal_title: "Bank Details", copy_btn: "Copy Number" },
             jp: { lang_name: "JP", btn: "勉強を始める", search_ph: "名前を探してね...", web_link: "公式サイト", greet: ["おはよう", "こんにちは", "こんばんは", "おやすみ"], spp_label: "今月の月謝", pay_status: "支払い状況", status_unpaid: "未払い", status_paid: "支払い済み", report: "欠席連絡", btn_wa: "WhatsApp\n確認", btn_bank: "銀行\n口座", btn_copy: "詳細\nコピー", news_title: "お知らせ", no_news: "新しいお知らせはありません", schedule_title: "時間割", no_schedule: "今日は授業がありません", notes_title: "先生からのメッセージ", no_notes: "メッセージはありません", history: "支払い履歴", no_history: "履歴はありません", toast_copy: "コピーしました！", modal_title: "口座情報", copy_btn: "番号をコピー" }
         };
 
         async function ambilData() {
-            // HAPUS CACHE LAMA AGAR PERUBAHAN MUNCUL
-            localStorage.removeItem('rbm_v7_final'); 
+            localStorage.removeItem('rbm_v8_final_fix'); // Hapus cache biar data baru masuk
             try {
                 const res = await fetch(API_URL);
                 const d = await res.json();
                 DATA_SISWA = d.students; DATA_HARGA = d.prices; KABAR_RBM = d.news; INFO_PENGUMUMAN = d.info;
                 finishLoad();
-            } catch (e) { 
-                console.error(e);
-                alert("Gagal koneksi. Coba refresh."); 
-                finishLoad(); 
-            }
+            } catch (e) { console.error(e); alert("Koneksi gagal."); finishLoad(); }
         }
 
         function finishLoad() {
@@ -218,26 +210,18 @@
                 let opsi = `<option value="" disabled selected>${t.search_ph}</option>` + sorted.map(s => `<option value="${s.id}">${s.name}</option>`).join('');
                 app.innerHTML = `
                 <div class="min-h-screen flex flex-col items-center justify-center p-6 pop-in relative overflow-hidden">
-                    <button onclick="cycleLanguage()" class="absolute top-6 right-6 px-4 py-2 rounded-full bg-white border-2 border-sky-100 text-sky-700 font-bold uppercase shadow-sm hover:scale-105 transition z-30 text-xs flex items-center gap-2" aria-label="Change Language"><i data-lucide="languages" width="14"></i> ${t.lang_name}</button>
+                    <button onclick="cycleLanguage()" class="absolute top-6 right-6 px-4 py-2 rounded-full bg-white border-2 border-sky-100 text-sky-700 font-bold uppercase shadow-sm hover:scale-105 transition z-30 text-xs flex items-center gap-2"><i data-lucide="languages" width="14"></i> ${t.lang_name}</button>
                     <div class="w-full max-w-sm relative z-10">
                         <div class="text-center mb-8">
-                            <div class="inline-flex items-center justify-center w-24 h-24 bg-white rounded-3xl shadow-lg mb-6 border-4 border-white transform rotate-3">
-                                <img src="logo.png" width="48" height="48" class="object-contain" onerror="this.src='https://cdn-icons-png.flaticon.com/512/2991/2991148.png'" alt="RBM Logo">
-                            </div>
+                            <div class="inline-flex items-center justify-center w-24 h-24 bg-white rounded-3xl shadow-lg mb-6 border-4 border-white transform rotate-3"><img src="logo.png" width="48" height="48" class="object-contain" onerror="this.src='https://cdn-icons-png.flaticon.com/512/2991/2991148.png'"></div>
                             <h1 class="font-fun font-black text-4xl text-sky-700 mb-2 tracking-tight drop-shadow-sm">RBM Portal</h1>
                             <div class="inline-block bg-orange-50 text-orange-600 px-4 py-1.5 rounded-full border border-orange-200"><p class="text-[10px] font-bold uppercase tracking-widest">✨ Istiqomah di atas Sunnah ✨</p></div>
                         </div>
-                        <div class="glass-panel p-2">
-                            <div class="bg-white rounded-3xl p-6 shadow-sm">
-                                <div class="relative mb-4 group">
-                                    <label for="selSiswa" class="sr-only">Pilih Siswa</label>
-                                    <select id="selSiswa" class="w-full p-4 pl-6 bg-sky-50 border border-sky-200 rounded-2xl text-sm font-bold text-sky-800 outline-none focus:border-sky-500 appearance-none transition cursor-pointer">${opsi}</select>
-                                    <div class="absolute right-5 top-1/2 -translate-y-1/2 text-sky-400 pointer-events-none"><i data-lucide="chevron-down" width="20"></i></div>
-                                </div>
-                                <button onclick="const id=document.getElementById('selSiswa').value; if(id){STATE.user=DATA_SISWA.find(s=>s.id===id);STATE.view='dashboard';renderApp(); setTimeout(fireConfetti, 300);}" class="w-full btn-orange py-4 font-black text-sm uppercase tracking-wider shadow-md transform hover:scale-[1.02] transition">${t.btn} 🚀</button>
-                                <div class="mt-6 text-center"><a href="${WEBSITE_URL}" target="_blank" class="text-xs font-bold text-sky-600 hover:text-orange-600 transition flex items-center justify-center gap-2"><span>${t.web_link}</span> <i data-lucide="external-link" width="12"></i></a></div>
-                            </div>
-                        </div>
+                        <div class="glass-panel p-2"><div class="bg-white rounded-3xl p-6 shadow-sm">
+                            <div class="relative mb-4 group"><select id="selSiswa" class="w-full p-4 pl-6 bg-sky-50 border border-sky-200 rounded-2xl text-sm font-bold text-sky-800 outline-none focus:border-sky-500 appearance-none transition cursor-pointer">${opsi}</select><div class="absolute right-5 top-1/2 -translate-y-1/2 text-sky-400 pointer-events-none"><i data-lucide="chevron-down" width="20"></i></div></div>
+                            <button onclick="const id=document.getElementById('selSiswa').value; if(id){STATE.user=DATA_SISWA.find(s=>s.id===id);STATE.view='dashboard';renderApp(); setTimeout(fireConfetti, 300);}" class="w-full btn-orange py-4 font-black text-sm uppercase tracking-wider shadow-md transform hover:scale-[1.02] transition">${t.btn} 🚀</button>
+                            <div class="mt-6 text-center"><a href="${WEBSITE_URL}" target="_blank" class="text-xs font-bold text-sky-600 hover:text-orange-600 transition flex items-center justify-center gap-2"><span>${t.web_link}</span> <i data-lucide="external-link" width="12"></i></a></div>
+                        </div></div>
                     </div>
                 </div>`;
             } else {
@@ -248,23 +232,21 @@
                 const isPaid = statusAman.includes('lunas');
                 const stText = isPaid ? t.status_paid : t.status_unpaid;
 
-                // --- FIX INFO: TAMPILKAN MESKI FOTO ERROR ---
+                // --- FIX: TAMPILKAN ISI (CONTENT) BERITA ---
                 const newsHtml = KABAR_RBM.map(k => {
-                    // Cek jika ada judul
                     if(!k.judul) return ''; 
-                    
-                    // Fallback gambar jika kosong
                     const imgUrl = k.foto || 'https://placehold.co/600x400/e0f2fe/0284c7?text=RBM+Japan';
                     
                     return `
-                    <div class="min-w-[260px] bg-white rounded-3xl border border-slate-100 overflow-hidden shadow-sm snap-center group">
+                    <div class="min-w-[280px] bg-white rounded-3xl border border-slate-100 overflow-hidden shadow-sm snap-center group">
                         <div class="h-32 bg-slate-100 relative overflow-hidden">
-                            <img src="${imgUrl}" loading="lazy" class="w-full h-full object-cover" onerror="this.src='https://placehold.co/600x400/e0f2fe/0284c7?text=Info+Baru'" alt="${k.judul}">
-                            <div class="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent"></div>
-                            <span class="absolute bottom-3 left-3 text-[10px] font-bold text-white bg-black/30 backdrop-blur-sm px-2 py-1 rounded-lg uppercase tracking-wider">${k.tgl || 'Info'}</span>
+                            <img src="${imgUrl}" loading="lazy" class="w-full h-full object-cover" onerror="this.src='https://placehold.co/600x400/e0f2fe/0284c7?text=Info'" alt="${k.judul}">
+                            <div class="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent"></div>
+                            <span class="absolute bottom-3 left-3 text-[10px] font-bold text-white bg-black/20 backdrop-blur-md px-2 py-1 rounded-lg uppercase tracking-wider">${k.tgl || 'Info'}</span>
                         </div>
                         <div class="p-5">
-                            <h4 class="text-sm font-bold text-slate-800 line-clamp-2 leading-snug font-fun">${k.judul}</h4>
+                            <h4 class="text-sm font-bold text-sky-900 line-clamp-2 leading-snug font-fun mb-2">${k.judul}</h4>
+                            <p class="text-xs text-slate-600 line-clamp-3 leading-relaxed">${k.isi || ''}</p>
                         </div>
                     </div>`;
                 }).join('');
@@ -273,7 +255,7 @@
                 <div class="pb-28 pop-in">
                     <div class="pt-10 px-8 pb-4 flex justify-between items-center">
                         <div><p class="text-sky-600 text-xs font-black uppercase tracking-widest mb-1 flex items-center gap-1">${getGreet()} <span>☀️</span></p><h2 class="font-fun font-black text-xl text-slate-800 leading-tight">${s.name}</h2></div>
-                        <div class="flex gap-2"><button onclick="cycleLanguage()" class="w-10 h-10 rounded-2xl bg-white text-sky-700 border-2 border-sky-100 flex items-center justify-center font-black text-xs uppercase hover:bg-sky-50 transition shadow-sm" aria-label="Change Language">${t.lang_name}</button><button onclick="location.reload()" class="w-10 h-10 rounded-2xl bg-white text-slate-400 border-2 border-slate-100 flex items-center justify-center hover:bg-red-50 hover:text-red-500 transition shadow-sm" aria-label="Logout"><i data-lucide="log-out" width="18"></i></button></div>
+                        <div class="flex gap-2"><button onclick="cycleLanguage()" class="w-10 h-10 rounded-2xl bg-white text-sky-700 border-2 border-sky-100 flex items-center justify-center font-black text-xs uppercase hover:bg-sky-50 transition shadow-sm">${t.lang_name}</button><button onclick="location.reload()" class="w-10 h-10 rounded-2xl bg-white text-slate-400 border-2 border-slate-100 flex items-center justify-center hover:bg-red-50 hover:text-red-500 transition shadow-sm"><i data-lucide="log-out" width="18"></i></button></div>
                     </div>
                     <div class="px-6 space-y-6">
                         <div class="sky-card rounded-[2rem] p-8">
