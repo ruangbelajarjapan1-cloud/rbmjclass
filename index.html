@@ -117,7 +117,7 @@
         const API_URL = "https://script.google.com/macros/s/AKfycbz2a5-sm2_gLBPF5jpTmZfBuN9PppkvUI3nXIyOJbYJ4XDZA3SDE7-FNU784ZxfSZjr/exec"; 
         const WEBSITE_URL = "https://rbj-site.vercel.app/";
         const ADMIN_WA = "6285819809668";
-        const CACHE_KEY = "rbm_app_data_v2_smart"; // Kunci untuk penyimpanan di HP
+        const CACHE_KEY = "rbm_app_data_v3_schedule"; 
 
         let DATA_SISWA = [], DATA_HARGA = {}, KABAR_RBM = [], INFO_PENGUMUMAN = {};
         let STATE = { view: 'login', user: null, lang: 'id' };
@@ -141,7 +141,8 @@
                 status_map: { 'hadir': 'Hadir', 'sakit': 'Sakit', 'izin': 'Izin', 'alpha': 'Alpha' },
                 izin_title: "Form Izin", sakit: "Sakit", izin: "Izin", placeholder: "Keterangan tambahan...", btn_kirim: "Kirim Data", kirim_sukses: "Data Izin Terkirim!",
                 lbl_alasan: "PILIH ALASAN", lbl_pesan: "PESAN TAMBAHAN",
-                toast_update: "Data Berhasil Diperbarui!"
+                toast_update: "Data Berhasil Diperbarui!",
+                today_title: "Kelas Hari Ini", today_no: "Tidak ada kelas hari ini, selamat beristirahat!", today_yes: "Jangan lupa masuk kelas ya!"
             },
             en: { 
                 lang_name: "EN", btn: "Let's Start!", search_ph: "Find Your Name...", web_link: "Official Website", greet: ["Good Morning", "Good Afternoon", "Good Evening", "Good Night"], 
@@ -154,7 +155,8 @@
                 status_map: { 'hadir': 'Present', 'sakit': 'Sick', 'izin': 'Permission', 'alpha': 'Absent' },
                 izin_title: "Absence Form", sakit: "Sick", izin: "Absence", placeholder: "Additional notes...", btn_kirim: "Submit", kirim_sukses: "Submitted Successfully!",
                 lbl_alasan: "SELECT REASON", lbl_pesan: "ADDITIONAL MESSAGE",
-                toast_update: "Data Updated Successfully!"
+                toast_update: "Data Updated Successfully!",
+                today_title: "Today's Class", today_no: "No class today, have a good rest!", today_yes: "Don't forget to join the class!"
             },
             jp: { 
                 lang_name: "JP", btn: "勉強を始める", search_ph: "名前を探してね...", web_link: "公式サイト", greet: ["おはよう", "こんにちは", "こんばんは", "おやすみ"], 
@@ -167,90 +169,57 @@
                 status_map: { 'hadir': '出席', 'sakit': '病欠', 'izin': '欠席', 'alpha': '無断欠席' },
                 izin_title: "欠席届", sakit: "病欠", izin: "欠席", placeholder: "備考...", btn_kirim: "送信する", kirim_sukses: "送信しました！",
                 lbl_alasan: "理由を選択", lbl_pesan: "備考 (任意)",
-                toast_update: "データが更新されました！"
+                toast_update: "データが更新されました！",
+                today_title: "今日の授業", today_no: "今日は授業がありません。ゆっくり休んでください！", today_yes: "授業を忘れないでくださいね！"
             }
         };
 
-        // --- SMART CACHING LOGIC ---
+        // --- CACHING & DATA ---
         function renderSkeleton() {
             const app = document.getElementById('app');
             app.innerHTML = `
             <div class="pb-28 pt-10 px-6 space-y-6">
                 <div class="flex justify-between items-center"><div class="h-4 w-32 skeleton"></div><div class="h-10 w-10 skeleton rounded-2xl"></div></div>
                 <div class="h-48 w-full skeleton rounded-[2rem]"></div>
-                <div class="grid grid-cols-2 gap-3">
-                    <div class="h-24 skeleton rounded-2xl"></div><div class="h-24 skeleton rounded-2xl"></div>
+                <div class="h-24 w-full skeleton rounded-[2rem]"></div> <div class="grid grid-cols-2 gap-3">
                     <div class="h-24 skeleton rounded-2xl"></div><div class="h-24 skeleton rounded-2xl"></div>
                 </div>
-                <div class="h-32 skeleton rounded-3xl"></div>
             </div>`;
         }
 
         async function ambilData() {
-            // 1. CEK CACHE DI HP DULU
             const cachedData = localStorage.getItem(CACHE_KEY);
             let hasCache = false;
-            
             if (cachedData) {
                 try {
                     const parsed = JSON.parse(cachedData);
-                    // Gunakan data cache agar langsung tampil (INSTANT LOAD)
-                    DATA_SISWA = parsed.students; 
-                    DATA_HARGA = parsed.prices; 
-                    KABAR_RBM = parsed.news; 
-                    INFO_PENGUMUMAN = parsed.info;
-                    
-                    finishLoad(false); // Render UI tanpa animasi loading
-                    hasCache = true;
-                    console.log("Loaded from Smart Cache ⚡");
+                    DATA_SISWA = parsed.students; DATA_HARGA = parsed.prices; KABAR_RBM = parsed.news; INFO_PENGUMUMAN = parsed.info;
+                    finishLoad(false); hasCache = true;
                 } catch (e) { console.log("Cache invalid"); }
             }
-
-            if (!hasCache) renderSkeleton(); // Kalau tidak ada cache, baru munculkan skeleton
-
-            // 2. TETAP AMBIL DATA BARU DARI INTERNET (Background Sync)
+            if (!hasCache) renderSkeleton(); 
             try {
                 const res = await fetch(API_URL);
                 const d = await res.json();
-                
-                // Cek apakah data berubah?
                 const newDataStr = JSON.stringify(d);
                 if (newDataStr !== cachedData) {
-                    // Simpan data baru ke Cache
                     localStorage.setItem(CACHE_KEY, newDataStr);
-                    
-                    // Update variable global
                     DATA_SISWA = d.students; DATA_HARGA = d.prices; KABAR_RBM = d.news; INFO_PENGUMUMAN = d.info;
-                    
-                    // Jika tadi sudah load cache, update UI user dan beri tahu
                     if (hasCache) {
-                        // Kalau user sedang di dashboard, update tampilannya
-                        // Kalau user sedang isi form, jangan ganggu dulu (optional logic)
                         if(STATE.view === 'dashboard' && STATE.user) {
-                            // Update data user yang sedang aktif
                             const updatedUser = DATA_SISWA.find(s => s.id === STATE.user.id);
                             if(updatedUser) STATE.user = updatedUser;
                             renderApp();
                             showToast(TEKS[STATE.lang].toast_update, "refresh-cw");
-                        } else if (STATE.view === 'login') {
-                            renderApp();
-                        }
-                    } else {
-                        finishLoad(true); // First load normal
-                    }
+                        } else if (STATE.view === 'login') { renderApp(); }
+                    } else { finishLoad(true); }
                 }
-            } catch (e) { 
-                console.error(e); 
-                if(!hasCache) alert("Koneksi gagal. Cek internet."); 
-            }
+            } catch (e) { if(!hasCache) alert("Koneksi gagal."); }
         }
 
         function finishLoad(animate = true) {
             const l = document.getElementById('loader');
-            if(l) {
-                l.style.opacity = '0';
-                setTimeout(() => { l.style.display = 'none'; }, 500);
-            }
+            if(l) { l.style.opacity = '0'; setTimeout(() => { l.style.display = 'none'; }, 500); }
             document.getElementById('app').classList.remove('hidden');
             renderApp();
         }
@@ -258,7 +227,6 @@
         function showToast(msg, icon='check-circle') {
              document.getElementById('toast-msg').innerText = msg;
              const t = document.getElementById('toast');
-             // Ganti icon jika perlu (simple logic)
              t.innerHTML = `<i data-lucide="${icon}" width="16"></i> <span id="toast-msg">${msg}</span>`;
              if(window.lucide) lucide.createIcons();
              t.classList.add('show');
@@ -274,9 +242,7 @@
         }
 
         function toggleIzin(show) {
-            const m = document.getElementById('modal-izin');
-            const t = TEKS[STATE.lang];
-            
+            const m = document.getElementById('modal-izin'); const t = TEKS[STATE.lang];
             if(show) {
                 document.getElementById('lbl-izin-title').innerText = t.izin_title;
                 document.getElementById('lbl-pilih-alasan').innerText = t.lbl_alasan; 
@@ -285,12 +251,10 @@
                 document.getElementById('btn-izin').innerText = "📅 " + t.izin;
                 document.getElementById('pesanIzin').placeholder = t.placeholder;
                 document.getElementById('btn-kirim-izin').innerHTML = `<span>${t.btn_kirim}</span> <i data-lucide="send" width="16"></i>`;
-                
                 alasanTerpilih = ''; 
                 document.querySelectorAll('.btn-alasan').forEach(b => b.classList.remove('bg-orange-100', 'text-orange-600', 'border-orange-200'));
                 if(window.lucide) lucide.createIcons();
             }
-
             if(show) m.classList.add('active'); else m.classList.remove('active');
         }
 
@@ -302,43 +266,26 @@
 
         function kirimIzin() {
             if(!alasanTerpilih) { alert("Pilih alasan dulu"); return; }
-            const t = TEKS[STATE.lang];
-            const btn = document.getElementById('btn-kirim-izin');
-            
+            const t = TEKS[STATE.lang]; const btn = document.getElementById('btn-kirim-izin');
             const btnText = btn.innerHTML;
             btn.innerHTML = `<i data-lucide="loader-2" class="animate-spin" width="16"></i> ...`;
             if(window.lucide) lucide.createIcons();
 
             fetch(API_URL, {
                 method: 'POST',
-                body: JSON.stringify({
-                    id: STATE.user.id,
-                    alasan: alasanTerpilih,
-                    pesan: document.getElementById('pesanIzin').value
-                })
-            })
-            .then(res => res.json())
-            .then(data => {
-                showToast(t.kirim_sukses);
-                toggleIzin(false);
-                btn.innerHTML = btnText;
-            })
-            .catch(err => {
-                alert("Gagal mengirim.");
-                btn.innerHTML = btnText;
-            });
+                body: JSON.stringify({ id: STATE.user.id, alasan: alasanTerpilih, pesan: document.getElementById('pesanIzin').value })
+            }).then(res => res.json()).then(data => {
+                showToast(t.kirim_sukses); toggleIzin(false); btn.innerHTML = btnText;
+            }).catch(err => { alert("Gagal mengirim."); btn.innerHTML = btnText; });
         }
 
         function copyText(text, label) {
-            navigator.clipboard.writeText(text).then(() => {
-                showToast(`${label} ${TEKS[STATE.lang].toast_copy}`);
-            });
+            navigator.clipboard.writeText(text).then(() => { showToast(`${label} ${TEKS[STATE.lang].toast_copy}`); });
         }
 
         function cycleLanguage() {
             if (STATE.lang === 'id') STATE.lang = 'en'; else if (STATE.lang === 'en') STATE.lang = 'jp'; else STATE.lang = 'id';
             if (STATE.lang === 'jp') document.body.classList.add('lang-jp'); else document.body.classList.remove('lang-jp');
-            // Simpan preferensi bahasa juga bisa di sini (optional)
             renderApp();
         }
 
@@ -355,8 +302,7 @@
         }
 
         function salinRincian(nama, siswa, status) {
-            const t = TEKS[STATE.lang];
-            const dataTagihan = hitungTotalTagihan(siswa);
+            const t = TEKS[STATE.lang]; const dataTagihan = hitungTotalTagihan(siswa);
             const statusAman = (status || '').toString().toLowerCase(); 
             const st = statusAman.includes('lunas') ? t.status_paid : t.status_unpaid;
             const txt = `RBM INVOICE\nName: ${nama}\n\nClasses:\n- ${dataTagihan.rincian.join('\n- ')}${dataTagihan.statusDiskon}\n\nTotal: ¥${parseInt(dataTagihan.total).toLocaleString('ja-JP')}\nStatus: ${st}`;
@@ -365,11 +311,9 @@
 
         function getGreet() { const h = new Date().getHours(); const g = TEKS[STATE.lang].greet; if (h < 11) return g[0]; if (h < 15) return g[1]; if (h < 19) return g[2]; return g[3]; }
 
-        function setView(viewName) {
-            STATE.view = viewName;
-            renderApp();
-        }
+        function setView(viewName) { STATE.view = viewName; renderApp(); }
 
+        // --- RENDER UTAMA ---
         function renderApp() {
             const app = document.getElementById('app'); 
             const t = TEKS[STATE.lang];
@@ -412,24 +356,15 @@
                             let stColor = 'bg-slate-100 text-slate-500';
                             let icon = 'circle';
                             const rawStatus = (a.status || '').toLowerCase().trim();
-                            
                             if(rawStatus.includes('hadir')) { stColor = 'bg-green-100 text-green-700'; icon='check-circle-2'; }
                             else if(rawStatus.includes('sakit')) { stColor = 'bg-orange-100 text-orange-700'; icon='activity'; }
                             else if(rawStatus.includes('izin')) { stColor = 'bg-blue-100 text-blue-700'; icon='info'; }
                             else if(rawStatus.includes('alpha')) { stColor = 'bg-red-100 text-red-700'; icon='x-circle'; }
-
                             const displayStatus = statusMap[rawStatus] || a.status;
-
                             return `
                             <div class="bg-white p-4 rounded-3xl border border-slate-100 shadow-sm flex items-center gap-4">
-                                <div class="w-14 h-14 ${stColor} rounded-2xl flex items-center justify-center shrink-0">
-                                    <i data-lucide="${icon}" width="24"></i>
-                                </div>
-                                <div>
-                                    <p class="text-[10px] text-slate-400 font-bold uppercase tracking-wider mb-0.5">${a.date}</p>
-                                    <h4 class="font-bold text-slate-800 text-base">${a.subject || 'Mata Pelajaran'}</h4>
-                                    <div class="inline-block mt-1 px-2 py-0.5 rounded-md text-[10px] font-black uppercase ${stColor}">${displayStatus}</div>
-                                </div>
+                                <div class="w-14 h-14 ${stColor} rounded-2xl flex items-center justify-center shrink-0"><i data-lucide="${icon}" width="24"></i></div>
+                                <div><p class="text-[10px] text-slate-400 font-bold uppercase tracking-wider mb-0.5">${a.date}</p><h4 class="font-bold text-slate-800 text-base">${a.subject || 'Mata Pelajaran'}</h4><div class="inline-block mt-1 px-2 py-0.5 rounded-md text-[10px] font-black uppercase ${stColor}">${displayStatus}</div></div>
                             </div>`;
                         }).join('') : `<div class="p-10 text-center text-slate-400 bg-white/50 rounded-3xl border-2 border-dashed border-slate-200 italic text-sm">${t.no_absensi}</div>`}
                     </div>
@@ -443,20 +378,26 @@
                 const isPaid = statusAman.includes('lunas');
                 const stText = isPaid ? t.status_paid : t.status_unpaid;
 
+                // --- LOGIKA JADWAL HARI INI ---
+                const mapHari = ['Ahad', 'Senin', 'Selasa', 'Rabu', 'Kamis', 'Jumat', 'Sabtu'];
+                const hariIni = mapHari[new Date().getDay()];
+                const jadwalHariIni = s.schedule.filter(k => k.day === hariIni);
+                const adaKelas = jadwalHariIni.length > 0;
+                
+                const jadwalHariIniHTML = adaKelas ? jadwalHariIni.map(sc => 
+                    `<div class="flex items-center gap-3 bg-white p-3 rounded-2xl border border-orange-100 shadow-sm mb-2">
+                        <div class="w-10 h-10 bg-orange-50 rounded-xl flex items-center justify-center text-orange-600"><i data-lucide="book-open" width="18"></i></div>
+                        <div><p class="text-xs font-bold text-slate-800">${sc.subject}</p><p class="text-[10px] text-slate-500 font-bold flex items-center gap-1"><i data-lucide="clock" width="10"></i> ${sc.time}</p></div>
+                    </div>`
+                ).join('') : `<div class="bg-white/50 p-4 rounded-2xl border border-dashed border-slate-200 text-center"><p class="text-xs text-slate-400 italic">${t.today_no}</p></div>`;
+
                 const newsHtml = KABAR_RBM.map(k => {
                     if(!k.judul) return ''; 
                     const imgUrl = k.foto || 'https://placehold.co/600x400/e0f2fe/0284c7?text=RBM+Japan';
                     return `
                     <div class="min-w-[280px] bg-white rounded-3xl border border-slate-100 overflow-hidden shadow-sm snap-center group">
-                        <div class="h-32 bg-slate-100 relative overflow-hidden">
-                            <img src="${imgUrl}" loading="lazy" class="w-full h-full object-cover" onerror="this.src='https://placehold.co/600x400/e0f2fe/0284c7?text=Info'" alt="${k.judul}">
-                            <div class="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent"></div>
-                            <span class="absolute bottom-3 left-3 text-[10px] font-bold text-white bg-black/20 backdrop-blur-md px-2 py-1 rounded-lg uppercase tracking-wider">${k.tgl || 'Info'}</span>
-                        </div>
-                        <div class="p-5">
-                            <h4 class="text-sm font-bold text-sky-900 line-clamp-2 leading-snug font-fun mb-2">${k.judul}</h4>
-                            <p class="text-xs text-slate-600 line-clamp-3 leading-relaxed">${k.isi || ''}</p>
-                        </div>
+                        <div class="h-32 bg-slate-100 relative overflow-hidden"><img src="${imgUrl}" loading="lazy" class="w-full h-full object-cover" onerror="this.src='https://placehold.co/600x400/e0f2fe/0284c7?text=Info'"><div class="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent"></div><span class="absolute bottom-3 left-3 text-[10px] font-bold text-white bg-black/20 backdrop-blur-md px-2 py-1 rounded-lg uppercase tracking-wider">${k.tgl || 'Info'}</span></div>
+                        <div class="p-5"><h4 class="text-sm font-bold text-sky-900 line-clamp-2 leading-snug font-fun mb-2">${k.judul}</h4><p class="text-xs text-slate-600 line-clamp-3 leading-relaxed">${k.isi || ''}</p></div>
                     </div>`;
                 }).join('');
 
@@ -474,23 +415,20 @@
                             </div>
                         </div>
 
+                        <div class="bg-orange-50 border border-orange-100 rounded-[1.5rem] p-4 relative overflow-hidden">
+                            <div class="flex items-center justify-between mb-3 relative z-10">
+                                <h3 class="font-fun font-bold text-orange-800 flex items-center gap-2"><i data-lucide="calendar" width="16"></i> ${t.today_title}</h3>
+                                ${adaKelas ? `<span class="bg-red-500 text-white text-[10px] font-bold px-2 py-0.5 rounded-full animate-pulse">LIVE</span>` : ''}
+                            </div>
+                            <div class="relative z-10">${jadwalHariIniHTML}</div>
+                            <div class="absolute -right-6 -bottom-6 w-24 h-24 bg-orange-100 rounded-full opacity-50"></div>
+                        </div>
+
                         <div class="grid grid-cols-2 gap-3">
-                            <button onclick="setView('attendance')" class="glass-panel p-4 flex flex-col items-center gap-2 hover:bg-white transition group active:scale-95 bg-white/60">
-                                <div class="w-12 h-12 bg-purple-100 text-purple-600 rounded-2xl flex items-center justify-center shadow-sm"><i data-lucide="calendar-check-2" width="24"></i></div>
-                                <span class="text-[10px] font-bold text-slate-600 text-center leading-tight whitespace-pre-line uppercase">${t.btn_absensi}</span>
-                            </button>
-                            <button onclick="window.open('https://wa.me/${ADMIN_WA}?text=Konfirmasi SPP ${s.name} Total: ¥${total}')" class="glass-panel p-4 flex flex-col items-center gap-2 hover:bg-white transition group active:scale-95">
-                                <div class="w-12 h-12 bg-green-100 text-green-600 rounded-2xl flex items-center justify-center shadow-sm"><i data-lucide="message-circle" width="24"></i></div>
-                                <span class="text-[10px] font-bold text-slate-600 text-center leading-tight whitespace-pre-line uppercase">${t.btn_wa}</span>
-                            </button>
-                            <button onclick="toggleModal(true)" class="glass-panel p-4 flex flex-col items-center gap-2 hover:bg-white transition group active:scale-95">
-                                <div class="w-12 h-12 bg-sky-100 text-sky-600 rounded-2xl flex items-center justify-center shadow-sm"><i data-lucide="credit-card" width="24"></i></div>
-                                <span class="text-[10px] font-bold text-slate-600 text-center leading-tight whitespace-pre-line uppercase">${t.btn_bank}</span>
-                            </button>
-                            <button onclick="salinRincian('${s.name}', s, '${stRaw}')" class="glass-panel p-4 flex flex-col items-center gap-2 hover:bg-white transition group active:scale-95">
-                                <div class="w-12 h-12 bg-orange-100 text-orange-500 rounded-2xl flex items-center justify-center shadow-sm"><i data-lucide="copy" width="24"></i></div>
-                                <span class="text-[10px] font-bold text-slate-600 text-center leading-tight whitespace-pre-line uppercase">${t.btn_copy}</span>
-                            </button>
+                            <button onclick="setView('attendance')" class="glass-panel p-4 flex flex-col items-center gap-2 hover:bg-white transition group active:scale-95 bg-white/60"><div class="w-12 h-12 bg-purple-100 text-purple-600 rounded-2xl flex items-center justify-center shadow-sm"><i data-lucide="calendar-check-2" width="24"></i></div><span class="text-[10px] font-bold text-slate-600 text-center leading-tight whitespace-pre-line uppercase">${t.btn_absensi}</span></button>
+                            <button onclick="window.open('https://wa.me/${ADMIN_WA}?text=Konfirmasi SPP ${s.name} Total: ¥${total}')" class="glass-panel p-4 flex flex-col items-center gap-2 hover:bg-white transition group active:scale-95"><div class="w-12 h-12 bg-green-100 text-green-600 rounded-2xl flex items-center justify-center shadow-sm"><i data-lucide="message-circle" width="24"></i></div><span class="text-[10px] font-bold text-slate-600 text-center leading-tight whitespace-pre-line uppercase">${t.btn_wa}</span></button>
+                            <button onclick="toggleModal(true)" class="glass-panel p-4 flex flex-col items-center gap-2 hover:bg-white transition group active:scale-95"><div class="w-12 h-12 bg-sky-100 text-sky-600 rounded-2xl flex items-center justify-center shadow-sm"><i data-lucide="credit-card" width="24"></i></div><span class="text-[10px] font-bold text-slate-600 text-center leading-tight whitespace-pre-line uppercase">${t.btn_bank}</span></button>
+                            <button onclick="salinRincian('${s.name}', s, '${stRaw}')" class="glass-panel p-4 flex flex-col items-center gap-2 hover:bg-white transition group active:scale-95"><div class="w-12 h-12 bg-orange-100 text-orange-500 rounded-2xl flex items-center justify-center shadow-sm"><i data-lucide="copy" width="24"></i></div><span class="text-[10px] font-bold text-slate-600 text-center leading-tight whitespace-pre-line uppercase">${t.btn_copy}</span></button>
                         </div>
 
                         ${INFO_PENGUMUMAN.aktif ? `<div class="bg-yellow-50 border border-yellow-200 rounded-2xl p-1 overflow-hidden shadow-sm"><div class="bg-white/80 rounded-xl px-4 py-3"><div class="ticker-text text-xs font-bold text-orange-700 italic">📣 ${STATE.lang==='id'?INFO_PENGUMUMAN.teks_id:INFO_PENGUMUMAN.teks_en}</div></div></div>` : ''}
@@ -502,7 +440,6 @@
                                     ${newsHtml || `<div class="w-full py-8 text-center text-xs text-slate-400 italic bg-white/50 rounded-3xl border-2 border-dashed border-slate-200">${t.no_news}</div>`}
                                 </div>
                             </section>
-                            
                             <div class="grid gap-6">
                                 <section>
                                     <div class="flex items-center gap-3 mb-4 px-1"><div class="h-8 w-2 bg-sky-400 rounded-full"></div><h3 class="font-fun font-bold text-slate-700 text-xl">${t.schedule_title}</h3></div>
@@ -510,16 +447,7 @@
                                         ${s.schedule.map(sc => {
                                             const hariDisplay = DAY_NAMES[STATE.lang][sc.day] || sc.day;
                                             const hariKotak = STATE.lang === 'jp' ? hariDisplay.substring(0,1) : hariDisplay.substring(0,3);
-                                            return `<div class="bg-white p-4 rounded-[1.5rem] border border-slate-100 flex items-center gap-4 shadow-sm hover:shadow-md transition">
-                                                <div class="w-14 h-14 bg-sky-50 rounded-2xl flex flex-col items-center justify-center border-2 border-sky-100 text-sky-600"><span class="text-xs font-black uppercase tracking-widest">${hariKotak}</span></div>
-                                                <div class="flex-1">
-                                                    <p class="text-sm font-bold text-slate-700 font-fun">${sc.subject}</p>
-                                                    <div class="flex justify-between items-center mt-1">
-                                                        <p class="text-[10px] text-slate-500 font-bold flex items-center gap-1"><i data-lucide="clock" width="12"></i> ${sc.time} JST</p>
-                                                        <p class="text-[10px] text-orange-600 font-bold flex items-center gap-1 bg-orange-50 px-2 py-0.5 rounded-full"><i data-lucide="user" width="10"></i> ${sc.teacher}</p>
-                                                    </div>
-                                                </div>
-                                            </div>`
+                                            return `<div class="bg-white p-4 rounded-[1.5rem] border border-slate-100 flex items-center gap-4 shadow-sm hover:shadow-md transition"><div class="w-14 h-14 bg-sky-50 rounded-2xl flex flex-col items-center justify-center border-2 border-sky-100 text-sky-600"><span class="text-xs font-black uppercase tracking-widest">${hariKotak}</span></div><div><p class="text-sm font-bold text-slate-700 font-fun">${sc.subject}</p><p class="text-[10px] text-slate-500 font-bold flex items-center gap-1 mt-0.5"><i data-lucide="clock" width="12"></i> ${sc.time} JST</p></div></div>`
                                         }).join('') || `<p class="text-xs text-slate-400 italic text-center py-6 bg-white/50 rounded-3xl border-2 border-dashed border-slate-200">${t.no_schedule}</p>`}
                                     </div>
                                 </section>
