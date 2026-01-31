@@ -64,7 +64,7 @@
 
     <div class="fixed bottom-8 left-0 right-0 z-[60] flex justify-center pointer-events-none">
         <div id="toast" class="bg-slate-800 text-white px-6 py-3 rounded-full shadow-xl flex items-center gap-2 text-sm font-bold">
-            <i data-lucide="check" stroke-width="3" width="16"></i> <span id="toast-msg">OK</span>
+            <i data-lucide="check-circle" stroke-width="3" width="16"></i> <span id="toast-msg">OK</span>
         </div>
     </div>
 
@@ -117,7 +117,8 @@
         const API_URL = "https://script.google.com/macros/s/AKfycbz2a5-sm2_gLBPF5jpTmZfBuN9PppkvUI3nXIyOJbYJ4XDZA3SDE7-FNU784ZxfSZjr/exec"; 
         const WEBSITE_URL = "https://rbj-site.vercel.app/";
         const ADMIN_WA = "6285819809668";
-        
+        const CACHE_KEY = "rbm_app_data_v2_smart"; // Kunci untuk penyimpanan di HP
+
         let DATA_SISWA = [], DATA_HARGA = {}, KABAR_RBM = [], INFO_PENGUMUMAN = {};
         let STATE = { view: 'login', user: null, lang: 'id' };
         let alasanTerpilih = '';
@@ -138,9 +139,9 @@
                 toast_copy: "Berhasil disalin!", modal_title: "Info Rekening", copy_btn: "Salin Nomor",
                 absensi_title: "Riwayat Absensi", absensi_back: "Kembali", no_absensi: "Belum ada data absensi",
                 status_map: { 'hadir': 'Hadir', 'sakit': 'Sakit', 'izin': 'Izin', 'alpha': 'Alpha' },
-                // IZIN FORM (LENGKAP)
                 izin_title: "Form Izin", sakit: "Sakit", izin: "Izin", placeholder: "Keterangan tambahan...", btn_kirim: "Kirim Data", kirim_sukses: "Data Izin Terkirim!",
-                lbl_alasan: "PILIH ALASAN", lbl_pesan: "PESAN TAMBAHAN"
+                lbl_alasan: "PILIH ALASAN", lbl_pesan: "PESAN TAMBAHAN",
+                toast_update: "Data Berhasil Diperbarui!"
             },
             en: { 
                 lang_name: "EN", btn: "Let's Start!", search_ph: "Find Your Name...", web_link: "Official Website", greet: ["Good Morning", "Good Afternoon", "Good Evening", "Good Night"], 
@@ -151,9 +152,9 @@
                 toast_copy: "Copied!", modal_title: "Bank Details", copy_btn: "Copy Number",
                 absensi_title: "Attendance History", absensi_back: "Back", no_absensi: "No attendance data",
                 status_map: { 'hadir': 'Present', 'sakit': 'Sick', 'izin': 'Permission', 'alpha': 'Absent' },
-                // IZIN FORM (LENGKAP)
                 izin_title: "Absence Form", sakit: "Sick", izin: "Absence", placeholder: "Additional notes...", btn_kirim: "Submit", kirim_sukses: "Submitted Successfully!",
-                lbl_alasan: "SELECT REASON", lbl_pesan: "ADDITIONAL MESSAGE"
+                lbl_alasan: "SELECT REASON", lbl_pesan: "ADDITIONAL MESSAGE",
+                toast_update: "Data Updated Successfully!"
             },
             jp: { 
                 lang_name: "JP", btn: "勉強を始める", search_ph: "名前を探してね...", web_link: "公式サイト", greet: ["おはよう", "こんにちは", "こんばんは", "おやすみ"], 
@@ -164,13 +165,13 @@
                 toast_copy: "コピーしました！", modal_title: "口座情報", copy_btn: "番号をコピー",
                 absensi_title: "出席履歴", absensi_back: "戻る", no_absensi: "履歴はありません",
                 status_map: { 'hadir': '出席', 'sakit': '病欠', 'izin': '欠席', 'alpha': '無断欠席' },
-                // IZIN FORM (LENGKAP)
                 izin_title: "欠席届", sakit: "病欠", izin: "欠席", placeholder: "備考...", btn_kirim: "送信する", kirim_sukses: "送信しました！",
-                lbl_alasan: "理由を選択", lbl_pesan: "備考 (任意)"
+                lbl_alasan: "理由を選択", lbl_pesan: "備考 (任意)",
+                toast_update: "データが更新されました！"
             }
         };
 
-        // --- SKELETON RENDER ---
+        // --- SMART CACHING LOGIC ---
         function renderSkeleton() {
             const app = document.getElementById('app');
             app.innerHTML = `
@@ -186,14 +187,82 @@
         }
 
         async function ambilData() {
-            renderSkeleton(); 
-            localStorage.removeItem('rbm_cache_fix_translate_v1'); 
+            // 1. CEK CACHE DI HP DULU
+            const cachedData = localStorage.getItem(CACHE_KEY);
+            let hasCache = false;
+            
+            if (cachedData) {
+                try {
+                    const parsed = JSON.parse(cachedData);
+                    // Gunakan data cache agar langsung tampil (INSTANT LOAD)
+                    DATA_SISWA = parsed.students; 
+                    DATA_HARGA = parsed.prices; 
+                    KABAR_RBM = parsed.news; 
+                    INFO_PENGUMUMAN = parsed.info;
+                    
+                    finishLoad(false); // Render UI tanpa animasi loading
+                    hasCache = true;
+                    console.log("Loaded from Smart Cache ⚡");
+                } catch (e) { console.log("Cache invalid"); }
+            }
+
+            if (!hasCache) renderSkeleton(); // Kalau tidak ada cache, baru munculkan skeleton
+
+            // 2. TETAP AMBIL DATA BARU DARI INTERNET (Background Sync)
             try {
                 const res = await fetch(API_URL);
                 const d = await res.json();
-                DATA_SISWA = d.students; DATA_HARGA = d.prices; KABAR_RBM = d.news; INFO_PENGUMUMAN = d.info;
-                setTimeout(() => renderApp(), 300);
-            } catch (e) { console.error(e); alert("Koneksi lambat, coba refresh."); }
+                
+                // Cek apakah data berubah?
+                const newDataStr = JSON.stringify(d);
+                if (newDataStr !== cachedData) {
+                    // Simpan data baru ke Cache
+                    localStorage.setItem(CACHE_KEY, newDataStr);
+                    
+                    // Update variable global
+                    DATA_SISWA = d.students; DATA_HARGA = d.prices; KABAR_RBM = d.news; INFO_PENGUMUMAN = d.info;
+                    
+                    // Jika tadi sudah load cache, update UI user dan beri tahu
+                    if (hasCache) {
+                        // Kalau user sedang di dashboard, update tampilannya
+                        // Kalau user sedang isi form, jangan ganggu dulu (optional logic)
+                        if(STATE.view === 'dashboard' && STATE.user) {
+                            // Update data user yang sedang aktif
+                            const updatedUser = DATA_SISWA.find(s => s.id === STATE.user.id);
+                            if(updatedUser) STATE.user = updatedUser;
+                            renderApp();
+                            showToast(TEKS[STATE.lang].toast_update, "refresh-cw");
+                        } else if (STATE.view === 'login') {
+                            renderApp();
+                        }
+                    } else {
+                        finishLoad(true); // First load normal
+                    }
+                }
+            } catch (e) { 
+                console.error(e); 
+                if(!hasCache) alert("Koneksi gagal. Cek internet."); 
+            }
+        }
+
+        function finishLoad(animate = true) {
+            const l = document.getElementById('loader');
+            if(l) {
+                l.style.opacity = '0';
+                setTimeout(() => { l.style.display = 'none'; }, 500);
+            }
+            document.getElementById('app').classList.remove('hidden');
+            renderApp();
+        }
+        
+        function showToast(msg, icon='check-circle') {
+             document.getElementById('toast-msg').innerText = msg;
+             const t = document.getElementById('toast');
+             // Ganti icon jika perlu (simple logic)
+             t.innerHTML = `<i data-lucide="${icon}" width="16"></i> <span id="toast-msg">${msg}</span>`;
+             if(window.lucide) lucide.createIcons();
+             t.classList.add('show');
+             setTimeout(() => t.classList.remove('show'), 3000);
         }
 
         // --- UI FUNCTIONS ---
@@ -208,11 +277,10 @@
             const m = document.getElementById('modal-izin');
             const t = TEKS[STATE.lang];
             
-            // Set Bahasa Modal Izin (FULL TERJEMAHAN)
             if(show) {
                 document.getElementById('lbl-izin-title').innerText = t.izin_title;
-                document.getElementById('lbl-pilih-alasan').innerText = t.lbl_alasan; // NEW
-                document.getElementById('lbl-pesan-tambahan').innerText = t.lbl_pesan; // NEW
+                document.getElementById('lbl-pilih-alasan').innerText = t.lbl_alasan; 
+                document.getElementById('lbl-pesan-tambahan').innerText = t.lbl_pesan; 
                 document.getElementById('btn-sakit').innerText = "🤒 " + t.sakit;
                 document.getElementById('btn-izin').innerText = "📅 " + t.izin;
                 document.getElementById('pesanIzin').placeholder = t.placeholder;
@@ -233,11 +301,10 @@
         }
 
         function kirimIzin() {
-            if(!alasanTerpilih) { alert("Pilih alasan dulu (Sakit/Izin)"); return; }
+            if(!alasanTerpilih) { alert("Pilih alasan dulu"); return; }
             const t = TEKS[STATE.lang];
             const btn = document.getElementById('btn-kirim-izin');
             
-            // Loading State
             const btnText = btn.innerHTML;
             btn.innerHTML = `<i data-lucide="loader-2" class="animate-spin" width="16"></i> ...`;
             if(window.lucide) lucide.createIcons();
@@ -252,27 +319,26 @@
             })
             .then(res => res.json())
             .then(data => {
-                alert(t.kirim_sukses);
+                showToast(t.kirim_sukses);
                 toggleIzin(false);
                 btn.innerHTML = btnText;
             })
             .catch(err => {
-                alert("Gagal mengirim. Cek internet.");
+                alert("Gagal mengirim.");
                 btn.innerHTML = btnText;
             });
         }
 
         function copyText(text, label) {
             navigator.clipboard.writeText(text).then(() => {
-                document.getElementById('toast-msg').innerText = `${label} ${TEKS[STATE.lang].toast_copy}`;
-                document.getElementById('toast').classList.add('show');
-                setTimeout(() => document.getElementById('toast').classList.remove('show'), 3000);
+                showToast(`${label} ${TEKS[STATE.lang].toast_copy}`);
             });
         }
 
         function cycleLanguage() {
             if (STATE.lang === 'id') STATE.lang = 'en'; else if (STATE.lang === 'en') STATE.lang = 'jp'; else STATE.lang = 'id';
             if (STATE.lang === 'jp') document.body.classList.add('lang-jp'); else document.body.classList.remove('lang-jp');
+            // Simpan preferensi bahasa juga bisa di sini (optional)
             renderApp();
         }
 
@@ -304,12 +370,10 @@
             renderApp();
         }
 
-        // --- RENDER UTAMA ---
         function renderApp() {
             const app = document.getElementById('app'); 
             const t = TEKS[STATE.lang];
             
-            // 1. HALAMAN LOGIN
             if (STATE.view === 'login') {
                 const sorted = [...DATA_SISWA].sort((a,b) => a.name.localeCompare(b.name));
                 let opsi = `<option value="" disabled selected>${t.search_ph}</option>` + sorted.map(s => `<option value="${s.id}">${s.name}</option>`).join('');
@@ -330,7 +394,6 @@
                     </div>
                 </div>`;
             } 
-            // 2. HALAMAN ABSENSI
             else if (STATE.view === 'attendance') {
                 const s = STATE.user;
                 const listAbsen = s.attendance || [];
@@ -372,7 +435,6 @@
                     </div>
                 </div>`;
             }
-            // 3. DASHBOARD
             else {
                 const s = STATE.user;
                 const dataTagihan = hitungTotalTagihan(s); const total = dataTagihan.total;
@@ -408,7 +470,6 @@
                         <div class="sky-card rounded-[2rem] p-8">
                             <div class="flex justify-between items-start mb-8 relative z-10"><div><p class="text-[10px] font-bold text-sky-100 uppercase tracking-widest mb-2 opacity-90 border border-sky-300/30 inline-block px-2 py-1 rounded-lg">${t.spp_label}</p><h1 class="font-fun font-black text-4xl tracking-tight text-white drop-shadow-md">¥${total.toLocaleString('ja-JP')}</h1></div><div class="w-12 h-12 rounded-2xl bg-white/20 border-2 border-white/30 backdrop-blur-sm flex items-center justify-center shadow-inner"><i data-lucide="wallet" class="text-white" width="24"></i></div></div>
                             <div class="flex justify-between items-end relative z-10"><div><p class="text-[10px] text-sky-100 uppercase mb-2 font-bold tracking-wider">${t.pay_status}</p><span class="inline-flex items-center gap-2 bg-black/20 backdrop-blur-md px-4 py-2 rounded-xl text-xs font-bold border border-white/20 text-white"><div class="w-2.5 h-2.5 rounded-full ${isPaid ?'bg-green-400':'bg-orange-400 animate-pulse'} border-2 border-white"></div> ${stText}</span></div>
-                            
                             <button onclick="toggleIzin(true)" class="bg-white text-sky-700 px-5 py-3 rounded-2xl text-[10px] font-black uppercase tracking-wider shadow-lg hover:bg-sky-50 transition flex items-center gap-2"><span>${t.report}</span> <i data-lucide="edit-3" width="12"></i></button>
                             </div>
                         </div>
