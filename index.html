@@ -128,13 +128,37 @@
         };
 
         const TEKS = {
-            id: { lang_name: "ID", btn: "Mulai Belajar!", search_ph: "Cari Nama Kamu...", web_link: "Website Ruang Belajar", greet: ["Selamat Pagi", "Selamat Siang", "Selamat Sore", "Selamat Malam"], spp_label: "SPP", pay_status: "Status", status_unpaid: "Belum Ada Pembayaran", status_paid: "Lunas", report: "Izin", btn_wa: "Konfirmasi\nWhatsApp", btn_bank: "Info\nRekening", btn_copy: "Salin\nRincian", news_title: "Kabar RBM Japan", no_news: "Belum ada kabar baru", schedule_title: "Jadwal Belajar", no_schedule: "Libur dulu ya!", notes_title: "Pesan Guru", no_notes: "Belum ada pesan", history: "Riwayat SPP", no_history: "Masih kosong", toast_copy: "Berhasil disalin!", modal_title: "Info Rekening", copy_btn: "Salin Nomor" },
-            en: { lang_name: "EN", btn: "Let's Start!", search_ph: "Find Your Name...", web_link: "Official Website", greet: ["Good Morning", "Good Afternoon", "Good Evening", "Good Night"], spp_label: "Tuition Fee", pay_status: "Status", status_unpaid: "Payment Pending", status_paid: "Paid", report: "Absence", btn_wa: "Confirm\nWhatsApp", btn_bank: "Bank\nDetails", btn_copy: "Copy\nDetails", news_title: "RBM News", no_news: "No news yet", schedule_title: "My Schedule", no_schedule: "No class today!", notes_title: "Teacher's Note", no_notes: "No notes yet", history: "Payment History", no_history: "Empty history", toast_copy: "Copied!", modal_title: "Bank Details", copy_btn: "Copy Number" },
-            jp: { lang_name: "JP", btn: "勉強を始める", search_ph: "名前を探してね...", web_link: "公式サイト", greet: ["おはよう", "こんにちは", "こんばんは", "おやすみ"], spp_label: "今月の月謝", pay_status: "支払い状況", status_unpaid: "未払い", status_paid: "支払い済み", report: "欠席連絡", btn_wa: "WhatsApp\n確認", btn_bank: "銀行\n口座", btn_copy: "詳細\nコピー", news_title: "お知らせ", no_news: "新しいお知らせはありません", schedule_title: "時間割", no_schedule: "今日は授業がありません", notes_title: "先生からのメッセージ", no_notes: "メッセージはありません", history: "支払い履歴", no_history: "履歴はありません", toast_copy: "コピーしました！", modal_title: "口座情報", copy_btn: "番号をコピー" }
+            id: { 
+                lang_name: "ID", btn: "Mulai Belajar!", search_ph: "Cari Nama Kamu...", web_link: "Website Ruang Belajar", greet: ["Selamat Pagi", "Selamat Siang", "Selamat Sore", "Selamat Malam"], 
+                spp_label: "SPP", pay_status: "Status", status_unpaid: "Belum Ada Pembayaran", status_paid: "Lunas", report: "Izin", 
+                btn_wa: "Konfirmasi", btn_bank: "Info Bank", btn_copy: "Salin Tagihan", btn_absensi: "Absensi",
+                news_title: "Kabar RBM Japan", no_news: "Belum ada kabar baru", schedule_title: "Jadwal Belajar", no_schedule: "Libur dulu ya!", 
+                notes_title: "Pesan Guru", no_notes: "Belum ada pesan", history: "Riwayat SPP", no_history: "Masih kosong", 
+                toast_copy: "Berhasil disalin!", modal_title: "Info Rekening", copy_btn: "Salin Nomor",
+                absensi_title: "Riwayat Absensi", absensi_back: "Kembali", no_absensi: "Belum ada data absensi", teacher_label: "Guru"
+            },
+            en: { 
+                lang_name: "EN", btn: "Let's Start!", search_ph: "Find Your Name...", web_link: "Official Website", greet: ["Good Morning", "Good Afternoon", "Good Evening", "Good Night"], 
+                spp_label: "Tuition Fee", pay_status: "Status", status_unpaid: "Payment Pending", status_paid: "Paid", report: "Absence", 
+                btn_wa: "Confirm", btn_bank: "Bank Info", btn_copy: "Copy Invoice", btn_absensi: "Attendance",
+                news_title: "RBM News", no_news: "No news yet", schedule_title: "My Schedule", no_schedule: "No class today!", 
+                notes_title: "Teacher's Note", no_notes: "No notes yet", history: "Payment History", no_history: "Empty history", 
+                toast_copy: "Copied!", modal_title: "Bank Details", copy_btn: "Copy Number",
+                absensi_title: "Attendance History", absensi_back: "Back", no_absensi: "No attendance data", teacher_label: "Teacher"
+            },
+            jp: { 
+                lang_name: "JP", btn: "勉強を始める", search_ph: "名前を探してね...", web_link: "公式サイト", greet: ["おはよう", "こんにちは", "こんばんは", "おやすみ"], 
+                spp_label: "今月の月謝", pay_status: "支払い状況", status_unpaid: "未払い", status_paid: "支払い済み", report: "欠席連絡", 
+                btn_wa: "確認", btn_bank: "口座情報", btn_copy: "詳細コピー", btn_absensi: "出席簿",
+                news_title: "お知らせ", no_news: "新しいお知らせはありません", schedule_title: "時間割", no_schedule: "今日は授業がありません", 
+                notes_title: "先生からのメッセージ", no_notes: "メッセージはありません", history: "支払い履歴", no_history: "履歴はありません", 
+                toast_copy: "コピーしました！", modal_title: "口座情報", copy_btn: "番号をコピー",
+                absensi_title: "出席履歴", absensi_back: "戻る", no_absensi: "履歴はありません", teacher_label: "先生"
+            }
         };
 
         async function ambilData() {
-            localStorage.removeItem('rbm_v8_final_fix'); // Hapus cache biar data baru masuk
+            localStorage.removeItem('rbm_v9_absensi'); 
             try {
                 const res = await fetch(API_URL);
                 const d = await res.json();
@@ -202,6 +226,11 @@
 
         function getGreet() { const h = new Date().getHours(); const g = TEKS[STATE.lang].greet; if (h < 11) return g[0]; if (h < 15) return g[1]; if (h < 19) return g[2]; return g[3]; }
 
+        function setView(viewName) {
+            STATE.view = viewName;
+            renderApp();
+        }
+
         function renderApp() {
             const app = document.getElementById('app'); const t = TEKS[STATE.lang];
             
@@ -224,7 +253,47 @@
                         </div></div>
                     </div>
                 </div>`;
-            } else {
+            } 
+            else if (STATE.view === 'attendance') {
+                const s = STATE.user;
+                const listAbsen = s.attendance || [];
+                
+                app.innerHTML = `
+                <div class="pb-28 pop-in">
+                    <div class="pt-10 px-6 pb-6 bg-white sticky top-0 z-30 shadow-sm border-b border-slate-100">
+                        <div class="flex items-center gap-4">
+                            <button onclick="setView('dashboard')" class="w-10 h-10 rounded-2xl bg-slate-50 text-slate-600 flex items-center justify-center hover:bg-slate-100 transition"><i data-lucide="arrow-left" width="20"></i></button>
+                            <h2 class="font-fun font-black text-xl text-slate-800">${t.absensi_title}</h2>
+                        </div>
+                    </div>
+                    <div class="p-6 space-y-4">
+                        ${listAbsen.length > 0 ? listAbsen.map(a => {
+                            let stColor = 'bg-slate-100 text-slate-500';
+                            let icon = 'circle';
+                            const st = a.status.toLowerCase();
+                            if(st.includes('hadir')) { stColor = 'bg-green-100 text-green-700'; icon='check-circle-2'; }
+                            else if(st.includes('sakit')) { stColor = 'bg-orange-100 text-orange-700'; icon='activity'; }
+                            else if(st.includes('izin')) { stColor = 'bg-blue-100 text-blue-700'; icon='info'; }
+                            else if(st.includes('alpha')) { stColor = 'bg-red-100 text-red-700'; icon='x-circle'; }
+
+                            return `
+                            <div class="bg-white p-4 rounded-3xl border border-slate-100 shadow-sm flex items-center gap-4">
+                                <div class="w-14 h-14 ${stColor} rounded-2xl flex items-center justify-center shrink-0">
+                                    <i data-lucide="${icon}" width="24"></i>
+                                </div>
+                                <div>
+                                    <p class="text-[10px] text-slate-400 font-bold uppercase tracking-wider mb-0.5">${a.date}</p>
+                                    <h4 class="font-bold text-slate-800 text-base">${a.subject}</h4>
+                                    <div class="inline-block mt-1 px-2 py-0.5 rounded-md text-[10px] font-black uppercase ${stColor}">${a.status}</div>
+                                </div>
+                            </div>
+                            `;
+                        }).join('') : `<div class="p-10 text-center text-slate-400 bg-white/50 rounded-3xl border-2 border-dashed border-slate-200 italic text-sm">${t.no_absensi}</div>`}
+                    </div>
+                </div>`;
+            }
+            else {
+                // DASHBOARD VIEW
                 const s = STATE.user;
                 const dataTagihan = hitungTotalTagihan(s); const total = dataTagihan.total;
                 const stRaw = s.payments["Bulan Ini"] || ""; 
@@ -232,11 +301,9 @@
                 const isPaid = statusAman.includes('lunas');
                 const stText = isPaid ? t.status_paid : t.status_unpaid;
 
-                // --- FIX: TAMPILKAN ISI (CONTENT) BERITA ---
                 const newsHtml = KABAR_RBM.map(k => {
                     if(!k.judul) return ''; 
                     const imgUrl = k.foto || 'https://placehold.co/600x400/e0f2fe/0284c7?text=RBM+Japan';
-                    
                     return `
                     <div class="min-w-[280px] bg-white rounded-3xl border border-slate-100 overflow-hidden shadow-sm snap-center group">
                         <div class="h-32 bg-slate-100 relative overflow-hidden">
@@ -262,11 +329,26 @@
                             <div class="flex justify-between items-start mb-8 relative z-10"><div><p class="text-[10px] font-bold text-sky-100 uppercase tracking-widest mb-2 opacity-90 border border-sky-300/30 inline-block px-2 py-1 rounded-lg">${t.spp_label}</p><h1 class="font-fun font-black text-4xl tracking-tight text-white drop-shadow-md">¥${total.toLocaleString('ja-JP')}</h1></div><div class="w-12 h-12 rounded-2xl bg-white/20 border-2 border-white/30 backdrop-blur-sm flex items-center justify-center shadow-inner"><i data-lucide="wallet" class="text-white" width="24"></i></div></div>
                             <div class="flex justify-between items-end relative z-10"><div><p class="text-[10px] text-sky-100 uppercase mb-2 font-bold tracking-wider">${t.pay_status}</p><span class="inline-flex items-center gap-2 bg-black/20 backdrop-blur-md px-4 py-2 rounded-xl text-xs font-bold border border-white/20 text-white"><div class="w-2.5 h-2.5 rounded-full ${isPaid ?'bg-green-400':'bg-orange-400 animate-pulse'} border-2 border-white"></div> ${stText}</span></div><button onclick="laporIzin('${s.name}', '${s.id}')" class="bg-white text-sky-700 px-5 py-3 rounded-2xl text-[10px] font-black uppercase tracking-wider shadow-lg hover:bg-sky-50 transition flex items-center gap-2"><span>${t.report}</span> <i data-lucide="send" width="12"></i></button></div>
                         </div>
-                        <div class="grid grid-cols-3 gap-3">
-                            <button onclick="window.open('https://wa.me/${ADMIN_WA}?text=Konfirmasi SPP ${s.name} Total: ¥${total}')" class="glass-panel p-4 flex flex-col items-center gap-2 hover:bg-white transition group active:scale-95"><div class="w-12 h-12 bg-green-100 text-green-600 rounded-2xl flex items-center justify-center shadow-sm"><i data-lucide="message-circle" width="24"></i></div><span class="text-[10px] font-bold text-slate-600 text-center leading-tight whitespace-pre-line uppercase">${t.btn_wa}</span></button>
-                            <button onclick="toggleModal(true)" class="glass-panel p-4 flex flex-col items-center gap-2 hover:bg-white transition group active:scale-95"><div class="w-12 h-12 bg-sky-100 text-sky-600 rounded-2xl flex items-center justify-center shadow-sm"><i data-lucide="credit-card" width="24"></i></div><span class="text-[10px] font-bold text-slate-600 text-center leading-tight whitespace-pre-line uppercase">${t.btn_bank}</span></button>
-                            <button onclick="salinRincian('${s.name}', s, '${stRaw}')" class="glass-panel p-4 flex flex-col items-center gap-2 hover:bg-white transition group active:scale-95"><div class="w-12 h-12 bg-orange-100 text-orange-500 rounded-2xl flex items-center justify-center shadow-sm"><i data-lucide="copy" width="24"></i></div><span class="text-[10px] font-bold text-slate-600 text-center leading-tight whitespace-pre-line uppercase">${t.btn_copy}</span></button>
+
+                        <div class="grid grid-cols-2 gap-3">
+                            <button onclick="setView('attendance')" class="glass-panel p-4 flex flex-col items-center gap-2 hover:bg-white transition group active:scale-95 bg-white/60">
+                                <div class="w-12 h-12 bg-purple-100 text-purple-600 rounded-2xl flex items-center justify-center shadow-sm"><i data-lucide="calendar-check-2" width="24"></i></div>
+                                <span class="text-[10px] font-bold text-slate-600 text-center leading-tight whitespace-pre-line uppercase">${t.btn_absensi}</span>
+                            </button>
+                            <button onclick="window.open('https://wa.me/${ADMIN_WA}?text=Konfirmasi SPP ${s.name} Total: ¥${total}')" class="glass-panel p-4 flex flex-col items-center gap-2 hover:bg-white transition group active:scale-95">
+                                <div class="w-12 h-12 bg-green-100 text-green-600 rounded-2xl flex items-center justify-center shadow-sm"><i data-lucide="message-circle" width="24"></i></div>
+                                <span class="text-[10px] font-bold text-slate-600 text-center leading-tight whitespace-pre-line uppercase">${t.btn_wa}</span>
+                            </button>
+                            <button onclick="toggleModal(true)" class="glass-panel p-4 flex flex-col items-center gap-2 hover:bg-white transition group active:scale-95">
+                                <div class="w-12 h-12 bg-sky-100 text-sky-600 rounded-2xl flex items-center justify-center shadow-sm"><i data-lucide="credit-card" width="24"></i></div>
+                                <span class="text-[10px] font-bold text-slate-600 text-center leading-tight whitespace-pre-line uppercase">${t.btn_bank}</span>
+                            </button>
+                            <button onclick="salinRincian('${s.name}', s, '${stRaw}')" class="glass-panel p-4 flex flex-col items-center gap-2 hover:bg-white transition group active:scale-95">
+                                <div class="w-12 h-12 bg-orange-100 text-orange-500 rounded-2xl flex items-center justify-center shadow-sm"><i data-lucide="copy" width="24"></i></div>
+                                <span class="text-[10px] font-bold text-slate-600 text-center leading-tight whitespace-pre-line uppercase">${t.btn_copy}</span>
+                            </button>
                         </div>
+
                         ${INFO_PENGUMUMAN.aktif ? `<div class="bg-yellow-50 border border-yellow-200 rounded-2xl p-1 overflow-hidden shadow-sm"><div class="bg-white/80 rounded-xl px-4 py-3"><div class="ticker-text text-xs font-bold text-orange-700 italic">📣 ${STATE.lang==='id'?INFO_PENGUMUMAN.teks_id:INFO_PENGUMUMAN.teks_en}</div></div></div>` : ''}
                         
                         <div class="space-y-8 pb-4">
@@ -284,7 +366,17 @@
                                         ${s.schedule.map(sc => {
                                             const hariDisplay = DAY_NAMES[STATE.lang][sc.day] || sc.day;
                                             const hariKotak = STATE.lang === 'jp' ? hariDisplay.substring(0,1) : hariDisplay.substring(0,3);
-                                            return `<div class="bg-white p-4 rounded-[1.5rem] border border-slate-100 flex items-center gap-4 shadow-sm hover:shadow-md transition"><div class="w-14 h-14 bg-sky-50 rounded-2xl flex flex-col items-center justify-center border-2 border-sky-100 text-sky-600"><span class="text-xs font-black uppercase tracking-widest">${hariKotak}</span></div><div><p class="text-sm font-bold text-slate-700 font-fun">${sc.subject}</p><p class="text-[10px] text-slate-500 font-bold flex items-center gap-1 mt-0.5"><i data-lucide="clock" width="12"></i> ${sc.time} JST</p></div></div>`
+                                            // UPDATE: MENAMPILKAN NAMA GURU
+                                            return `<div class="bg-white p-4 rounded-[1.5rem] border border-slate-100 flex items-center gap-4 shadow-sm hover:shadow-md transition">
+                                                <div class="w-14 h-14 bg-sky-50 rounded-2xl flex flex-col items-center justify-center border-2 border-sky-100 text-sky-600"><span class="text-xs font-black uppercase tracking-widest">${hariKotak}</span></div>
+                                                <div class="flex-1">
+                                                    <p class="text-sm font-bold text-slate-700 font-fun">${sc.subject}</p>
+                                                    <div class="flex justify-between items-center mt-1">
+                                                        <p class="text-[10px] text-slate-500 font-bold flex items-center gap-1"><i data-lucide="clock" width="12"></i> ${sc.time} JST</p>
+                                                        <p class="text-[10px] text-orange-600 font-bold flex items-center gap-1 bg-orange-50 px-2 py-0.5 rounded-full"><i data-lucide="user" width="10"></i> ${sc.teacher}</p>
+                                                    </div>
+                                                </div>
+                                            </div>`
                                         }).join('') || `<p class="text-xs text-slate-400 italic text-center py-6 bg-white/50 rounded-3xl border-2 border-dashed border-slate-200">${t.no_schedule}</p>`}
                                     </div>
                                 </section>
