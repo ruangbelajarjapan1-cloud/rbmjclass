@@ -10,74 +10,22 @@
     <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
     
     <style>
-        /* Font Bulat Ramah Anak */
         @import url('https://fonts.googleapis.com/css2?family=Fredoka:wght@400;500;600;700&family=Nunito:wght@400;600;700;800&display=swap');
         
-        :root { 
-            --sky-blue: #0ea5e9; 
-            --sun-orange: #f97316;
-            --cloud-white: #f0f9ff;
-        }
-
-        body { 
-            font-family: 'Nunito', sans-serif; 
-            background-color: var(--cloud-white); 
-            color: #0c4a6e; 
-            -webkit-tap-highlight-color: transparent; 
-        }
-
-        /* Judul Lucu */
+        :root { --sky-blue: #0ea5e9; --sun-orange: #f97316; --cloud-white: #f0f9ff; }
+        body { font-family: 'Nunito', sans-serif; background-color: var(--cloud-white); color: #0c4a6e; -webkit-tap-highlight-color: transparent; }
         .font-fun { font-family: 'Fredoka', sans-serif; }
-
-        /* Background Awan */
-        .kids-bg {
-            background-color: #f0f9ff;
-            background-image: 
-                radial-gradient(at 0% 0%, hsla(195, 100%, 85%, 1) 0, transparent 50%), 
-                radial-gradient(at 100% 100%, hsla(35, 100%, 85%, 1) 0, transparent 50%);
-        }
-
-        /* Glass Panel */
-        .glass-panel {
-            background: rgba(255, 255, 255, 0.9);
-            backdrop-filter: blur(10px);
-            border: 2px solid rgba(255, 255, 255, 0.8);
-            box-shadow: 0 8px 20px rgba(14, 165, 233, 0.1);
-            border-radius: 1.5rem;
-        }
-
-        /* KARTU SPP (Tema Langit) */
-        .sky-card {
-            background: linear-gradient(135deg, #0284c7 0%, #38bdf8 100%);
-            position: relative; overflow: hidden; color: white;
-            box-shadow: 0 15px 25px -5px rgba(2, 132, 199, 0.3);
-            border: 2px solid rgba(255,255,255,0.2);
-        }
-        /* Motif Awan Abstrak (Syar'i) */
-        .sky-card::before {
-            content: ''; position: absolute; top: -30px; right: -30px; width: 120px; height: 120px;
-            background: radial-gradient(circle, rgba(255,255,255,0.15) 0%, transparent 70%);
-            border-radius: 50%; pointer-events: none;
-        }
-
-        /* Button Semangat (Orange) */
-        .btn-orange {
-            background: linear-gradient(to bottom, #fb923c, #ea580c);
-            color: white; border-bottom: 4px solid #c2410c;
-            transition: all 0.1s;
-        }
+        .kids-bg { background-color: #f0f9ff; background-image: radial-gradient(at 0% 0%, hsla(195, 100%, 85%, 1) 0, transparent 50%), radial-gradient(at 100% 100%, hsla(35, 100%, 85%, 1) 0, transparent 50%); }
+        .glass-panel { background: rgba(255, 255, 255, 0.9); backdrop-filter: blur(10px); border: 2px solid rgba(255, 255, 255, 0.8); box-shadow: 0 8px 20px rgba(14, 165, 233, 0.1); border-radius: 1.5rem; }
+        .sky-card { background: linear-gradient(135deg, #0284c7 0%, #38bdf8 100%); position: relative; overflow: hidden; color: white; box-shadow: 0 15px 25px -5px rgba(2, 132, 199, 0.3); border: 2px solid rgba(255,255,255,0.2); }
+        .sky-card::before { content: ''; position: absolute; top: -30px; right: -30px; width: 120px; height: 120px; background: radial-gradient(circle, rgba(255,255,255,0.15) 0%, transparent 70%); border-radius: 50%; pointer-events: none; }
+        .btn-orange { background: linear-gradient(to bottom, #fb923c, #ea580c); color: white; border-bottom: 4px solid #c2410c; transition: all 0.1s; }
         .btn-orange:active { transform: translateY(2px); border-bottom: 0px solid transparent; }
-
-        /* Animations */
         .pop-up { animation: popUp 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275); }
         @keyframes popUp { from { opacity: 0; transform: scale(0.9); } to { opacity: 1; transform: scale(1); } }
-        
         .ticker-text { animation: marquee 25s linear infinite; display: inline-block; white-space: nowrap; }
         @keyframes marquee { 0% { transform: translateX(100%); } 100% { transform: translateX(-100%); } }
-        
         .hide-scroll::-webkit-scrollbar { display: none; }
-        
-        /* Modal & Toast */
         #toast { visibility: hidden; opacity: 0; transition: all 0.3s; transform: translateY(20px); }
         #toast.show { visibility: visible; opacity: 1; transform: translateY(0); }
         .modal-backdrop { opacity: 0; pointer-events: none; transition: all 0.3s; background: rgba(2, 132, 199, 0.2); backdrop-filter: blur(4px); }
@@ -91,7 +39,7 @@
     <div id="loader" class="fixed inset-0 z-50 bg-[#f0f9ff] flex flex-col items-center justify-center transition-opacity duration-500">
         <div class="relative mb-4">
             <div class="w-20 h-20 bg-white rounded-2xl flex items-center justify-center shadow-xl animate-bounce">
-                <img src="logo.png" class="h-10 w-10 object-contain" onerror="this.src='https://cdn-icons-png.flaticon.com/512/2991/2991148.png'">
+                <img src="logo.png" class="h-10 w-10 object-contain" onerror="this.style.display='none'">
             </div>
         </div>
         <p class="text-xs font-black text-sky-600 tracking-widest uppercase font-fun animate-pulse">Memuat...</p>
@@ -112,22 +60,17 @@
                 <h3 class="font-fun font-bold text-xl text-sky-700" id="modal-title">Info Bank</h3>
                 <button onclick="toggleModal(false)" class="w-8 h-8 rounded-full bg-slate-100 flex items-center justify-center hover:bg-red-100 hover:text-red-500 transition"><i data-lucide="x" width="18"></i></button>
             </div>
-            
             <div class="bg-sky-50 border-2 border-dashed border-sky-200 rounded-2xl p-6 text-center mb-6">
                 <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/c/c2/Japan_Post_Bank_logo.svg/1200px-Japan_Post_Bank_logo.svg.png" class="h-6 mx-auto mb-3">
                 <p class="text-[10px] text-sky-400 font-bold uppercase tracking-widest mb-1">Nomor Rekening</p>
                 <h2 class="font-fun font-black text-3xl text-slate-700 tracking-tight">10120-12345678</h2>
                 <div class="mt-3 inline-block bg-orange-100 text-orange-600 px-3 py-1 rounded-full text-[10px] font-bold uppercase">a.n RBM JAPAN ADMIN</div>
             </div>
-
-            <button onclick="copyText('10120-12345678', 'No. Rekening')" class="w-full btn-orange py-4 rounded-xl text-sm font-black uppercase tracking-wider shadow-md btn-copy-label">
-                Salin Nomor
-            </button>
+            <button onclick="copyText('10120-12345678', 'No. Rekening')" class="w-full btn-orange py-4 rounded-xl text-sm font-black uppercase tracking-wider shadow-md btn-copy-label">Salin Nomor</button>
         </div>
     </div>
 
     <script>
-        // --- CONFIG ---
         const API_URL = "https://script.google.com/macros/s/AKfycbz2a5-sm2_gLBPF5jpTmZfBuN9PppkvUI3nXIyOJbYJ4XDZA3SDE7-FNU784ZxfSZjr/exec"; 
         const WEBSITE_URL = "https://rbj-site.vercel.app/";
         const ADMIN_WA = "6285819809668";
@@ -141,39 +84,12 @@
         };
 
         const TEKS = {
-            id: { 
-                btn: "Mulai Belajar!", search_ph: "Cari Nama Kamu...", web_link: "Website Ruang Belajar",
-                greet: ["Selamat Pagi", "Selamat Siang", "Selamat Sore", "Selamat Malam"],
-                spp_label: "Tabungan Akhirat (SPP)", 
-                pay_status: "Status", status_unpaid: "Belum Ada Pembayaran", status_paid: "Lunas",
-                report: "Izin", 
-                btn_wa: "Konfirmasi\nWhatsApp", btn_bank: "Info\nRekening", btn_copy: "Salin\nRincian",
-                news_title: "Kabar RBM", no_news: "Belum ada kabar baru",
-                schedule_title: "Jadwal Belajar", no_schedule: "Libur dulu ya!",
-                notes_title: "Pesan Guru", no_notes: "Belum ada pesan",
-                history: "Riwayat SPP", no_history: "Masih kosong",
-                toast_copy: "Berhasil disalin!", modal_title: "Info Rekening", copy_btn: "Salin Nomor"
-            },
-            en: { 
-                btn: "Let's Start!", search_ph: "Find Your Name...", web_link: "Official Website",
-                greet: ["Good Morning", "Good Afternoon", "Good Evening", "Good Night"],
-                spp_label: "Tuition Fee", 
-                pay_status: "Status", status_unpaid: "Payment Pending", status_paid: "Paid",
-                report: "Absence", 
-                btn_wa: "Confirm\nWhatsApp", btn_bank: "Bank\nDetails", btn_copy: "Copy\nDetails",
-                news_title: "RBM News", no_news: "No news yet",
-                schedule_title: "My Schedule", no_schedule: "No class today!",
-                notes_title: "Teacher's Note", no_notes: "No notes yet",
-                history: "Payment History", no_history: "Empty history",
-                toast_copy: "Copied!", modal_title: "Bank Details", copy_btn: "Copy Number"
-            }
+            id: { btn: "Mulai Belajar!", search_ph: "Cari Nama Kamu...", web_link: "Website Ruang Belajar", greet: ["Selamat Pagi", "Selamat Siang", "Selamat Sore", "Selamat Malam"], spp_label: "Tabungan Akhirat (SPP)", pay_status: "Status", status_unpaid: "Belum Ada Pembayaran", status_paid: "Lunas", report: "Izin", btn_wa: "Konfirmasi\nWhatsApp", btn_bank: "Info\nRekening", btn_copy: "Salin\nRincian", news_title: "Kabar RBM", no_news: "Belum ada kabar baru", schedule_title: "Jadwal Belajar", no_schedule: "Libur dulu ya!", notes_title: "Pesan Guru", no_notes: "Belum ada pesan", history: "Riwayat SPP", no_history: "Masih kosong", toast_copy: "Berhasil disalin!", modal_title: "Info Rekening", copy_btn: "Salin Nomor" },
+            en: { btn: "Let's Start!", search_ph: "Find Your Name...", web_link: "Official Website", greet: ["Good Morning", "Good Afternoon", "Good Evening", "Good Night"], spp_label: "Tuition Fee", pay_status: "Status", status_unpaid: "Payment Pending", status_paid: "Paid", report: "Absence", btn_wa: "Confirm\nWhatsApp", btn_bank: "Bank\nDetails", btn_copy: "Copy\nDetails", news_title: "RBM News", no_news: "No news yet", schedule_title: "My Schedule", no_schedule: "No class today!", notes_title: "Teacher's Note", no_notes: "No notes yet", history: "Payment History", no_history: "Empty history", toast_copy: "Copied!", modal_title: "Bank Details", copy_btn: "Copy Number" }
         };
 
-        // --- CORE FUNCTIONS ---
         async function ambilData() {
-            // Hapus cache lama agar data baru yang diperbaiki bisa masuk
-            localStorage.removeItem('rbm_kids_v2_cache'); 
-            
+            localStorage.removeItem('rbm_kids_v2_cache'); // Clear cache lama biar fix error langsung jalan
             try {
                 const res = await fetch(API_URL);
                 const d = await res.json();
@@ -188,24 +104,18 @@
             setTimeout(() => { l.style.display = 'none'; document.getElementById('app').classList.remove('hidden'); renderApp(); }, 600);
         }
 
-        // --- CONFETTI ---
         function fireConfetti() {
-            var count = 200;
-            var defaults = { origin: { y: 0.7 } };
-            function fire(particleRatio, opts) {
-                confetti(Object.assign({}, defaults, opts, { particleCount: Math.floor(count * particleRatio) }));
-            }
+            var count = 200; var defaults = { origin: { y: 0.7 } };
+            function fire(particleRatio, opts) { confetti(Object.assign({}, defaults, opts, { particleCount: Math.floor(count * particleRatio) })); }
             fire(0.25, { spread: 26, startVelocity: 55, colors: ['#0ea5e9', '#f97316'] });
             fire(0.2, { spread: 60, colors: ['#38bdf8', '#fb923c'] });
             fire(0.35, { spread: 100, decay: 0.91, scalar: 0.8 });
         }
 
         function toggleModal(show) {
-            const m = document.getElementById('modal-transfer');
-            const t = TEKS[STATE.lang];
+            const m = document.getElementById('modal-transfer'); const t = TEKS[STATE.lang];
             document.getElementById('modal-title').innerText = t.modal_title;
-            const btn = m.querySelector('.btn-copy-label');
-            if(btn) btn.innerText = t.copy_btn;
+            const btn = m.querySelector('.btn-copy-label'); if(btn) btn.innerText = t.copy_btn;
             if(show) m.classList.add('active'); else m.classList.remove('active');
         }
 
@@ -217,248 +127,90 @@
             });
         }
 
-        // --- LOGIKA HITUNG HARGA (ANTI-TYPO) ---
+        // --- FUNGSI PINTAR: AUTO-CORRECT PETIK MIRING & HITUNG TOTAL ---
         function hitungTotalTagihan(siswa) {
-            let total = 0;
-            let rincian = [];
-            
+            let total = 0; let rincian = [];
             siswa.classes.forEach(c => {
-                // BUG FIX: Ganti tanda petik keriting (’) menjadi lurus (') agar tidak error
-                let namaBersih = c.split('(')[0].trim().replace(/’/g, "'");
-                
-                // Cari harga (jika tidak ketemu, anggap 0)
+                // DISINI KUNCINYA: .replace(/’/g, "'") mengubah petik miring jadi lurus
+                let namaBersih = c.split('(')[0].trim().replace(/’/g, "'"); 
                 const harga = DATA_HARGA[namaBersih] || 0;
-                
-                if(harga > 0) {
-                    total += harga;
-                    rincian.push(`${c} (¥${harga.toLocaleString()})`);
-                } else {
-                    // Jika harga 0, mungkin typo di nama kelas
-                    rincian.push(`${c} (Harga tdk ditemukan)`);
-                }
+                if(harga > 0) { total += harga; rincian.push(`${c} (¥${harga.toLocaleString()})`); } 
+                else { rincian.push(`${c} (Harga tdk ditemukan)`); }
             });
-
-            // Cek Diskon (Anak Ke-2 dst / Role 2)
-            let statusDiskon = "";
-            if (siswa.role == 2) {
-                total = total * 0.5;
-                statusDiskon = " (Diskon 50%)";
-            }
-            
+            let statusDiskon = ""; if (siswa.role == 2) { total = total * 0.5; statusDiskon = " (Diskon 50%)"; }
             return { total: total, rincian: rincian, statusDiskon: statusDiskon };
         }
 
         function salinRincian(nama, siswa, status) {
             const t = TEKS[STATE.lang];
             const dataTagihan = hitungTotalTagihan(siswa);
-            const st = status && status.toLowerCase().includes('lunas') ? t.status_paid : t.status_unpaid;
-            
+            const statusAman = (status || '').toString().toLowerCase(); // Aman dari error undefined
+            const st = statusAman.includes('lunas') ? t.status_paid : t.status_unpaid;
             const txt = `RBM INVOICE\nName: ${nama}\n\nClasses:\n- ${dataTagihan.rincian.join('\n- ')}${dataTagihan.statusDiskon}\n\nTotal: ¥${parseInt(dataTagihan.total).toLocaleString('ja-JP')}\nStatus: ${st}`;
             copyText(txt, "Invoice");
         }
 
-        function getGreet() {
-            const h = new Date().getHours();
-            const g = TEKS[STATE.lang].greet;
-            if (h < 11) return g[0]; if (h < 15) return g[1]; if (h < 19) return g[2]; return g[3];
-        }
+        function getGreet() { const h = new Date().getHours(); const g = TEKS[STATE.lang].greet; if (h < 11) return g[0]; if (h < 15) return g[1]; if (h < 19) return g[2]; return g[3]; }
 
         function renderApp() {
-            const app = document.getElementById('app');
-            const t = TEKS[STATE.lang];
-
+            const app = document.getElementById('app'); const t = TEKS[STATE.lang];
             if (STATE.view === 'login') {
                 const sorted = [...DATA_SISWA].sort((a,b) => a.name.localeCompare(b.name));
                 let opsi = `<option value="" disabled selected>${t.search_ph}</option>` + sorted.map(s => `<option value="${s.id}">${s.name}</option>`).join('');
-                
                 app.innerHTML = `
                 <div class="min-h-screen flex flex-col items-center justify-center p-6 pop-up relative overflow-hidden">
-                    <button onclick="STATE.lang=STATE.lang==='id'?'en':'id';renderApp()" class="absolute top-6 right-6 px-4 py-2 rounded-full bg-white border-2 border-sky-100 text-sky-600 font-black uppercase shadow-md hover:scale-105 transition z-30 text-xs flex items-center gap-2">
-                        <i data-lucide="languages" width="14"></i> ${STATE.lang}
-                    </button>
-
+                    <button onclick="STATE.lang=STATE.lang==='id'?'en':'id';renderApp()" class="absolute top-6 right-6 px-4 py-2 rounded-full bg-white border-2 border-sky-100 text-sky-600 font-black uppercase shadow-md hover:scale-105 transition z-30 text-xs flex items-center gap-2"><i data-lucide="languages" width="14"></i> ${STATE.lang}</button>
                     <div class="w-full max-w-sm relative z-10">
                         <div class="text-center mb-8">
-                            <div class="inline-flex items-center justify-center w-24 h-24 bg-white rounded-3xl shadow-lg mb-6 border-4 border-white transform rotate-3">
-                                <img src="logo.png" class="h-12 object-contain" onerror="this.src='https://cdn-icons-png.flaticon.com/512/2991/2991148.png'">
-                            </div>
+                            <div class="inline-flex items-center justify-center w-24 h-24 bg-white rounded-3xl shadow-lg mb-6 border-4 border-white transform rotate-3"><img src="logo.png" class="h-12 object-contain" onerror="this.src='https://cdn-icons-png.flaticon.com/512/2991/2991148.png'"></div>
                             <h1 class="font-fun font-black text-4xl text-sky-600 mb-2 tracking-tight drop-shadow-sm">RBM Portal</h1>
-                            <div class="inline-block bg-orange-100 text-orange-600 px-4 py-1.5 rounded-full border-2 border-orange-200">
-                                <p class="text-[10px] font-bold uppercase tracking-widest">✨ Istiqomah di atas Sunnah ✨</p>
-                            </div>
+                            <div class="inline-block bg-orange-100 text-orange-600 px-4 py-1.5 rounded-full border-2 border-orange-200"><p class="text-[10px] font-bold uppercase tracking-widest">✨ Istiqomah di atas Sunnah ✨</p></div>
                         </div>
-
-                        <div class="glass-panel p-2">
-                            <div class="bg-white rounded-[1.3rem] p-6 shadow-sm">
-                                <div class="relative mb-4 group">
-                                    <select id="selSiswa" class="w-full p-4 pl-6 bg-sky-50 border-2 border-sky-100 rounded-2xl text-sm font-bold text-sky-700 outline-none focus:border-sky-400 appearance-none transition cursor-pointer">${opsi}</select>
-                                    <div class="absolute right-5 top-1/2 -translate-y-1/2 text-sky-300 pointer-events-none"><i data-lucide="chevron-down" width="20"></i></div>
-                                </div>
-                                <button onclick="const id=document.getElementById('selSiswa').value; if(id){STATE.user=DATA_SISWA.find(s=>s.id===id);STATE.view='dashboard';renderApp(); setTimeout(fireConfetti, 300);}" class="w-full btn-orange py-4 rounded-2xl font-black text-sm uppercase tracking-wider shadow-md transform hover:scale-[1.02] transition">
-                                    ${t.btn} 🚀
-                                </button>
-                                <div class="mt-6 text-center">
-                                    <a href="${WEBSITE_URL}" target="_blank" class="text-xs font-bold text-sky-400 hover:text-orange-500 transition flex items-center justify-center gap-2">
-                                        <span>${t.web_link}</span> <i data-lucide="external-link" width="12"></i>
-                                    </a>
-                                </div>
-                            </div>
-                        </div>
+                        <div class="glass-panel p-2"><div class="bg-white rounded-[1.3rem] p-6 shadow-sm">
+                            <div class="relative mb-4 group"><select id="selSiswa" class="w-full p-4 pl-6 bg-sky-50 border-2 border-sky-100 rounded-2xl text-sm font-bold text-sky-700 outline-none focus:border-sky-400 appearance-none transition cursor-pointer">${opsi}</select><div class="absolute right-5 top-1/2 -translate-y-1/2 text-sky-300 pointer-events-none"><i data-lucide="chevron-down" width="20"></i></div></div>
+                            <button onclick="const id=document.getElementById('selSiswa').value; if(id){STATE.user=DATA_SISWA.find(s=>s.id===id);STATE.view='dashboard';renderApp(); setTimeout(fireConfetti, 300);}" class="w-full btn-orange py-4 rounded-2xl font-black text-sm uppercase tracking-wider shadow-md transform hover:scale-[1.02] transition">${t.btn} 🚀</button>
+                            <div class="mt-6 text-center"><a href="${WEBSITE_URL}" target="_blank" class="text-xs font-bold text-sky-400 hover:text-orange-500 transition flex items-center justify-center gap-2"><span>${t.web_link}</span> <i data-lucide="external-link" width="12"></i></a></div>
+                        </div></div>
                     </div>
                 </div>`;
             } else {
                 const s = STATE.user;
-                
-                // --- PAKAI FUNGSI BARU (KEBAL ERROR) ---
-                const dataTagihan = hitungTotalTagihan(s);
-                const total = dataTagihan.total;
-                // ---------------------------------------
-
+                const dataTagihan = hitungTotalTagihan(s); const total = dataTagihan.total;
                 const stRaw = s.payments["Bulan Ini"];
-                const isPaid = stRaw && stRaw.toLowerCase().includes('lunas');
+                // FIX CRASH DISINI: Tambahkan (stRaw || '') agar tidak error jika data kosong
+                const statusAman = (stRaw || '').toString().toLowerCase();
+                const isPaid = statusAman.includes('lunas');
                 const stText = isPaid ? t.status_paid : t.status_unpaid;
-                const displayName = s.name; 
 
                 app.innerHTML = `
                 <div class="pb-28 pop-up">
                     <div class="pt-10 px-8 pb-4 flex justify-between items-center">
-                        <div>
-                            <p class="text-sky-500 text-xs font-black uppercase tracking-widest mb-1 flex items-center gap-1">
-                                ${getGreet()} <span>☀️</span>
-                            </p>
-                            <h2 class="font-fun font-black text-xl text-slate-800 leading-tight">${displayName}</h2>
-                        </div>
-                        <div class="flex gap-2">
-                             <button onclick="STATE.lang=STATE.lang==='id'?'en':'id';renderApp()" class="w-10 h-10 rounded-2xl bg-white text-sky-600 border-2 border-sky-100 flex items-center justify-center font-black text-xs uppercase hover:bg-sky-50 transition shadow-sm">${STATE.lang}</button>
-                            <button onclick="location.reload()" class="w-10 h-10 rounded-2xl bg-white text-slate-400 border-2 border-slate-100 flex items-center justify-center hover:bg-red-50 hover:text-red-500 transition shadow-sm"><i data-lucide="log-out" width="18"></i></button>
-                        </div>
+                        <div><p class="text-sky-500 text-xs font-black uppercase tracking-widest mb-1 flex items-center gap-1">${getGreet()} <span>☀️</span></p><h2 class="font-fun font-black text-xl text-slate-800 leading-tight">${s.name}</h2></div>
+                        <div class="flex gap-2"><button onclick="STATE.lang=STATE.lang==='id'?'en':'id';renderApp()" class="w-10 h-10 rounded-2xl bg-white text-sky-600 border-2 border-sky-100 flex items-center justify-center font-black text-xs uppercase hover:bg-sky-50 transition shadow-sm">${STATE.lang}</button><button onclick="location.reload()" class="w-10 h-10 rounded-2xl bg-white text-slate-400 border-2 border-slate-100 flex items-center justify-center hover:bg-red-50 hover:text-red-500 transition shadow-sm"><i data-lucide="log-out" width="18"></i></button></div>
                     </div>
-
                     <div class="px-6 space-y-6">
                         <div class="sky-card rounded-[2.5rem] p-8 group transform transition hover:scale-[1.02]">
-                            <div class="flex justify-between items-start mb-8 relative z-10">
-                                <div>
-                                    <p class="text-[10px] font-bold text-sky-100 uppercase tracking-widest mb-2 opacity-90 border border-sky-300/30 inline-block px-2 py-1 rounded-lg">${t.spp_label}</p>
-                                    <h1 class="font-fun font-black text-4xl tracking-tight text-white drop-shadow-md">¥${total.toLocaleString('ja-JP')}</h1>
-                                </div>
-                                <div class="w-12 h-12 rounded-2xl bg-white/20 border-2 border-white/30 backdrop-blur-sm flex items-center justify-center shadow-inner">
-                                    <i data-lucide="wallet" class="text-white" width="24"></i>
-                                </div>
-                            </div>
-                            
-                            <div class="flex justify-between items-end relative z-10">
-                                <div>
-                                    <p class="text-[10px] text-sky-100 uppercase mb-2 font-bold tracking-wider">${t.pay_status}</p>
-                                    <span class="inline-flex items-center gap-2 bg-black/20 backdrop-blur-md px-4 py-2 rounded-xl text-xs font-bold border border-white/20 text-white">
-                                        <div class="w-2.5 h-2.5 rounded-full ${isPaid ?'bg-green-400':'bg-orange-400 animate-pulse'} border-2 border-white"></div> 
-                                        ${stText}
-                                    </span>
-                                </div>
-                                <button onclick="laporIzin('${s.name}', '${s.id}')" class="bg-white text-sky-600 px-5 py-3 rounded-2xl text-[10px] font-black uppercase tracking-wider shadow-lg hover:bg-sky-50 transition flex items-center gap-2 border-b-4 border-slate-200 active:border-b-0 active:translate-y-1">
-                                    <span>${t.report}</span> <i data-lucide="send" width="12"></i>
-                                </button>
-                            </div>
+                            <div class="flex justify-between items-start mb-8 relative z-10"><div><p class="text-[10px] font-bold text-sky-100 uppercase tracking-widest mb-2 opacity-90 border border-sky-300/30 inline-block px-2 py-1 rounded-lg">${t.spp_label}</p><h1 class="font-fun font-black text-4xl tracking-tight text-white drop-shadow-md">¥${total.toLocaleString('ja-JP')}</h1></div><div class="w-12 h-12 rounded-2xl bg-white/20 border-2 border-white/30 backdrop-blur-sm flex items-center justify-center shadow-inner"><i data-lucide="wallet" class="text-white" width="24"></i></div></div>
+                            <div class="flex justify-between items-end relative z-10"><div><p class="text-[10px] text-sky-100 uppercase mb-2 font-bold tracking-wider">${t.pay_status}</p><span class="inline-flex items-center gap-2 bg-black/20 backdrop-blur-md px-4 py-2 rounded-xl text-xs font-bold border border-white/20 text-white"><div class="w-2.5 h-2.5 rounded-full ${isPaid ?'bg-green-400':'bg-orange-400 animate-pulse'} border-2 border-white"></div> ${stText}</span></div><button onclick="laporIzin('${s.name}', '${s.id}')" class="bg-white text-sky-600 px-5 py-3 rounded-2xl text-[10px] font-black uppercase tracking-wider shadow-lg hover:bg-sky-50 transition flex items-center gap-2 border-b-4 border-slate-200 active:border-b-0 active:translate-y-1"><span>${t.report}</span> <i data-lucide="send" width="12"></i></button></div>
                         </div>
-
                         <div class="grid grid-cols-3 gap-3">
-                            <button onclick="window.open('https://wa.me/${ADMIN_WA}?text=Konfirmasi SPP ${s.name} Total: ¥${total}')" class="glass-panel p-4 flex flex-col items-center gap-2 hover:bg-white transition group border-b-4 border-slate-200/50 active:border-b-0 active:translate-y-1">
-                                <div class="w-12 h-12 bg-green-100 text-green-600 rounded-2xl flex items-center justify-center group-hover:scale-110 transition shadow-sm"><i data-lucide="message-circle" width="24"></i></div>
-                                <span class="text-[10px] font-bold text-slate-600 text-center leading-tight whitespace-pre-line uppercase">${t.btn_wa}</span>
-                            </button>
-                            <button onclick="toggleModal(true)" class="glass-panel p-4 flex flex-col items-center gap-2 hover:bg-white transition group border-b-4 border-slate-200/50 active:border-b-0 active:translate-y-1">
-                                <div class="w-12 h-12 bg-sky-100 text-sky-600 rounded-2xl flex items-center justify-center group-hover:scale-110 transition shadow-sm"><i data-lucide="credit-card" width="24"></i></div>
-                                <span class="text-[10px] font-bold text-slate-600 text-center leading-tight whitespace-pre-line uppercase">${t.btn_bank}</span>
-                            </button>
-                            <button onclick="salinRincian('${s.name}', s, '${stRaw}')" class="glass-panel p-4 flex flex-col items-center gap-2 hover:bg-white transition group border-b-4 border-slate-200/50 active:border-b-0 active:translate-y-1">
-                                <div class="w-12 h-12 bg-orange-100 text-orange-500 rounded-2xl flex items-center justify-center group-hover:scale-110 transition shadow-sm"><i data-lucide="copy" width="24"></i></div>
-                                <span class="text-[10px] font-bold text-slate-600 text-center leading-tight whitespace-pre-line uppercase">${t.btn_copy}</span>
-                            </button>
+                            <button onclick="window.open('https://wa.me/${ADMIN_WA}?text=Konfirmasi SPP ${s.name} Total: ¥${total}')" class="glass-panel p-4 flex flex-col items-center gap-2 hover:bg-white transition group border-b-4 border-slate-200/50 active:border-b-0 active:translate-y-1"><div class="w-12 h-12 bg-green-100 text-green-600 rounded-2xl flex items-center justify-center group-hover:scale-110 transition shadow-sm"><i data-lucide="message-circle" width="24"></i></div><span class="text-[10px] font-bold text-slate-600 text-center leading-tight whitespace-pre-line uppercase">${t.btn_wa}</span></button>
+                            <button onclick="toggleModal(true)" class="glass-panel p-4 flex flex-col items-center gap-2 hover:bg-white transition group border-b-4 border-slate-200/50 active:border-b-0 active:translate-y-1"><div class="w-12 h-12 bg-sky-100 text-sky-600 rounded-2xl flex items-center justify-center group-hover:scale-110 transition shadow-sm"><i data-lucide="credit-card" width="24"></i></div><span class="text-[10px] font-bold text-slate-600 text-center leading-tight whitespace-pre-line uppercase">${t.btn_bank}</span></button>
+                            <button onclick="salinRincian('${s.name}', s, '${stRaw}')" class="glass-panel p-4 flex flex-col items-center gap-2 hover:bg-white transition group border-b-4 border-slate-200/50 active:border-b-0 active:translate-y-1"><div class="w-12 h-12 bg-orange-100 text-orange-500 rounded-2xl flex items-center justify-center group-hover:scale-110 transition shadow-sm"><i data-lucide="copy" width="24"></i></div><span class="text-[10px] font-bold text-slate-600 text-center leading-tight whitespace-pre-line uppercase">${t.btn_copy}</span></button>
                         </div>
-
-                        ${INFO_PENGUMUMAN.aktif ? `
-                        <div class="bg-yellow-50 border-2 border-yellow-200 rounded-2xl p-1 overflow-hidden shadow-sm">
-                            <div class="bg-white/60 rounded-xl px-4 py-3">
-                                <div class="ticker-text text-xs font-bold text-orange-700 italic">📣 ${STATE.lang==='id'?INFO_PENGUMUMAN.teks_id:INFO_PENGUMUMAN.teks_en}</div>
-                            </div>
-                        </div>` : ''}
-
+                        ${INFO_PENGUMUMAN.aktif ? `<div class="bg-yellow-50 border-2 border-yellow-200 rounded-2xl p-1 overflow-hidden shadow-sm"><div class="bg-white/60 rounded-xl px-4 py-3"><div class="ticker-text text-xs font-bold text-orange-700 italic">📣 ${STATE.lang==='id'?INFO_PENGUMUMAN.teks_id:INFO_PENGUMUMAN.teks_en}</div></div></div>` : ''}
                         <div class="space-y-8 pb-4">
-                            <section>
-                                <div class="flex items-center gap-3 mb-4 px-1">
-                                    <div class="h-8 w-2 bg-orange-400 rounded-full"></div>
-                                    <h3 class="font-fun font-bold text-slate-700 text-xl">${t.news_title}</h3>
-                                </div>
-                                <div class="flex gap-4 overflow-x-auto pb-6 px-1 snap-x hide-scroll">
-                                    ${KABAR_RBM.map(k => `
-                                    <div class="min-w-[260px] bg-white rounded-[2rem] border-2 border-slate-100 overflow-hidden shadow-sm snap-center group">
-                                        <div class="h-32 bg-slate-100 relative overflow-hidden">
-                                            <img src="${k.foto}" class="w-full h-full object-cover group-hover:scale-110 transition duration-500" onerror="this.src='https://img.freepik.com/free-vector/abstract-geometric-wireframe-background_52683-59421.jpg'">
-                                            <span class="absolute bottom-3 left-3 text-[10px] font-black text-sky-600 bg-white/90 px-3 py-1 rounded-full uppercase tracking-wider shadow-sm">${k.tgl}</span>
-                                        </div>
-                                        <div class="p-5">
-                                            <h4 class="text-sm font-bold text-slate-700 line-clamp-2 leading-snug font-fun">${k.judul}</h4>
-                                        </div>
-                                    </div>`).join('') || `<div class="w-full py-8 text-center text-xs text-slate-400 italic bg-white/50 rounded-3xl border-2 border-dashed border-slate-200">${t.no_news}</div>`}
-                                </div>
-                            </section>
-
+                            <section><div class="flex items-center gap-3 mb-4 px-1"><div class="h-8 w-2 bg-orange-400 rounded-full"></div><h3 class="font-fun font-bold text-slate-700 text-xl">${t.news_title}</h3></div><div class="flex gap-4 overflow-x-auto pb-6 px-1 snap-x hide-scroll">${KABAR_RBM.map(k => `<div class="min-w-[260px] bg-white rounded-[2rem] border-2 border-slate-100 overflow-hidden shadow-sm snap-center group"><div class="h-32 bg-slate-100 relative overflow-hidden"><img src="${k.foto}" class="w-full h-full object-cover group-hover:scale-110 transition duration-500" onerror="this.src='https://img.freepik.com/free-vector/abstract-geometric-wireframe-background_52683-59421.jpg'"><span class="absolute bottom-3 left-3 text-[10px] font-black text-sky-600 bg-white/90 px-3 py-1 rounded-full uppercase tracking-wider shadow-sm">${k.tgl}</span></div><div class="p-5"><h4 class="text-sm font-bold text-slate-700 line-clamp-2 leading-snug font-fun">${k.judul}</h4></div></div>`).join('') || `<div class="w-full py-8 text-center text-xs text-slate-400 italic bg-white/50 rounded-3xl border-2 border-dashed border-slate-200">${t.no_news}</div>`}</div></section>
                             <div class="grid gap-6">
-                                <section>
-                                    <div class="flex items-center gap-3 mb-4 px-1">
-                                        <div class="h-8 w-2 bg-sky-400 rounded-full"></div>
-                                        <h3 class="font-fun font-bold text-slate-700 text-xl">${t.schedule_title}</h3>
-                                    </div>
-                                    <div class="space-y-3">
-                                        ${s.schedule.map(sc => `
-                                        <div class="bg-white p-4 rounded-[1.5rem] border-2 border-slate-50 flex items-center gap-4 shadow-sm hover:shadow-md transition">
-                                            <div class="w-14 h-14 bg-sky-50 rounded-2xl flex flex-col items-center justify-center border-2 border-sky-100 text-sky-500">
-                                                <span class="text-xs font-black uppercase tracking-widest">${(DAY_NAMES[STATE.lang][sc.day] || sc.day).substring(0,3)}</span>
-                                            </div>
-                                            <div>
-                                                <p class="text-sm font-bold text-slate-700 font-fun">${sc.subject}</p>
-                                                <p class="text-[10px] text-slate-400 font-bold flex items-center gap-1 mt-0.5"><i data-lucide="clock" width="12"></i> ${sc.time} JST</p>
-                                            </div>
-                                        </div>`).join('') || `<p class="text-xs text-slate-400 italic text-center py-6 bg-white/50 rounded-3xl border-2 border-dashed border-slate-200">${t.no_schedule}</p>`}
-                                    </div>
-                                </section>
-
-                                <section>
-                                    <div class="flex items-center gap-3 mb-4 px-1">
-                                        <div class="h-8 w-2 bg-purple-400 rounded-full"></div>
-                                        <h3 class="font-fun font-bold text-slate-700 text-xl">${t.notes_title}</h3>
-                                    </div>
-                                    <div class="space-y-3">
-                                        ${s.notes.map(n => `
-                                        <div class="bg-white p-6 rounded-[1.5rem] border-l-[6px] border-l-purple-400 border-y-2 border-r-2 border-slate-50 shadow-sm relative overflow-hidden">
-                                            <div class="flex justify-between items-center mb-3">
-                                                <span class="text-[10px] font-bold text-purple-500 bg-purple-50 px-2 py-1 rounded-lg uppercase tracking-wider">${n.date}</span>
-                                            </div>
-                                            <p class="text-xs text-slate-600 font-bold leading-relaxed relative z-10">"${n.message}"</p>
-                                        </div>`).join('') || `<p class="text-xs text-slate-400 italic text-center py-6 bg-white/50 rounded-3xl border-2 border-dashed border-slate-200">${t.no_notes}</p>`}
-                                    </div>
-                                </section>
-
-                                <section>
-                                    <div class="flex items-center gap-3 mb-4 px-1">
-                                        <div class="h-8 w-2 bg-green-400 rounded-full"></div>
-                                        <h3 class="font-fun font-bold text-slate-700 text-xl">${t.history}</h3>
-                                    </div>
-                                    <div class="glass-panel p-2 rounded-[1.8rem] border-2 border-white">
-                                        <div class="bg-white/60 rounded-[1.5rem] overflow-hidden">
-                                            ${s.history.map(h => `
-                                            <div class="flex justify-between items-center p-4 border-b border-slate-100 last:border-0 hover:bg-white transition">
-                                                <div>
-                                                    <p class="font-bold text-slate-700 text-sm">${h.bulan}</p>
-                                                    <p class="text-[10px] text-slate-400 font-bold tracking-wide uppercase">${h.kelas}</p>
-                                                </div>
-                                                <div class="text-right">
-                                                    <p class="font-black text-slate-600 text-xs">¥${parseInt(h.nominal).toLocaleString('ja-JP')}</p>
-                                                    <span class="text-[10px] font-black uppercase tracking-wider ${h.status.toLowerCase().includes('lunas') ? 'text-green-500 bg-green-100 px-2 py-0.5 rounded-full' : 'text-slate-400'}">${h.status}</span>
-                                                </div>
-                                            </div>`).join('') || `<div class="p-6 text-center text-xs text-slate-400 italic">${t.no_history}</div>`}
-                                        </div>
-                                    </div>
-                                </section>
+                                <section><div class="flex items-center gap-3 mb-4 px-1"><div class="h-8 w-2 bg-sky-400 rounded-full"></div><h3 class="font-fun font-bold text-slate-700 text-xl">${t.schedule_title}</h3></div><div class="space-y-3">${s.schedule.map(sc => `<div class="bg-white p-4 rounded-[1.5rem] border-2 border-slate-50 flex items-center gap-4 shadow-sm hover:shadow-md transition"><div class="w-14 h-14 bg-sky-50 rounded-2xl flex flex-col items-center justify-center border-2 border-sky-100 text-sky-500"><span class="text-xs font-black uppercase tracking-widest">${(DAY_NAMES[STATE.lang][sc.day] || sc.day).substring(0,3)}</span></div><div><p class="text-sm font-bold text-slate-700 font-fun">${sc.subject}</p><p class="text-[10px] text-slate-400 font-bold flex items-center gap-1 mt-0.5"><i data-lucide="clock" width="12"></i> ${sc.time} JST</p></div></div>`).join('') || `<p class="text-xs text-slate-400 italic text-center py-6 bg-white/50 rounded-3xl border-2 border-dashed border-slate-200">${t.no_schedule}</p>`}</div></section>
+                                <section><div class="flex items-center gap-3 mb-4 px-1"><div class="h-8 w-2 bg-purple-400 rounded-full"></div><h3 class="font-fun font-bold text-slate-700 text-xl">${t.notes_title}</h3></div><div class="space-y-3">${s.notes.map(n => `<div class="bg-white p-6 rounded-[1.5rem] border-l-[6px] border-l-purple-400 border-y-2 border-r-2 border-slate-50 shadow-sm relative overflow-hidden"><div class="flex justify-between items-center mb-3"><span class="text-[10px] font-bold text-purple-500 bg-purple-50 px-2 py-1 rounded-lg uppercase tracking-wider">${n.date}</span></div><p class="text-xs text-slate-600 font-bold leading-relaxed relative z-10">"${n.message}"</p></div>`).join('') || `<p class="text-xs text-slate-400 italic text-center py-6 bg-white/50 rounded-3xl border-2 border-dashed border-slate-200">${t.no_notes}</p>`}</div></section>
+                                <section><div class="flex items-center gap-3 mb-4 px-1"><div class="h-8 w-2 bg-green-400 rounded-full"></div><h3 class="font-fun font-bold text-slate-700 text-xl">${t.history}</h3></div><div class="glass-panel p-2 rounded-[1.8rem] border-2 border-white"><div class="bg-white/60 rounded-[1.5rem] overflow-hidden">
+                                    ${s.history.map(h => {
+                                        // FIX CRASH DISINI JUGA: Tambahkan (h.status || '')
+                                        const hStat = (h.status || '').toString().toLowerCase();
+                                        return `<div class="flex justify-between items-center p-4 border-b border-slate-100 last:border-0 hover:bg-white transition"><div><p class="font-bold text-slate-700 text-sm">${h.bulan}</p><p class="text-[10px] text-slate-400 font-bold tracking-wide uppercase">${h.kelas}</p></div><div class="text-right"><p class="font-black text-slate-600 text-xs">¥${parseInt(h.nominal).toLocaleString('ja-JP')}</p><span class="text-[10px] font-black uppercase tracking-wider ${hStat.includes('lunas') ? 'text-green-500 bg-green-100 px-2 py-0.5 rounded-full' : 'text-slate-400'}">${h.status}</span></div></div>`
+                                    }).join('') || `<div class="p-6 text-center text-xs text-slate-400 italic">${t.no_history}</div>`}
+                                </div></div></section>
                             </div>
                         </div>
                     </div>
@@ -466,7 +218,6 @@
             }
             lucide.createIcons();
         }
-        
         ambilData();
         function laporIzin(nama, id) { window.open(`https://wa.me/${ADMIN_WA}?text=Assalamu'alaikum, izin untuk murid ${nama} (${id})...`); }
     </script>
