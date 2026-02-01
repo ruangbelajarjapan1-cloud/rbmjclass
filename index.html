@@ -120,7 +120,7 @@
         const API_URL = "https://script.google.com/macros/s/AKfycbz2a5-sm2_gLBPF5jpTmZfBuN9PppkvUI3nXIyOJbYJ4XDZA3SDE7-FNU784ZxfSZjr/exec"; 
         const WEBSITE_URL = "https://rbj-site.vercel.app/";
         const ADMIN_WA = "6285819809668";
-        const CACHE_KEY = "rbm_app_data_v9_halus"; // Key baru untuk perubahan teks
+        const CACHE_KEY = "rbm_app_data_v10_fix_btn"; 
         const USER_KEY = "rbm_user_id"; 
 
         let DATA_SISWA = [], DATA_HARGA = {}, KABAR_RBM = [], INFO_PENGUMUMAN = {};
@@ -138,7 +138,6 @@
                 lang_name: "ID", btn: "Mulai Belajar!", search_ph: "Cari Nama Kamu...", web_link: "Website Ruang Belajar", greet: ["Selamat Pagi", "Selamat Siang", "Selamat Sore", "Selamat Malam"], 
                 spp_label: "SPP", pay_status: "Status", status_unpaid: "Belum Ada Pembayaran", status_paid: "Lunas", report: "Izin", 
                 btn_wa: "Konfirmasi", btn_bank: "Info Bank", btn_absensi: "Absensi",
-                // UPDATE DISINI: LEBIH HALUS
                 btn_copy: "Rincian SPP",
                 news_title: "Kabar RBM Japan", no_news: "Belum ada kabar baru", schedule_title: "Jadwal Belajar", no_schedule: "Libur dulu ya!", 
                 notes_title: "Pesan Guru", no_notes: "Belum ada pesan", history: "Riwayat SPP", no_history: "Masih kosong", 
@@ -154,7 +153,6 @@
                 lang_name: "EN", btn: "Let's Start!", search_ph: "Find Your Name...", web_link: "Official Website", greet: ["Good Morning", "Good Afternoon", "Good Evening", "Good Night"], 
                 spp_label: "Tuition Fee", pay_status: "Status", status_unpaid: "Payment Pending", status_paid: "Paid", report: "Absence", 
                 btn_wa: "Confirm", btn_bank: "Bank Info", btn_absensi: "Attendance",
-                // UPDATE DISINI
                 btn_copy: "Tuition Details",
                 news_title: "RBM News", no_news: "No news yet", schedule_title: "My Schedule", no_schedule: "No class today!", 
                 notes_title: "Teacher's Note", no_notes: "No notes yet", history: "Payment History", no_history: "Empty history", 
@@ -170,7 +168,6 @@
                 lang_name: "JP", btn: "勉強を始める", search_ph: "名前を探してね...", web_link: "公式サイト", greet: ["おはよう", "こんにちは", "こんばんは", "おやすみ"], 
                 spp_label: "今月の月謝", pay_status: "支払い状況", status_unpaid: "未払い", status_paid: "支払い済み", report: "欠席連絡", 
                 btn_wa: "確認", btn_bank: "口座情報", btn_absensi: "出席簿",
-                // UPDATE DISINI
                 btn_copy: "学費明細",
                 news_title: "お知らせ", no_news: "新しいお知らせはありません", schedule_title: "時間割", no_schedule: "今日は授業がありません", 
                 notes_title: "先生からのメッセージ", no_notes: "メッセージはありません", history: "支払い履歴", no_history: "履歴はありません", 
@@ -341,11 +338,19 @@
             return { total: total, rincian: rincian, statusDiskon: statusDiskon };
         }
 
-        function salinRincian(nama, siswa, status) {
-            const t = TEKS[STATE.lang]; const dataTagihan = hitungTotalTagihan(siswa);
-            const statusAman = (status || '').toString().toLowerCase(); 
+        // --- FIX KRUSIAL: SALIN RINCIAN BERDASARKAN ID ---
+        // Fungsi ini dimodifikasi agar mencari ulang data user berdasarkan ID
+        // untuk menghindari error [object Object]
+        function salinRincian(id) {
+            const s = DATA_SISWA.find(x => x.id === id); // Cari data fresh
+            if(!s) return;
+
+            const t = TEKS[STATE.lang];
+            const dataTagihan = hitungTotalTagihan(s);
+            const statusAman = (s.payments["Bulan Ini"] || "").toString().toLowerCase(); 
             const st = statusAman.includes('lunas') ? t.status_paid : t.status_unpaid;
-            const txt = `RBM INVOICE\nName: ${nama}\n\nClasses:\n- ${dataTagihan.rincian.join('\n- ')}${dataTagihan.statusDiskon}\n\nTotal: ¥${parseInt(dataTagihan.total).toLocaleString('ja-JP')}\nStatus: ${st}`;
+            const txt = `RBM INVOICE\nName: ${s.name}\n\nClasses:\n- ${dataTagihan.rincian.join('\n- ')}${dataTagihan.statusDiskon}\n\nTotal: ¥${parseInt(dataTagihan.total).toLocaleString('ja-JP')}\nStatus: ${st}`;
+            
             copyText(txt, "Invoice");
         }
 
@@ -418,6 +423,7 @@
                 const isPaid = statusAman.includes('lunas');
                 const stText = isPaid ? t.status_paid : t.status_unpaid;
 
+                // --- LOGIKA JADWAL HARI INI ---
                 const mapHari = ['Ahad', 'Senin', 'Selasa', 'Rabu', 'Kamis', 'Jumat', 'Sabtu'];
                 const hariIni = mapHari[new Date().getDay()];
                 const jadwalHariIni = s.schedule.filter(k => k.day === hariIni);
@@ -445,6 +451,11 @@
                         <div class="p-5"><h4 class="text-sm font-bold text-sky-900 line-clamp-2 leading-snug font-fun mb-2">${k.judul}</h4><p class="text-xs text-slate-600 line-clamp-3 leading-relaxed">${k.isi || ''}</p></div>
                     </div>`;
                 }).join('');
+
+                // --- TOMBOL WA (FIX ERROR NAMA) ---
+                // Encode URI Component agar nama dengan spasi/kutip aman
+                const textWA = `Konfirmasi SPP ${s.name} Total: ¥${total}`;
+                const linkWA = `https://wa.me/${ADMIN_WA}?text=${encodeURIComponent(textWA)}`;
 
                 app.innerHTML = `
                 <div class="pb-28 pop-in">
@@ -474,7 +485,7 @@
                                 <div class="w-12 h-12 bg-purple-100 text-purple-600 rounded-2xl flex items-center justify-center shadow-sm"><i data-lucide="calendar-check-2" width="24"></i></div>
                                 <span class="text-[10px] font-bold text-slate-600 text-center leading-tight whitespace-pre-line uppercase">${t.btn_absensi}</span>
                             </button>
-                            <button onclick="window.open('https://wa.me/${ADMIN_WA}?text=Konfirmasi SPP ${s.name} Total: ¥${total}')" class="glass-panel p-4 flex flex-col items-center gap-2 hover:bg-white transition group active:scale-95">
+                            <button onclick="window.open('${linkWA}')" class="glass-panel p-4 flex flex-col items-center gap-2 hover:bg-white transition group active:scale-95">
                                 <div class="w-12 h-12 bg-green-100 text-green-600 rounded-2xl flex items-center justify-center shadow-sm"><i data-lucide="message-circle" width="24"></i></div>
                                 <span class="text-[10px] font-bold text-slate-600 text-center leading-tight whitespace-pre-line uppercase">${t.btn_wa}</span>
                             </button>
@@ -482,7 +493,7 @@
                                 <div class="w-12 h-12 bg-sky-100 text-sky-600 rounded-2xl flex items-center justify-center shadow-sm"><i data-lucide="credit-card" width="24"></i></div>
                                 <span class="text-[10px] font-bold text-slate-600 text-center leading-tight whitespace-pre-line uppercase">${t.btn_bank}</span>
                             </button>
-                            <button onclick="salinRincian('${s.name}', s, '${stRaw}')" class="glass-panel p-4 flex flex-col items-center gap-2 hover:bg-white transition group active:scale-95">
+                            <button onclick="salinRincian('${s.id}')" class="glass-panel p-4 flex flex-col items-center gap-2 hover:bg-white transition group active:scale-95">
                                 <div class="w-12 h-12 bg-orange-100 text-orange-500 rounded-2xl flex items-center justify-center shadow-sm"><i data-lucide="receipt" width="24"></i></div>
                                 <span class="text-[10px] font-bold text-slate-600 text-center leading-tight whitespace-pre-line uppercase">${t.btn_copy}</span>
                             </button>
