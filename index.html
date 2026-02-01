@@ -120,8 +120,8 @@
         const API_URL = "https://script.google.com/macros/s/AKfycbz2a5-sm2_gLBPF5jpTmZfBuN9PppkvUI3nXIyOJbYJ4XDZA3SDE7-FNU784ZxfSZjr/exec"; 
         const WEBSITE_URL = "https://rbj-site.vercel.app/";
         const ADMIN_WA = "6285819809668";
-        const CACHE_KEY = "rbm_app_data_v7_autologin"; // Cache key baru
-        const USER_KEY = "rbm_user_id"; // Key untuk simpan ID pengguna (Auto Login)
+        const CACHE_KEY = "rbm_app_data_v9_halus"; // Key baru untuk perubahan teks
+        const USER_KEY = "rbm_user_id"; 
 
         let DATA_SISWA = [], DATA_HARGA = {}, KABAR_RBM = [], INFO_PENGUMUMAN = {};
         let STATE = { view: 'login', user: null, lang: 'id' };
@@ -137,7 +137,9 @@
             id: { 
                 lang_name: "ID", btn: "Mulai Belajar!", search_ph: "Cari Nama Kamu...", web_link: "Website Ruang Belajar", greet: ["Selamat Pagi", "Selamat Siang", "Selamat Sore", "Selamat Malam"], 
                 spp_label: "SPP", pay_status: "Status", status_unpaid: "Belum Ada Pembayaran", status_paid: "Lunas", report: "Izin", 
-                btn_wa: "Konfirmasi", btn_bank: "Info Bank", btn_copy: "Salin Tagihan", btn_absensi: "Absensi",
+                btn_wa: "Konfirmasi", btn_bank: "Info Bank", btn_absensi: "Absensi",
+                // UPDATE DISINI: LEBIH HALUS
+                btn_copy: "Rincian SPP",
                 news_title: "Kabar RBM Japan", no_news: "Belum ada kabar baru", schedule_title: "Jadwal Belajar", no_schedule: "Libur dulu ya!", 
                 notes_title: "Pesan Guru", no_notes: "Belum ada pesan", history: "Riwayat SPP", no_history: "Masih kosong", 
                 toast_copy: "Berhasil disalin!", modal_title: "Info Rekening", copy_btn: "Salin Nomor",
@@ -151,7 +153,9 @@
             en: { 
                 lang_name: "EN", btn: "Let's Start!", search_ph: "Find Your Name...", web_link: "Official Website", greet: ["Good Morning", "Good Afternoon", "Good Evening", "Good Night"], 
                 spp_label: "Tuition Fee", pay_status: "Status", status_unpaid: "Payment Pending", status_paid: "Paid", report: "Absence", 
-                btn_wa: "Confirm", btn_bank: "Bank Info", btn_copy: "Copy Invoice", btn_absensi: "Attendance",
+                btn_wa: "Confirm", btn_bank: "Bank Info", btn_absensi: "Attendance",
+                // UPDATE DISINI
+                btn_copy: "Tuition Details",
                 news_title: "RBM News", no_news: "No news yet", schedule_title: "My Schedule", no_schedule: "No class today!", 
                 notes_title: "Teacher's Note", no_notes: "No notes yet", history: "Payment History", no_history: "Empty history", 
                 toast_copy: "Copied!", modal_title: "Bank Details", copy_btn: "Copy Number",
@@ -165,7 +169,9 @@
             jp: { 
                 lang_name: "JP", btn: "勉強を始める", search_ph: "名前を探してね...", web_link: "公式サイト", greet: ["おはよう", "こんにちは", "こんばんは", "おやすみ"], 
                 spp_label: "今月の月謝", pay_status: "支払い状況", status_unpaid: "未払い", status_paid: "支払い済み", report: "欠席連絡", 
-                btn_wa: "確認", btn_bank: "口座情報", btn_copy: "詳細コピー", btn_absensi: "出席簿",
+                btn_wa: "確認", btn_bank: "口座情報", btn_absensi: "出席簿",
+                // UPDATE DISINI
+                btn_copy: "学費明細",
                 news_title: "お知らせ", no_news: "新しいお知らせはありません", schedule_title: "時間割", no_schedule: "今日は授業がありません", 
                 notes_title: "先生からのメッセージ", no_notes: "メッセージはありません", history: "支払い履歴", no_history: "履歴はありません", 
                 toast_copy: "コピーしました！", modal_title: "口座情報", copy_btn: "番号をコピー",
@@ -194,24 +200,17 @@
 
         async function ambilData() {
             const cachedData = localStorage.getItem(CACHE_KEY);
-            const savedUser = localStorage.getItem(USER_KEY); // Cek apakah ada user tersimpan (Auto-Login)
+            const savedUser = localStorage.getItem(USER_KEY); 
             let hasCache = false;
 
             if (cachedData) {
                 try {
                     const parsed = JSON.parse(cachedData);
                     DATA_SISWA = parsed.students; DATA_HARGA = parsed.prices; KABAR_RBM = parsed.news; INFO_PENGUMUMAN = parsed.info;
-                    
-                    // AUTO LOGIN LOGIC:
-                    // Jika ada data di cache DAN ada savedUser, langsung masuk dashboard
                     if (savedUser) {
                         const foundUser = DATA_SISWA.find(s => s.id === savedUser);
-                        if (foundUser) {
-                            STATE.user = foundUser;
-                            STATE.view = 'dashboard';
-                        }
+                        if (foundUser) { STATE.user = foundUser; STATE.view = 'dashboard'; }
                     }
-                    
                     finishLoad(false); hasCache = true;
                 } catch (e) { console.log("Cache invalid"); }
             }
@@ -221,11 +220,9 @@
                 const res = await fetch(API_URL);
                 const d = await res.json();
                 const newDataStr = JSON.stringify(d);
-                
                 if (newDataStr !== cachedData) {
                     localStorage.setItem(CACHE_KEY, newDataStr);
                     DATA_SISWA = d.students; DATA_HARGA = d.prices; KABAR_RBM = d.news; INFO_PENGUMUMAN = d.info;
-                    
                     if (hasCache) {
                         if(STATE.view === 'dashboard' && STATE.user) {
                             const updatedUser = DATA_SISWA.find(s => s.id === STATE.user.id);
@@ -234,7 +231,6 @@
                             showToast(TEKS[STATE.lang].toast_update, "refresh-cw");
                         } else if (STATE.view === 'login') { renderApp(); }
                     } else { 
-                        // Jika first load (internet) dan ada savedUser, auto login juga
                         if (savedUser && !STATE.user) {
                              const foundUser = DATA_SISWA.find(s => s.id === savedUser);
                              if (foundUser) { STATE.user = foundUser; STATE.view = 'dashboard'; }
@@ -261,17 +257,17 @@
              setTimeout(() => t.classList.remove('show'), 3000);
         }
 
-        // --- AUTH FUNCTIONS (NEW) ---
+        // --- AUTH FUNCTIONS ---
         function loginSiswa(id) {
             if(!id) return;
             STATE.user = DATA_SISWA.find(s => s.id === id);
-            localStorage.setItem(USER_KEY, id); // SIMPAN ID (AUTO LOGIN)
+            localStorage.setItem(USER_KEY, id); 
             STATE.view = 'dashboard';
             renderApp();
         }
 
         function logoutSiswa() {
-            localStorage.removeItem(USER_KEY); // HAPUS ID
+            localStorage.removeItem(USER_KEY); 
             STATE.user = null;
             STATE.view = 'login';
             renderApp();
@@ -291,7 +287,6 @@
                 document.getElementById('lbl-izin-title').innerText = t.izin_title;
                 document.getElementById('lbl-pilih-alasan').innerText = t.lbl_alasan; 
                 document.getElementById('lbl-pesan-tambahan').innerText = t.lbl_pesan; 
-                // HALAL ICON (Thermometer & Calendar)
                 document.getElementById('btn-sakit').innerText = "🌡️ " + t.sakit;
                 document.getElementById('btn-izin').innerText = "📅 " + t.izin;
                 document.getElementById('pesanIzin').placeholder = t.placeholder;
@@ -423,7 +418,6 @@
                 const isPaid = statusAman.includes('lunas');
                 const stText = isPaid ? t.status_paid : t.status_unpaid;
 
-                // --- LOGIKA JADWAL HARI INI ---
                 const mapHari = ['Ahad', 'Senin', 'Selasa', 'Rabu', 'Kamis', 'Jumat', 'Sabtu'];
                 const hariIni = mapHari[new Date().getDay()];
                 const jadwalHariIni = s.schedule.filter(k => k.day === hariIni);
@@ -476,10 +470,22 @@
                         </div>
 
                         <div class="grid grid-cols-2 gap-3">
-                            <button onclick="setView('attendance')" class="glass-panel p-4 flex flex-col items-center gap-2 hover:bg-white transition group active:scale-95 bg-white/60"><div class="w-12 h-12 bg-purple-100 text-purple-600 rounded-2xl flex items-center justify-center shadow-sm"><i data-lucide="calendar-check-2" width="24"></i></div><span class="text-[10px] font-bold text-slate-600 text-center leading-tight whitespace-pre-line uppercase">${t.btn_absensi}</span></button>
-                            <button onclick="window.open('https://wa.me/${ADMIN_WA}?text=Konfirmasi SPP ${s.name} Total: ¥${total}')" class="glass-panel p-4 flex flex-col items-center gap-2 hover:bg-white transition group active:scale-95"><div class="w-12 h-12 bg-green-100 text-green-600 rounded-2xl flex items-center justify-center shadow-sm"><i data-lucide="message-circle" width="24"></i></div><span class="text-[10px] font-bold text-slate-600 text-center leading-tight whitespace-pre-line uppercase">${t.btn_wa}</span></button>
-                            <button onclick="toggleModal(true)" class="glass-panel p-4 flex flex-col items-center gap-2 hover:bg-white transition group active:scale-95"><div class="w-12 h-12 bg-sky-100 text-sky-600 rounded-2xl flex items-center justify-center shadow-sm"><i data-lucide="credit-card" width="24"></i></div><span class="text-[10px] font-bold text-slate-600 text-center leading-tight whitespace-pre-line uppercase">${t.btn_bank}</span></button>
-                            <button onclick="salinRincian('${s.name}', s, '${stRaw}')" class="glass-panel p-4 flex flex-col items-center gap-2 hover:bg-white transition group active:scale-95"><div class="w-12 h-12 bg-orange-100 text-orange-500 rounded-2xl flex items-center justify-center shadow-sm"><i data-lucide="copy" width="24"></i></div><span class="text-[10px] font-bold text-slate-600 text-center leading-tight whitespace-pre-line uppercase">${t.btn_copy}</span></button>
+                            <button onclick="setView('attendance')" class="glass-panel p-4 flex flex-col items-center gap-2 hover:bg-white transition group active:scale-95 bg-white/60">
+                                <div class="w-12 h-12 bg-purple-100 text-purple-600 rounded-2xl flex items-center justify-center shadow-sm"><i data-lucide="calendar-check-2" width="24"></i></div>
+                                <span class="text-[10px] font-bold text-slate-600 text-center leading-tight whitespace-pre-line uppercase">${t.btn_absensi}</span>
+                            </button>
+                            <button onclick="window.open('https://wa.me/${ADMIN_WA}?text=Konfirmasi SPP ${s.name} Total: ¥${total}')" class="glass-panel p-4 flex flex-col items-center gap-2 hover:bg-white transition group active:scale-95">
+                                <div class="w-12 h-12 bg-green-100 text-green-600 rounded-2xl flex items-center justify-center shadow-sm"><i data-lucide="message-circle" width="24"></i></div>
+                                <span class="text-[10px] font-bold text-slate-600 text-center leading-tight whitespace-pre-line uppercase">${t.btn_wa}</span>
+                            </button>
+                            <button onclick="toggleModal(true)" class="glass-panel p-4 flex flex-col items-center gap-2 hover:bg-white transition group active:scale-95">
+                                <div class="w-12 h-12 bg-sky-100 text-sky-600 rounded-2xl flex items-center justify-center shadow-sm"><i data-lucide="credit-card" width="24"></i></div>
+                                <span class="text-[10px] font-bold text-slate-600 text-center leading-tight whitespace-pre-line uppercase">${t.btn_bank}</span>
+                            </button>
+                            <button onclick="salinRincian('${s.name}', s, '${stRaw}')" class="glass-panel p-4 flex flex-col items-center gap-2 hover:bg-white transition group active:scale-95">
+                                <div class="w-12 h-12 bg-orange-100 text-orange-500 rounded-2xl flex items-center justify-center shadow-sm"><i data-lucide="receipt" width="24"></i></div>
+                                <span class="text-[10px] font-bold text-slate-600 text-center leading-tight whitespace-pre-line uppercase">${t.btn_copy}</span>
+                            </button>
                         </div>
 
                         ${INFO_PENGUMUMAN.aktif ? `<div class="bg-yellow-50 border border-yellow-200 rounded-2xl p-1 overflow-hidden shadow-sm"><div class="bg-white/80 rounded-xl px-4 py-3"><div class="ticker-text text-xs font-bold text-orange-700 italic">📣 ${STATE.lang==='id'?INFO_PENGUMUMAN.teks_id:INFO_PENGUMUMAN.teks_en}</div></div></div>` : ''}
